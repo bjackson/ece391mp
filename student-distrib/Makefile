@@ -10,6 +10,12 @@ ASFLAGS +=
 LDFLAGS += -nostdlib -static
 CC=gcc
 
+# Use 32-bit compatibility mode on 64-bit computers
+LBITS := $(shell getconf LONG_BIT)
+ifeq ($(LBITS), 64)
+	CC += -m32
+endif
+
 #If you have any .h files in another directory, add -I<dir> to this line
 CPPFLAGS +=-nostdinc -g
 
@@ -19,7 +25,7 @@ SRC =  $(wildcard *.S) $(wildcard *.c)
 # This generates the list of .o files. The order matters, boot.o must be first
 OBJS  = boot.o
 OBJS += $(filter-out boot.o,$(patsubst %.S,%.o,$(filter %.S,$(SRC))))
-OBJS += $(patsubst %.c,%.o,$(filter %.c,$(SRC))) 
+OBJS += $(patsubst %.c,%.o,$(filter %.c,$(SRC)))
 
 
 bootimg: Makefile $(OBJS)
@@ -32,7 +38,7 @@ Makefile.dep: $(SRC)
 	$(CC) -MM $(CPPFLAGS) $(SRC) > $@
 
 .PHONY: clean
-clean: 
+clean:
 	rm -f *.o Makefile.dep bootimg
 
 ifneq ($(MAKECMDGOALS),dep)

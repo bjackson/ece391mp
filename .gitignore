@@ -32,9 +32,9 @@
 # Debug files
 *.dSYM/
 
-# Binaries
-student-distrib/bootimg
-student-distrib/mp3.img
-
 # SVN
 .svn/
+
+# MP3 Specific Compiled Files
+Makefile.dep
+bootimg

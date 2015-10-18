@@ -38,3 +38,4 @@
 # MP3 Specific Compiled Files
 Makefile.dep
 bootimg
+mp3.img

@@ -13,20 +13,21 @@
 .globl  idt_desc_ptr, idt
 
 .align 4
-
-
 tss_size:
 	.long tss_bottom - tss - 1
 
 ldt_size:
 	.long ldt_bottom - ldt - 1
 
-	.word 0 # Padding
+
+# ldt_desc
+    .word 0 # Padding
 ldt_desc:
 	.word KERNEL_LDT
 	.long ldt
 
-	.align 4
+# tss
+.align 4
 tss:
 _tss:
 	.rept 104
@@ -34,7 +35,9 @@ _tss:
 	.endr
 tss_bottom:
 
-	.align  16
+
+# gdt
+.align  16
 gdt:
 _gdt:
 
@@ -84,10 +87,16 @@ ldt_desc_ptr:
 
 gdt_bottom:
 
+
+# gdt_desc_ptr
+.align 4
+    .word 0 # Padding
 gdt_desc_ptr:
 	.word gdt_bottom - gdt - 1
 	.long gdt
 
+
+# ldt
 	.align 16
 ldt:
 	.rept 4
@@ -95,6 +104,8 @@ ldt:
 	.endr
 ldt_bottom:
 
+
+# idt_desc_ptr
 .align 4
 	.word 0 # Padding
 idt_desc_ptr:
@@ -102,7 +113,8 @@ idt_desc_ptr:
 	.long idt
 
 
-	.align  16
+# idt
+.align  16
 idt:
 _idt:
 	.rept NUM_VEC
@@ -110,3 +122,4 @@ _idt:
 	.endr
 
 idt_bottom:
+

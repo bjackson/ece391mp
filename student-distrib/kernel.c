@@ -23,6 +23,7 @@ entry (unsigned long magic, unsigned long addr)
 	/* Clear the screen. */
 	clear();
 
+	printf("TrumpOS - Making Computing Great Again\n");
 	/* Am I booted by a Multiboot-compliant boot loader? */
 	if (magic != MULTIBOOT_BOOTLOADER_MAGIC)
 	{

@@ -13,11 +13,8 @@
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
-/* Check if MAGIC is valid and print the Multiboot information structure
-   pointed by ADDR. */
-void
-entry (unsigned long magic, unsigned long addr)
-{
+// Check if MAGIC is valid and print the Multiboot information structure pointed by ADDR.
+void entry (unsigned long magic, unsigned long addr) {
 	multiboot_info_t *mbi;
 
 	/* Clear the screen. */
@@ -149,6 +146,9 @@ entry (unsigned long magic, unsigned long addr)
 	/* Init the PIC */
 	i8259_init();
 
+	// Initialize IDT
+    init_idt();
+
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 
@@ -156,7 +156,7 @@ entry (unsigned long magic, unsigned long addr)
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
-	//printf("Enabling Interrupts\n");
+	printf("Enabling Interrupts\n");
 	//sti();
 
 	/* Execute the first program (`shell') ... */

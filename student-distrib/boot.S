@@ -24,7 +24,7 @@ _start:
 	jmp     continue
 
 continue:
-	# Load the GDT
+	# Load the GDT and IDT
 	lgdt gdt_desc_ptr
 	lidt idt_desc_ptr
 

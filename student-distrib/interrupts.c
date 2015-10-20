@@ -6,6 +6,27 @@
 #include "lib.h"
 #include "interrupts.h"
 
+#define DIVBYZERO_IDT     0x00
+#define DEBUGGER_IDT      0x01
+#define NMI_IDT           0x02
+#define BREAKPOINT_IDT    0x03
+#define OVERFLOW_IDT      0x04
+#define BOUNDS_IDT        0x05
+#define INVOPCODE_IDT     0x06
+#define COPRUNAVAIL_IDT   0x07
+#define DBLFAULT_IDT      0x08
+#define CPRSEGOVER_IDT    0x09
+#define INVTASKSTS_IDT    0x0A
+#define SEGNPRESENT_IDT   0x0B
+#define STACKFAULT_IDT    0x0C
+#define GPROTFAULT_IDT    0x0D
+#define PAGEFAULT_IDT     0x0E
+#define RESERVED_IDT      0x0F
+#define MATHFAULT_IDT     0x10
+#define ALIGNCHECK_IDT    0x11
+#define MACHINECHECK_IDT  0x12
+#define SIMDFLTPTEX_IDT   0x13
+
 /**
  *
  */
@@ -17,6 +38,7 @@ void init_idt() {
     for(i = 0; i < NUM_VEC; i++) {
         set_idt_entry(i, (uint32_t) isr0);
     }
+
 }
 
 /**

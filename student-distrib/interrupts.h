@@ -1,5 +1,6 @@
-#include "x86_desc.h"
-#include "lib.h"
-
+#ifndef INTERRUPTS_H
+#define INTERRUPTS_H
 
 extern int initializeIDT();
+
+#endif

@@ -1,28 +1,45 @@
+/**
+ * interrupts.c - <description here>
+ */
+
 #include "x86_desc.h"
 #include "lib.h"
 #include "interrupts.h"
 
-#define SYSTEM_CALL_IDT_LOC 0x80
+/**
+ *
+ */
+void init_idt() {
+    memset(&idt, 0x00, sizeof(idt_desc_t) * NUM_VEC);
 
-void systemCallHandler();
+    // Initialize all IDT entries
+    int i;
+    for(i = 0; i < NUM_VEC; i++) {
+        set_idt_entry(i, (uint32_t) isr0);
+    }
+}
 
-// Initializes the IDT
-// @return 0 on success
-int initializeIDT() {
+/**
+ *
+ */
+void set_idt_entry(uint8_t idx, uint32_t handler) {
+    seg_sel_t selector;
+    selector.rpl = 0x3;         // Requested priviledge level (3)
+    selector.ti = 0;            // Table index (GDT)
+    selector.index = KERNEL_CS; // Segment index (Kernel code segment)
 
-  // Initialize system call interrupt
-  idt[SYSTEM_CALL_IDT_LOC].seg_selector = KERNEL_CS;
-  idt[SYSTEM_CALL_IDT_LOC].reserved4 = 0;
-  idt[SYSTEM_CALL_IDT_LOC].reserved3 = 0;
-  idt[SYSTEM_CALL_IDT_LOC].reserved2 = 1;
-  idt[SYSTEM_CALL_IDT_LOC].reserved1 = 1;
-  idt[SYSTEM_CALL_IDT_LOC].size = 1;
-  idt[SYSTEM_CALL_IDT_LOC].reserved0 = 0;
-  idt[SYSTEM_CALL_IDT_LOC].dpl = 3;
-  idt[SYSTEM_CALL_IDT_LOC].present = 1;
+    idt_desc_t entry;
 
-  SET_IDT_ENTRY(idt[SYSTEM_CALL_IDT_LOC], systemCallHandler);
+    SET_IDT_ENTRY(entry, handler);
+    entry.seg_selector = selector.val;
+    entry.type = 0xF;  // Type (32-bit trap gate)
+    entry.ss = 0;      // Storage Segment
+    entry.dpl = 0;     // Descriptor Priviledge Level
+    entry.present = 1; // Present
 
+    idt[idx] = entry;
+}
 
-  return 0;
+extern void isr_handler() {
+    printf("TRUMP SAYS NO!\n");
 }

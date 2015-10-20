@@ -35,7 +35,7 @@ typedef struct x86_desc {
 /* This is a segment descriptor.  It goes in the GDT. */
 typedef struct seg_desc {
 	union {
-		uint32_t val;
+		uint32_t val[2];
 		struct {
 			uint16_t seg_lim_15_00;
 			uint16_t base_15_00;
@@ -147,18 +147,15 @@ do { \
 
 /* An interrupt descriptor entry (goes into the IDT) */
 typedef union idt_desc_t {
-	uint32_t val;
+	uint32_t val[2];
 	struct {
 		uint16_t offset_15_00;
 		uint16_t seg_selector;
-		uint8_t reserved4;
-		uint32_t reserved3 : 1;
-		uint32_t reserved2 : 1;
-		uint32_t reserved1 : 1;
-		uint32_t size : 1;
-		uint32_t reserved0 : 1;
-		uint32_t dpl : 2;
-		uint32_t present : 1;
+		uint8_t unused0;
+		uint8_t type: 4;
+		uint8_t ss : 1;
+		uint8_t dpl : 2;
+		uint8_t present : 1;
 		uint16_t offset_31_16;
 	} __attribute__((packed));
 } idt_desc_t;

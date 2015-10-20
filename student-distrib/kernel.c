@@ -158,7 +158,7 @@ void entry (unsigned long magic, unsigned long addr) {
 	 * without showing you any output */
 
 	printf("Enabling Interrupts\n");
-	initializeIDT();
+	init_idt();
 	sti();
 
 

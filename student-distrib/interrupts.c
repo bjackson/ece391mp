@@ -6,6 +6,7 @@
 #include "lib.h"
 #include "interrupts.h"
 
+// Exception IDT entries
 #define DIVBYZERO_IDT     0x00
 #define DEBUGGER_IDT      0x01
 #define NMI_IDT           0x02

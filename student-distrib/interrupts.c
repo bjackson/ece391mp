@@ -40,6 +40,7 @@ void init_idt() {
         set_idt_entry(i, (uint32_t) isr0);
     }
 
+	//asm volatile("lidt idt_desc_ptr");
 }
 
 /**
@@ -47,7 +48,8 @@ void init_idt() {
  */
 void set_idt_entry(uint8_t idx, uint32_t handler) {
     seg_sel_t selector;
-    selector.rpl = 0x3;         // Requested priviledge level (3)
+    //selector.rpl = 0x3;         // Requested priviledge level (3)
+    selector.rpl = 0;
     selector.ti = 0;            // Table index (GDT)
     selector.index = KERNEL_CS; // Segment index (Kernel code segment)
 
@@ -56,6 +58,7 @@ void set_idt_entry(uint8_t idx, uint32_t handler) {
     SET_IDT_ENTRY(entry, handler);
     entry.seg_selector = selector.val;
     entry.type = 0xF;  // Type (32-bit trap gate)
+    //entry.type = 0xE;  // Type (32-bit interrupt gate)
     entry.ss = 0;      // Storage Segment
     entry.dpl = 0;     // Descriptor Priviledge Level
     entry.present = 1; // Present

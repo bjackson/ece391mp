@@ -6,14 +6,12 @@
 .globl isr0
 
 isr0:
+    iret
     cli
-    pushl $0
-    pushl $0
+    #pushw $0
     jmp isr_common
 
 isr_common:
-    popl  %eax
-    popl  %eax
     call isr_handler
-    sti
+    #sti
     iret

@@ -13,6 +13,8 @@
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
+extern void isr0();
+
 // Check if MAGIC is valid and print the Multiboot information structure pointed by ADDR.
 void entry (unsigned long magic, unsigned long addr) {
 	multiboot_info_t *mbi;
@@ -146,9 +148,6 @@ void entry (unsigned long magic, unsigned long addr) {
 	/* Init the PIC */
 	i8259_init();
 
-	// Initialize IDT
-    init_idt();
-
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 
@@ -159,8 +158,16 @@ void entry (unsigned long magic, unsigned long addr) {
 
 	printf("Enabling Interrupts\n");
 	init_idt();
-	sti();
+	//sti();
+	//
+	//isr_handler();
 
+	//asm volatile("pushw $0");
+	sti();
+	asm volatile("int $0");
+	//isr0();
+
+	//sti();
 
 	/* Execute the first program (`shell') ... */
 

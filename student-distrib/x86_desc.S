@@ -107,19 +107,18 @@ ldt_bottom:
 
 # idt_desc_ptr
 .align 4
-	.word 0 # Padding
 idt_desc_ptr:
 	.word idt_bottom - idt - 1
 	.long idt
+	.word 0 # Padding
 
 
 # idt
-.align  16
+.align 16
 idt:
 _idt:
 	.rept NUM_VEC
 	.quad 0
 	.endr
-
 idt_bottom:
 

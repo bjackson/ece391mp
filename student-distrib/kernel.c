@@ -158,15 +158,8 @@ void entry (unsigned long magic, unsigned long addr) {
 
 	printf("Enabling Interrupts\n");
 	init_idt();
-	//sti();
-	//
-	//isr_handler();
 
-	//asm volatile("pushw $0");
-	//sti();
-	//asm volatile("int $0");
-	//isr0();
-
+	//asm volatile("int $0x3");
 	//sti();
 
 	/* Execute the first program (`shell') ... */

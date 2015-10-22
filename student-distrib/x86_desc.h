@@ -153,7 +153,7 @@ typedef union idt_desc_t {
 		uint16_t seg_selector;
 		uint8_t unused0;
 		uint8_t type: 4;
-		uint8_t ss : 1;
+		uint8_t ss0 : 1;
 		uint8_t dpl : 2;
 		uint8_t present : 1;
 		uint16_t offset_31_16;

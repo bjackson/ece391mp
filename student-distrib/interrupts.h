@@ -20,12 +20,28 @@ typedef union seg_sel_t {
 void init_idt();
 
 //
-void set_idt_entry(uint8_t idx, uint32_t handler);
+void set_trap_entry(uint8_t idx, uint32_t handler);
+
+//
+void set_int_entry(uint8_t idx, uint32_t handler);
+
+//
+void set_sys_entry(uint8_t idx, uint32_t handler);
+
+//
+void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl);
 
 //
 extern void isr_handler();
 
 // Interrupt handler functions - in interrupts_asm.S
 extern void isr0();
+extern void isr8();
+extern void isr10();
+extern void isr11();
+extern void isr12();
+extern void isr13();
+extern void isr14();
+extern void isr17();
 
 #endif // INTERRUPTS_H

@@ -20,6 +20,10 @@ void i8259_init(void) {
 	master_mask = inb(MASTER_DATA);
 	slave_mask = inb(SLAVE_DATA);
 
+	// Mask all interrupts
+	outb(0xff, MASTER_DATA);
+	outb(0xff, SLAVE_DATA);
+
 	// Start initialization sequence
 	outb(ICW1, MASTER_COMMAND);
 	outb(ICW1, SLAVE_COMMAND);
@@ -37,8 +41,8 @@ void i8259_init(void) {
 	outb(ICW4, SLAVE_DATA);
 
 	// Restore saved masks
-	outb(master_mask, MASTER_DATA);
-	outb(slave_mask, SLAVE_DATA);
+	//outb(master_mask, MASTER_DATA);
+	//outb(slave_mask, SLAVE_DATA);
 }
 
 /* Enable (unmask) the specified IRQ */

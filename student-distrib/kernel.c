@@ -163,8 +163,8 @@ void entry (unsigned long magic, unsigned long addr) {
 	//isr_handler();
 
 	//asm volatile("pushw $0");
-	sti();
-	asm volatile("int $0");
+	//sti();
+	//asm volatile("int $0");
 	//isr0();
 
 	//sti();

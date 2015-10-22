@@ -11,26 +11,48 @@ uint8_t master_mask; /* IRQs 0-7 */
 uint8_t slave_mask; /* IRQs 8-15 */
 
 /* Initialize the 8259 PIC */
-void
-i8259_init(void)
-{
+void i8259_init(void) {
+	/**
+	 * Note: All of this is currently untested
+	 */
+
+	// Save masks
+	master_mask = inb(MASTER_DATA);
+	slave_mask = inb(SLAVE_DATA);
+
+	// Start initialization sequence
+	outb(ICW1, MASTER_COMMAND);
+	outb(ICW1, SLAVE_COMMAND);
+
+	// ICW2: Vector offset
+	outb(ICW2_MASTER, MASTER_DATA);
+	outb(ICW2_SLAVE, SLAVE_DATA);
+
+	// ICW3: Master/Slave connection
+	outb(ICW3_MASTER, MASTER_DATA);
+	outb(ICW3_SLAVE, SLAVE_DATA);
+
+	// ICW4: Additional info
+	outb(ICW4, MASTER_DATA);
+	outb(ICW4, SLAVE_DATA);
+
+	// Restore saved masks
+	outb(master_mask, MASTER_DATA);
+	outb(slave_mask, SLAVE_DATA);
 }
 
 /* Enable (unmask) the specified IRQ */
-void
-enable_irq(uint32_t irq_num)
-{
+void enable_irq(uint32_t irq_num) {
+
 }
 
 /* Disable (mask) the specified IRQ */
-void
-disable_irq(uint32_t irq_num)
-{
+void disable_irq(uint32_t irq_num) {
+
 }
 
 /* Send end-of-interrupt signal for the specified IRQ */
-void
-send_eoi(uint32_t irq_num)
-{
+void send_eoi(uint32_t irq_num) {
+
 }
 

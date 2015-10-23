@@ -32,41 +32,39 @@
  *
  */
 void init_idt() {
-    memset(&idt, 0x00, sizeof(idt_desc_t) * NUM_VEC);
+    memset(idt, 0x00, sizeof(idt_desc_t) * NUM_VEC);
 
-    set_trap_entry(0, (uint32_t) &isr0);
-    set_trap_entry(1, (uint32_t) &isr0);
-    set_int_entry(2, (uint32_t) &isr0);
-    set_sys_entry(3, (uint32_t) &isr0);
-    set_sys_entry(4, (uint32_t) &isr0);
-    set_sys_entry(5, (uint32_t) &isr0);
-    set_trap_entry(6, (uint32_t) &isr0);
-    set_trap_entry(7, (uint32_t) &isr0);
-    set_trap_entry(8, (uint32_t) &isr8);
-    set_trap_entry(9, (uint32_t) &isr0);
-    set_trap_entry(10, (uint32_t) &isr10);
-    set_trap_entry(11, (uint32_t) &isr11);
-    set_trap_entry(12, (uint32_t) &isr12);
-    set_trap_entry(13, (uint32_t) &isr13);
-    set_int_entry(14, (uint32_t) &isr14);
+    set_trap_entry(0, (uint32_t) isr0);
+    set_trap_entry(1, (uint32_t) isr0);
+    set_int_entry(2, (uint32_t) isr0);
+    set_sys_entry(3, (uint32_t) isr0);
+    set_sys_entry(4, (uint32_t) isr0);
+    set_sys_entry(5, (uint32_t) isr0);
+    set_trap_entry(6, (uint32_t) isr0);
+    set_trap_entry(7, (uint32_t) isr0);
+    set_trap_entry(8, (uint32_t) isr8);
+    set_trap_entry(9, (uint32_t) isr0);
+    set_trap_entry(10, (uint32_t) isr10);
+    set_trap_entry(11, (uint32_t) isr11);
+    set_trap_entry(12, (uint32_t) isr12);
+    set_trap_entry(13, (uint32_t) isr13);
+    set_int_entry(14, (uint32_t) isr14);
 
-    set_int_entry(15, (uint32_t) &isr0); // Unknown/Reserved
+    set_int_entry(15, (uint32_t) isr0); // Unknown/Reserved
 
-    set_trap_entry(16, (uint32_t) &isr0);
-    set_trap_entry(17, (uint32_t) &isr17);
-    set_trap_entry(18, (uint32_t) &isr0);
-    set_trap_entry(19, (uint32_t) &isr0);
-    set_sys_entry(128, (uint32_t) &isr0);
+    set_trap_entry(16, (uint32_t) isr0);
+    set_trap_entry(17, (uint32_t) isr17);
+    set_trap_entry(18, (uint32_t) isr0);
+    set_trap_entry(19, (uint32_t) isr0);
+    set_sys_entry(128, (uint32_t) isr0);
 
     int i;
     for(i = 20; i < 128; i++) {
-        set_int_entry(i, (uint32_t) &isr0);
+        set_int_entry(i, (uint32_t) isr0);
     }
     for(i = 129; i < NUM_VEC; i++) {
-        set_int_entry(i, (uint32_t) &isr0);
+        set_int_entry(i, (uint32_t) isr0);
     }
-
-	//asm volatile("lidt idt_desc_ptr");
 }
 
 /**
@@ -74,6 +72,7 @@ void init_idt() {
  */
 void set_trap_entry(uint8_t idx, uint32_t handler) {
     set_idt_entry(idx, handler, 0xF, 0);
+    //set_idt_entry(idx, handler, 0x7, 0);
 }
 
 /**
@@ -81,6 +80,7 @@ void set_trap_entry(uint8_t idx, uint32_t handler) {
  */
 void set_int_entry(uint8_t idx, uint32_t handler) {
     set_idt_entry(idx, handler, 0xE, 0);
+    //set_idt_entry(idx, handler, 0x6, 0);
 }
 
 /**
@@ -88,6 +88,7 @@ void set_int_entry(uint8_t idx, uint32_t handler) {
  */
 void set_sys_entry(uint8_t idx, uint32_t handler) {
     set_idt_entry(idx, handler, 0xF, 3);
+    //set_idt_entry(idx, handler, 0x7, 0);
 }
 
 /**
@@ -100,6 +101,8 @@ void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl) {
     selector.index = KERNEL_CS; // Segment index (Kernel code segment)
 
     idt_desc_t entry;
+    memset(&entry, 0x00, sizeof(idt_desc_t));
+
     SET_IDT_ENTRY(entry, handler);
     entry.seg_selector = selector.val;
     entry.type = type;  // Type (32-bit interrupt gate)

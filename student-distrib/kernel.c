@@ -159,11 +159,13 @@ void entry (unsigned long magic, unsigned long addr) {
 	printf("Enabling Interrupts\n");
 	init_idt();
 
+	/*
 	asm volatile("pushl %ss");
 	asm volatile("pushl %esp");
 	asm volatile("pushfl");
 	asm volatile("pushl %cs");
 	isr0();
+	*/
 
 	//asm volatile("int $0x3");
 	//sti();

@@ -22,7 +22,6 @@ void entry (unsigned long magic, unsigned long addr) {
 	/* Clear the screen. */
 	clear();
 
-	printf("TrumpOS - Making Computing Great Again\n");
 	/* Am I booted by a Multiboot-compliant boot loader? */
 	if (magic != MULTIBOOT_BOOTLOADER_MAGIC)
 	{
@@ -145,16 +144,22 @@ void entry (unsigned long magic, unsigned long addr) {
 		ltr(KERNEL_TSS);
 	}
 
-	/* Init the PIC */
+	clear(); // Clear video memory
+	printf("TrumpOS - Making Computing Great Again\n");
+	printf("======================================\n\n");
+
+	// Init PIC
 	i8259_init();
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
 	init_idt();
 
-	/* Enable interrupts */
-	printf("Enabling Interrupts\n");
+	// Enable interrupts
 	sti();
+
+	int dummy = 1 / 0;
+	//asm volatile("int $0x3");
 
 	/* Execute the first program (`shell') ... */
 

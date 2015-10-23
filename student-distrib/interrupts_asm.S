@@ -3,55 +3,60 @@
 
 .text
 
-.globl isr0
-isr0:
+# Macro simplifying generation of ISR linkage
+# n: Index of the ISR
+# ec: Boolean indicating whether the exception places an error code on the
+#     stack. Default of 0 (no error code)
+.macro ISR n ec=0
+.globl isr\n
+isr\n:
     cli
-    pushl $0
+    .ifeq \ec
+    pushl $0xdeadbeef
+    .endif
+    pushl $\n
     jmp isr_common
+.endm
 
-.globl isr8
-isr8:
-    cli
-    jmp isr_common
+ISR 0 0
+ISR 1 0
+ISR 2 0
+ISR 3 0
+ISR 4 0
+ISR 5 0
+ISR 6 0
+ISR 7 0
+ISR 8 1
+ISR 10 1
+ISR 11 1
+ISR 12 1
+ISR 13 1
+ISR 14 1
+ISR 16 0
+ISR 17 1
+ISR 18 0
+ISR 19 0
+ISR 128 0
 
-.globl isr10
-isr10:
-    cli
-    jmp isr_common
-
-.globl isr11
-isr11:
-    cli
-    jmp isr_common
-
-.globl isr12
-isr12:
-    cli
-    jmp isr_common
-
-.globl isr13
-isr13:
-    cli
-    jmp isr_common
-
-.globl isr14
-isr14:
-    cli
-    jmp isr_common
-
-.globl isr17
-isr17:
-    cli
-    jmp isr_common
-
+# void isr_common(uint32_t isr_index, uint32_t error_code);
+#
 # Function common to all ISRs
+# Parameters:
+#   isr_index: Index of the ISR
+#   error_code: Optional error code pushed by some exceptions, 0 otherwise
+# Returns: none
 isr_common:
-    popl   %eax              # Remove error code
-    #pushl  %ebp
-    #movl   %esp, %ebp
-    call isr_handler
+    popl    %eax                       # eax: ISR index
+    popl    %ecx                       # ecx: Error code
 
-    #sti
+    pushl   %ebp
+    movl    %esp, %ebp
+    pushl   %ecx
+    pushl   %eax
+    call    isr_handler                # isr_handler(isr_index, error_code)
+    add     $4, %esp
 
-    #leave
+    sti                                # Re-enable interrupts
+
+    leave
     iret

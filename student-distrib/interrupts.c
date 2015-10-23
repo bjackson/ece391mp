@@ -72,7 +72,6 @@ void init_idt() {
  */
 void set_trap_entry(uint8_t idx, uint32_t handler) {
     set_idt_entry(idx, handler, 0xF, 0);
-    //set_idt_entry(idx, handler, 0x7, 0);
 }
 
 /**
@@ -80,7 +79,6 @@ void set_trap_entry(uint8_t idx, uint32_t handler) {
  */
 void set_int_entry(uint8_t idx, uint32_t handler) {
     set_idt_entry(idx, handler, 0xE, 0);
-    //set_idt_entry(idx, handler, 0x6, 0);
 }
 
 /**
@@ -88,7 +86,6 @@ void set_int_entry(uint8_t idx, uint32_t handler) {
  */
 void set_sys_entry(uint8_t idx, uint32_t handler) {
     set_idt_entry(idx, handler, 0xF, 3);
-    //set_idt_entry(idx, handler, 0x7, 0);
 }
 
 /**
@@ -96,9 +93,9 @@ void set_sys_entry(uint8_t idx, uint32_t handler) {
  */
 void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl) {
     seg_sel_t selector;
-    selector.rpl = 0x3;         // Requested priviledge level (3)
+    selector.rpl = 0;           // Requested priviledge level (0)
     selector.ti = 0;            // Table index (GDT)
-    selector.index = KERNEL_CS; // Segment index (Kernel code segment)
+    selector.index = 2;         // Segment index (Kernel code segment)
 
     idt_desc_t entry;
     memset(&entry, 0x00, sizeof(idt_desc_t));

@@ -78,6 +78,10 @@ void set_sys_entry(uint8_t idx, uint32_t handler) {
     set_idt_entry(idx, handler, 0xF, 3);
 }
 
+void haltOnException() {
+  // Halt the kernel upon an unhandled exception
+  asm volatile(".1: hlt; jmp .1;");
+}
 /**
  *
  */
@@ -99,18 +103,23 @@ void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl) {
 }
 
 extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
-    printf("An exception has occurred. You're Fired!\n");
-    printf("ISR: %d\n", isr_index);
-    printf("Error: %x\n", error_code);
+  clear(); // Clear video memory
+  printf("An exception has occurred. You're Fired!\n");
+  printf("ISR: %d\n", isr_index);
+  printf("Error: %x\n", error_code);
 
-    switch(isr_index) {
-        case DIVBYZERO_IDT:
-            printf("Cause: Divide by Zero\n\n");
-            break;
-        case GPROTFAULT_IDT:
-            printf("Cause: General Protection Fault\n\n");
-            break;
-        default:
-            printf("Not yet handled!");
-    }
+  switch(isr_index) {
+      case DIVBYZERO_IDT:
+          printf("Cause: Divide by Zero\n\n");
+          haltOnException();
+          break;
+      case GPROTFAULT_IDT:
+          printf("Cause: General Protection Fault\n\n");
+          haltOnException();
+          break;
+      default:
+          printf("Not yet handled!");
+          haltOnException();
+  }
+
 }

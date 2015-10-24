@@ -54,7 +54,7 @@ isr_common:
     pushl   %ecx
     pushl   %eax
     call    isr_handler                # isr_handler(isr_index, error_code)
-    add     $4, %esp
+    add     $8, %esp
 
     sti                                # Re-enable interrupts
 

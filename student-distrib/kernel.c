@@ -159,6 +159,8 @@ void entry (unsigned long magic, unsigned long addr) {
 	sti();
 
 	int dummy = 1 / 0;
+
+	printf("%s\n", NULL);
 	//asm volatile("int $0x3");
 
 	/* Execute the first program (`shell') ... */

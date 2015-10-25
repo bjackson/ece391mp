@@ -8,9 +8,75 @@
 
 #include "page.h"
 
-/* varaible for page table. 4096 bytes because 4kb */
-uint32_t page_directory[1024] __attribute__((aligned(4096)));
-uint32_t page_table[1024] __attribute__((aligned(4096)));
+#define MAX_ENTRIES
+
+/* varaible for page tables. 4096 bytes because 4kb */
+uint32_t page_directory[3] __attribute__((aligned(4000)));
+uint32_t kernel_page_table[MAX_ENTRIES] __attribute__((aligned(4000))); //4,000-8,000
+uint32_t user1_page_table[MAX_ENTRIES] __attribute__((aligned(4000)));  //8,000-12,000
+uint32_t user2_page_table[MAX_ENTRIES] __attribute__((aligned(4000)));  //12 000-16,000
+
+// function being built as the starting point to do paging. everything after this functions is notes.
+/*
+ * init_pages
+ *      DESCRIPTION: initializes paging
+ *      INPUTS: none
+ *      OUTPUTS: none
+ *      RETURN VALUE: none
+ *      SIDE EFFECTS: clobbers eax
+ *
+ */
+void init_pages() {
+    //Enable paging - form OSDev guide at http://wiki.osdev.org/Paging
+    asm volatile (
+            "movl $page_directory, %%eax      /* enable paging */           ;"
+            "movl %%eax, %%cr3                                              ;"
+            "movl %%cr0, %%eax                /* set paging bit */          ;"
+            "orl $0x80000000, %%eax                                         ;"
+            "movl %%eax, %%cr0                                              ;"
+            "movl %%cr4, %%eax                  /* enable PSE */            ;"
+            "orl $0x00000010, %%eax                                         ;"
+            "movl %%eax, %%cr4                                              ;"
+            : /* no outputs */
+            : /* no inputs */
+            : "eax");
+    
+    int i;
+    
+    // initialize kernel table
+    for (i = 0; i < MAX_ENTRIES; i++) {
+        //init page address to array avlue and all settings to 0
+        kernel_page_table[i] = i;
+        kernel_page_table[1] << 12;
+    }
+    
+    // initialize user space 1 table
+    for (i = 0; i < MAX_ENTRIES; i++) {
+        //init page address to array avlue and all settings to 0
+        user1_page_table[i] = i;
+        user1_page_table[1] << 12;
+    }
+    
+    // initialize user 2 table
+    for (i = 0; i < MAX_ENTRIES; i++) {
+        //init page address to array avlue and all settings to 0
+        user2_page_table[i] = i;
+        user2_page_table[1] << 12;
+    }
+    
+    // load page tables into the directory
+    page_directory[0] = ((unsigned int)kernel_page_table);
+    page_directory[1] = ((unsigned int)user1_page_table);
+    page_directory[2] = ((unsigned int)user2_page_table);
+}
+
+
+
+
+
+
+
+
 
 /*
  * get_physaddr
@@ -68,7 +134,7 @@ void map_page(void * physaddr, void * virtualaddr, unsigned int flags)
 }
 
 // intialize the page directory and first page table
-void init_pages() {
+void init_one_page() {
     int i;
     
     // initialize the page directory to empty

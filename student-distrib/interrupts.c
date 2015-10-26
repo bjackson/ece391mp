@@ -59,10 +59,15 @@ void set_sys_entry(uint8_t idx, uint32_t handler) {
     set_idt_entry(idx, handler, 0xF, 3);
 }
 
+/**
+ * Halt the kernel upon an unhandled exception
+ */
 void haltOnException() {
-  // Halt the kernel upon an unhandled exception
+  cli();
+  printf("Halting the system!");
   asm volatile(".1: hlt; jmp .1;");
 }
+
 /**
  *
  */
@@ -90,23 +95,13 @@ extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
         printf("An exception has occurred. You're Fired!\n");
         printf("ISR: %d\n", isr_index);
         printf("Error: %x\n", error_code);
-    }
-
-    switch(isr_index) {
-        case DIVBYZERO_IDT:
-            printf("Cause: Divide by Zero\n\n");
-            haltOnException();
-            break;
-        case GPROTFAULT_IDT:
-            printf("Cause: General Protection Fault\n\n");
-            haltOnException();
-            break;
-        case KEYBOARD_IDT:
-            keyboard_isr();
-            break;
-        default:
-            printf("Not yet handled!");
-            haltOnException();
+        printf("Cause: %s\n\n", exception_desc[isr_index]);
+        haltOnException();
+    } else if(isr_index == KEYBOARD_IDT) {
+        keyboard_isr();
+    } else {
+        printf("Exception/Interrupt not yet handled!");
+        haltOnException();
     }
 }
 

@@ -7,6 +7,7 @@
 #include "lib.h"
 #include "devices/i8259.h"
 #include "interrupts/interrupts.h"
+#include "paging.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -153,6 +154,8 @@ void entry (unsigned long magic, unsigned long addr) {
     enable_irq(SLAVE_IRQ); // Enable IRQs 8-15
 
     init_idt(); // Initialize interrupt handlers
+
+    init_paging(); // Initialize paging
 
     enable_irq(KEYBOARD_IRQ); // Enable keyboard interrupt
 

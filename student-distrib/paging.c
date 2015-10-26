@@ -5,12 +5,8 @@
  */
 #include "paging.h"
 
-//
-pd_entry_t page_directory[MAX_ENTRIES] __attribute__((aligned(4 * 1024)));
-pt_entry_t kernel_page_table[MAX_ENTRIES] __attribute__((aligned(4 * 1024)));
-
-//uint32_t user1_page_table[MAX_ENTRIES] __attribute__((aligned(0x4000)));  //8,000-12,000
-//uint32_t user2_page_table[MAX_ENTRIES] __attribute__((aligned(0x4000)));  //12 000-16,000
+uint32_t page_directory[MAX_ENTRIES] __attribute__((aligned(4 * 1024)));
+uint32_t kernel_page_table[MAX_ENTRIES] __attribute__((aligned(4 * 1024)));
 
 // function being built as the starting point to do paging. everything after this functions is notes.
 /*
@@ -22,11 +18,8 @@ pt_entry_t kernel_page_table[MAX_ENTRIES] __attribute__((aligned(4 * 1024)));
  *      SIDE EFFECTS:
  */
 void init_paging() {
-    memset(page_directory, 0x00, sizeof(pd_entry_t) * MAX_ENTRIES);
-    memset(page_directory, 0x00, sizeof(pt_entry_t) * MAX_ENTRIES);
-
-    //0x00400000;
-    //0000000001 0000000000 000000000000
+    memset(page_directory, 0x00, sizeof(uint32_t) * MAX_ENTRIES);
+    memset(kernel_page_table, 0x00, sizeof(uint32_t) * MAX_ENTRIES);
 
     // 0MB - 4MB
     int i;
@@ -36,46 +29,50 @@ void init_paging() {
 
         pt_entry.present = (i == 0) ? 0 : 1;
         pt_entry.read_write = 1;
-        pt_entry.user_supervisor = 0;
-        pt_entry.cache_disabled = 1;
+        pt_entry.user_supervisor = 1;
+        pt_entry.write_through = 1;
+        pt_entry.cache_disabled = 0;
         pt_entry.dirty = 0;
         pt_entry.global = 0;
-        pt_entry.addr = i * (4 * 1024);
-        kernel_page_table[i] = pt_entry;
+        pt_entry.addr = i;
+        kernel_page_table[i] = pt_entry.val;
     }
     pd_entry_t pd_entry;
     memset(&pd_entry, 0x00, sizeof(pd_entry_t));
     pd_entry.present = 1;         // Present
     pd_entry.read_write = 1;      // Read/Write
-    pd_entry.user_supervisor = 0; // Supervisor only
-    pd_entry.cache_disabled = 1;  // Disable caching
+    pd_entry.user_supervisor = 1; //
+    pd_entry.cache_disabled = 0;  //
     pd_entry.size = 0;            // 4KB pages
-    pd_entry.addr = (uint32_t) kernel_page_table;
-    page_directory[0] = pd_entry;
+    pd_entry.addr = ((uint32_t) kernel_page_table) >> 12;
+    page_directory[0] = pd_entry.val;
 
     // 4MB - 8MB
-    pd_entry_t kernel_pd_entry;
+    pd_large_entry_t kernel_pd_entry;
     memset(&kernel_pd_entry, 0x00, sizeof(pd_entry_t));
     kernel_pd_entry.present = 1;         // Present
     kernel_pd_entry.read_write = 1;      // Read/Write
-    kernel_pd_entry.user_supervisor = 0; // Supervisor only
-    kernel_pd_entry.cache_disabled = 1;  // Disable caching
+    kernel_pd_entry.user_supervisor = 1; //
+    kernel_pd_entry.write_through = 1;   //
+    kernel_pd_entry.cache_disabled = 0;  //
+    kernel_pd_entry.accessed = 0;        //
+    kernel_pd_entry.dirty = 0;           //
     kernel_pd_entry.size = 1;            // 4MB pages
-    kernel_pd_entry.addr = 0x400000;
-    page_directory[1] = kernel_pd_entry;
+    kernel_pd_entry.addr = 1;
+    page_directory[1] = kernel_pd_entry.val;
 
     // Enable paging - from OSDev guide at http://wiki.osdev.org/Paging
     asm volatile (
             "movl $page_directory, %%eax   /* Load paging directory */      ;"
             "movl %%eax, %%cr3                                              ;"
 
+            "movl %%cr4, %%eax             /* Enable PSE */                 ;"
+            "orl  $0x00000010, %%eax                                        ;"
+            "movl %%eax, %%cr4                                              ;"
+
             "movl %%cr0, %%eax             /* Set paging bit */             ;"
             "orl  $0x80000000, %%eax                                        ;"
             "movl %%eax, %%cr0                                              ;"
-
-            "movl %%cr4, %%eax             /* Enable PSE */                 ;"
-            "orl  $0x00000010, %%eax                                        ;"
-            "movl %%eax, %%cr4                                              "
             : : : "eax");
 }
 

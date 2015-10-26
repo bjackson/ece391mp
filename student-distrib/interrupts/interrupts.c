@@ -87,6 +87,9 @@ void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl) {
     idt[idx] = entry;
 }
 
+/**
+ *
+ */
 extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
     // Handle exceptions differently
     if(isr_index <= MAX_EXCEPTION_ISR) {
@@ -94,9 +97,27 @@ extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
         printf("An exception has occurred. You're Fired!\n");
         printf("ISR: %d\n", isr_index);
         if(error_code != 0xDEADBEEF) {
-            printf("Error: %x\n", error_code);
+            printf("Error: 0x%x\n", error_code);
         }
         printf("Cause: %s\n\n", exception_desc[isr_index]);
+
+        // Page-Fault specific
+        if(isr_index == PAGEFAULT_IDT) {
+            asm volatile("movl %%cr2, %%eax" : : : "eax");
+            register uint32_t *addr asm("eax");
+            printf("Address: 0x%x\n", addr);
+
+            printf("Reason: %s\n", (error_code & 0x1) ? "Page-level protection violation" :
+                    "Non-present page");
+            printf("R/W: %s\n", (error_code & 0x2) ? "Write" : "Read");
+            printf("U/S: %s\n", (error_code & 0x4) ? "User mode" : "Supervisor mode");
+            if(error_code & 0x8) {
+                printf("Caused by reserved bits set to 1 in a page directory\n\n");
+            } else {
+                printf("\n");
+            }
+        }
+
         haltOnException();
     } else if(isr_index == KEYBOARD_IDT) {
         keyboard_isr();

@@ -5,9 +5,8 @@
 #include "multiboot.h"
 #include "x86_desc.h"
 #include "lib.h"
-#include "i8259.h"
-#include "debug.h"
-#include "interrupts.h"
+#include "devices/i8259.h"
+#include "interrupts/interrupts.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */

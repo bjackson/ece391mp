@@ -1,5 +1,6 @@
 # interrupts.S - <description here>
-# vim:ts=4
+#
+# vim:ts=4 expandtab
 
 .text
 

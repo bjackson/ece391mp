@@ -1,10 +1,8 @@
 /**
  * interrupts.c - <description here>
+ *
+ * vim:ts=4 expandtab
  */
-
-#include "x86_desc.h"
-#include "lib.h"
-#include "i8259.h"
 #include "interrupts.h"
 
 /**
@@ -95,7 +93,9 @@ extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
         clear(); // Clear video memory
         printf("An exception has occurred. You're Fired!\n");
         printf("ISR: %d\n", isr_index);
-        printf("Error: %x\n", error_code);
+        if(error_code != 0xDEADBEEF) {
+            printf("Error: %x\n", error_code);
+        }
         printf("Cause: %s\n\n", exception_desc[isr_index]);
         haltOnException();
     } else if(isr_index == KEYBOARD_IDT) {
@@ -147,7 +147,7 @@ void keyboard_isr() {
  *
  */
 void rtc_isr() {
-    test_interrupts();
+    //test_interrupts();
 
     // Select register C and throw away contents
     outb(0x0C, RTC_INDEX_PORT);

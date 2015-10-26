@@ -1,10 +1,8 @@
 /**
  * interrupts.c - <description here>
+ *
+ * vim:ts=4 expandtab
  */
-
-#include "x86_desc.h"
-#include "lib.h"
-#include "i8259.h"
 #include "interrupts.h"
 
 /**

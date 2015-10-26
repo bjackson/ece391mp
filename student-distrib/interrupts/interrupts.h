@@ -1,11 +1,14 @@
 /**
  * interrupts.h
+ *
+ * vim:ts=4 expandtab
  */
 #ifndef INTERRUPTS_H
 #define INTERRUPTS_H
 
-#include "x86_desc.h"
-#include "lib.h"
+#include "../x86_desc.h"
+#include "../lib.h"
+#include "../devices/i8259.h"
 
 #define MAX_EXCEPTION_ISR 31
 

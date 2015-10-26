@@ -35,6 +35,7 @@ void init_idt() {
 
     // User defined interrupts
     set_int_entry(33, (uint32_t) isr33);
+    set_int_entry(40, (uint32_t) isr40);
     set_sys_entry(128, (uint32_t) isr128);
 }
 
@@ -99,6 +100,8 @@ extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
         haltOnException();
     } else if(isr_index == KEYBOARD_IDT) {
         keyboard_isr();
+    } else if(isr_index == RTC_IDT) {
+        rtc_isr();
     } else {
         printf("Exception/Interrupt not yet handled!");
         haltOnException();
@@ -138,5 +141,18 @@ void keyboard_isr() {
     }
 
     send_eoi(KEYBOARD_IRQ);
+}
+
+/**
+ *
+ */
+void rtc_isr() {
+    test_interrupts();
+
+    // Select register C and throw away contents
+    outb(0x0C, RTC_INDEX_PORT);
+    inb(RTC_DATA_PORT);
+
+    send_eoi(RTC_IRQ);
 }
 

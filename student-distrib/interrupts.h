@@ -32,10 +32,15 @@
 
 // Interrupt IDT entries
 #define KEYBOARD_IDT      0x21
+#define RTC_IDT           0x28
 
 // Keyboard constants
 #define KEYBOARD_PORT 0x60
 #define SCANCODE_MAX  0x80
+
+// RTC constants
+#define RTC_INDEX_PORT 0x70
+#define RTC_DATA_PORT  0x71
 
 typedef union seg_sel_t {
     uint16_t val;
@@ -67,6 +72,9 @@ extern void isr_handler(uint32_t isr_index, uint32_t error_code);
 //
 void keyboard_isr();
 
+//
+void rtc_isr();
+
 // Interrupt handler functions - in interrupts_asm.S
 extern void isr0();
 extern void isr1();
@@ -87,6 +95,7 @@ extern void isr17();
 extern void isr18();
 extern void isr19();
 extern void isr33();
+extern void isr40();
 extern void isr128();
 
 /*

@@ -32,6 +32,8 @@
 #define EOI             0x60
 
 #define KEYBOARD_IRQ    1
+#define SLAVE_IRQ       2
+#define RTC_IRQ         8
 
 /* Externally-visible functions */
 

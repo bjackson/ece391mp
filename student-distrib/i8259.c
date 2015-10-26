@@ -62,8 +62,10 @@ void disable_irq(uint32_t irq_num) {
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
     if(irq_num >= 8) {
-        outb(EOI | irq_num, SLAVE_COMMAND);
+        outb(EOI | (irq_num - 8), SLAVE_COMMAND);
+        outb(EOI | SLAVE_IRQ, MASTER_COMMAND);
+    } else {
+        outb(EOI | irq_num, MASTER_COMMAND);
     }
-    outb(EOI | irq_num, MASTER_COMMAND);
 }
 

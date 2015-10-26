@@ -151,8 +151,27 @@ void entry (unsigned long magic, unsigned long addr) {
      * PIC, any other initialization stuff...
      */
     i8259_init(); // Init PIC
+    enable_irq(SLAVE_IRQ); // Enable IRQs 8-15
+
     init_idt(); // Initialize interrupt handlers
+
     enable_irq(KEYBOARD_IRQ); // Enable keyboard interrupt
+
+    /**
+     * Enable RTC
+     * Note: Need to move this to separate file (open() function?)
+     */
+
+    // Set RTC interrupt frequency
+    outb(0x8A, RTC_INDEX_PORT);
+    outb(0x2F, RTC_DATA_PORT); // 0bx0101111 (DV = 2, RS = 15)
+
+    // Enable interrupts
+    outb(0x8B, RTC_INDEX_PORT);
+    uint8_t prev = inb(RTC_DATA_PORT);
+    outb(0x8B, RTC_INDEX_PORT);
+    outb(prev | 0x40, RTC_DATA_PORT);
+    enable_irq(RTC_IRQ); // Enable RTC
 
     // Enable interrupts
     sti();

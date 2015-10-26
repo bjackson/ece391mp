@@ -38,6 +38,7 @@ ISR 18 0
 ISR 19 0
 
 ISR 33 0
+ISR 40 0
 ISR 128 0
 
 # void isr_common(uint32_t isr_index, uint32_t error_code);

@@ -31,6 +31,8 @@
  * to declare the interrupt finished */
 #define EOI             0x60
 
+#define KEYBOARD_IRQ    1
+
 /* Externally-visible functions */
 
 /* Initialize both PICs */

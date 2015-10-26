@@ -7,6 +7,36 @@
 #include "x86_desc.h"
 #include "lib.h"
 
+#define MAX_EXCEPTION_ISR 31
+
+// Exception IDT entries
+#define DIVBYZERO_IDT     0x00
+#define DEBUGGER_IDT      0x01
+#define NMI_IDT           0x02
+#define BREAKPOINT_IDT    0x03
+#define OVERFLOW_IDT      0x04
+#define BOUNDS_IDT        0x05
+#define INVOPCODE_IDT     0x06
+#define COPRUNAVAIL_IDT   0x07
+#define DBLFAULT_IDT      0x08
+#define CPRSEGOVER_IDT    0x09
+#define INVTASKSTS_IDT    0x0A
+#define SEGNPRESENT_IDT   0x0B
+#define STACKFAULT_IDT    0x0C
+#define GPROTFAULT_IDT    0x0D
+#define PAGEFAULT_IDT     0x0E
+#define MATHFAULT_IDT     0x10
+#define ALIGNCHECK_IDT    0x11
+#define MACHINECHECK_IDT  0x12
+#define SIMDFLTPTEX_IDT   0x13
+
+// Interrupt IDT entries
+#define KEYBOARD_IDT      0x21
+
+// Keyboard constants
+#define KEYBOARD_PORT 0x60
+#define SCANCODE_MAX  0x80
+
 typedef union seg_sel_t {
     uint16_t val;
     struct {
@@ -34,6 +64,9 @@ void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl);
 //
 extern void isr_handler(uint32_t isr_index, uint32_t error_code);
 
+//
+void keyboard_isr();
+
 // Interrupt handler functions - in interrupts_asm.S
 extern void isr0();
 extern void isr1();
@@ -53,6 +86,7 @@ extern void isr16();
 extern void isr17();
 extern void isr18();
 extern void isr19();
+extern void isr33();
 extern void isr128();
 
 #endif // INTERRUPTS_H

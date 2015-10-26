@@ -1,5 +1,5 @@
 /* i8259.c - Functions to interact with the 8259 interrupt controller
- * vim:ts=4 noexpandtab
+ * vim:ts=4 expandtab
  */
 
 #include "i8259.h"
@@ -12,51 +12,58 @@ uint8_t slave_mask; /* IRQs 8-15 */
 
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
-	/**
-	 * Note: All of this is currently untested
-	 */
+    // Mask all interrupts
+    outb(0xff, MASTER_DATA);
+    outb(0xff, SLAVE_DATA);
 
-	// Save masks
-	master_mask = inb(MASTER_DATA);
-	slave_mask = inb(SLAVE_DATA);
+    // Start initialization sequence
+    outb(ICW1, MASTER_COMMAND);
+    outb(ICW1, SLAVE_COMMAND);
 
-	// Mask all interrupts
-	outb(0xff, MASTER_DATA);
-	outb(0xff, SLAVE_DATA);
+    // ICW2: Vector offset
+    outb(ICW2_MASTER, MASTER_DATA);
+    outb(ICW2_SLAVE, SLAVE_DATA);
 
-	// Start initialization sequence
-	outb(ICW1, MASTER_COMMAND);
-	outb(ICW1, SLAVE_COMMAND);
+    // ICW3: Master/Slave connection
+    outb(ICW3_MASTER, MASTER_DATA);
+    outb(ICW3_SLAVE, SLAVE_DATA);
 
-	// ICW2: Vector offset
-	outb(ICW2_MASTER, MASTER_DATA);
-	outb(ICW2_SLAVE, SLAVE_DATA);
+    // ICW4: Additional info
+    outb(ICW4, MASTER_DATA);
+    outb(ICW4, SLAVE_DATA);
 
-	// ICW3: Master/Slave connection
-	outb(ICW3_MASTER, MASTER_DATA);
-	outb(ICW3_SLAVE, SLAVE_DATA);
-
-	// ICW4: Additional info
-	outb(ICW4, MASTER_DATA);
-	outb(ICW4, SLAVE_DATA);
-
-	// Restore saved masks
-	//outb(master_mask, MASTER_DATA);
-	//outb(slave_mask, SLAVE_DATA);
+    // Mask all interrupts (again)
+    outb(0xff, MASTER_DATA);
+    outb(0xff, SLAVE_DATA);
 }
 
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num) {
-
+    if(irq_num < 8) {
+        master_mask = inb(MASTER_DATA);
+        outb((master_mask & ~(1 << irq_num)), MASTER_DATA);
+    } else if(irq_num < 16) {
+        slave_mask = inb(SLAVE_DATA);
+        outb((master_mask & ~(1 << (irq_num - 8))), SLAVE_DATA);
+    }
 }
 
 /* Disable (mask) the specified IRQ */
 void disable_irq(uint32_t irq_num) {
-
+    if(irq_num < 8) {
+        master_mask = inb(MASTER_DATA);
+        outb((master_mask | (1 << irq_num)), MASTER_DATA);
+    } else if(irq_num < 16) {
+        slave_mask = inb(SLAVE_DATA);
+        outb((master_mask | (1 << (irq_num - 8))), SLAVE_DATA);
+    }
 }
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
-
+    if(irq_num >= 8) {
+        outb(EOI | irq_num, SLAVE_COMMAND);
+    }
+    outb(EOI | irq_num, MASTER_COMMAND);
 }
 

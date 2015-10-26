@@ -4,28 +4,8 @@
 
 #include "x86_desc.h"
 #include "lib.h"
+#include "i8259.h"
 #include "interrupts.h"
-
-// Exception IDT entries
-#define DIVBYZERO_IDT     0x00
-#define DEBUGGER_IDT      0x01
-#define NMI_IDT           0x02
-#define BREAKPOINT_IDT    0x03
-#define OVERFLOW_IDT      0x04
-#define BOUNDS_IDT        0x05
-#define INVOPCODE_IDT     0x06
-#define COPRUNAVAIL_IDT   0x07
-#define DBLFAULT_IDT      0x08
-#define CPRSEGOVER_IDT    0x09
-#define INVTASKSTS_IDT    0x0A
-#define SEGNPRESENT_IDT   0x0B
-#define STACKFAULT_IDT    0x0C
-#define GPROTFAULT_IDT    0x0D
-#define PAGEFAULT_IDT     0x0E
-#define MATHFAULT_IDT     0x10
-#define ALIGNCHECK_IDT    0x11
-#define MACHINECHECK_IDT  0x12
-#define SIMDFLTPTEX_IDT   0x13
 
 /**
  *
@@ -54,6 +34,7 @@ void init_idt() {
     set_trap_entry(19, (uint32_t) isr19);
 
     // User defined interrupts
+    set_int_entry(33, (uint32_t) isr33);
     set_sys_entry(128, (uint32_t) isr128);
 }
 
@@ -103,30 +84,64 @@ void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl) {
 }
 
 extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
-  clear(); // Clear video memory
-  printf("An exception has occurred. You're Fired!\n");
-  printf("ISR: %d\n", isr_index);
-  printf("Error: %x\n", error_code);
+    // Handle exceptions differently
+    if(isr_index <= MAX_EXCEPTION_ISR) {
+        clear(); // Clear video memory
+        printf("An exception has occurred. You're Fired!\n");
+        printf("ISR: %d\n", isr_index);
+        printf("Error: %x\n", error_code);
+    }
 
-  switch(isr_index) {
-      case DIVBYZERO_IDT:
-          printf("Cause: Divide by Zero\n\n");
-          haltOnException();
-          break;
-      case GPROTFAULT_IDT:
-          printf("Cause: General Protection Fault\n\n");
-          haltOnException();
-          break;
-//add another one for KB interrupts that calls the KB_INTERRUPT_HANDLER function
-      default:
-          printf("Not yet handled!");
-          haltOnException();
-  }
-
+    switch(isr_index) {
+        case DIVBYZERO_IDT:
+            printf("Cause: Divide by Zero\n\n");
+            haltOnException();
+            break;
+        case GPROTFAULT_IDT:
+            printf("Cause: General Protection Fault\n\n");
+            haltOnException();
+            break;
+        case KEYBOARD_IDT:
+            keyboard_isr();
+            break;
+        default:
+            printf("Not yet handled!");
+            haltOnException();
+    }
 }
-//KB_INTERRUPT_HANDLER function goes here
-//First, we grab the scan code with inb(KBD_DATA_PORT); where KBD_DATA_PORT is 0x60 in the little OS book
-//Then we take the scanned scancode and convert it to ASCII using some kind of table/array
-//Then we have to printf() the ASCII character we just converted to
-//THEN WE MUST PIC_ACKNOWLEDGE SO WE CAN GET THE NEXT CHARACTER
-//returns void, no need to give the case statement a return value since it doesn't care
+
+/**
+ *
+ */
+void keyboard_isr() {
+    // Lookup table for conversion from keyboard scan code to ASCII character
+    static uint8_t scancodes[128] = {
+        '$', '$',
+        '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
+        '$', '$',
+        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p',
+        '$', '$', '$', '$',
+        'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l',
+        '$', '$', '$', '$', '$',
+        'z', 'x', 'c', 'v', 'b', 'n', 'm',
+        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$',
+        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$',
+        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$',
+        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$',
+        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$',
+        '$', '$'
+    };
+
+    uint8_t scan_code = inb(KEYBOARD_PORT);
+
+    // Only process 'break' codes for now
+    if(scan_code >= SCANCODE_MAX) {
+        scan_code -= SCANCODE_MAX;
+        if(scancodes[scan_code] != '$') {
+            printf("%c", scancodes[scan_code]);
+        }
+    }
+
+    send_eoi(KEYBOARD_IRQ);
+}
+

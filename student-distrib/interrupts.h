@@ -101,7 +101,7 @@ extern void isr128();
 /*
  *
  */
-static const char* exception_desc[32] = {
+static const char* const exception_desc[32] = {
     "Divide By Zero",
     "Debug",
     "Non-Maskable Interrupt",

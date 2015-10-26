@@ -37,6 +37,8 @@
 #define KEYBOARD_IDT      0x21
 #define RTC_IDT           0x28
 
+#define SYSCALL_IDT       0x80
+
 // Keyboard constants
 #define KEYBOARD_PORT 0x60
 #define SCANCODE_MAX  0x80

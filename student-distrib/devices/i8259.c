@@ -11,7 +11,9 @@
 uint8_t master_mask; /* IRQs 0-7 */
 uint8_t slave_mask; /* IRQs 8-15 */
 
-/* Initialize the 8259 PIC */
+// i8259_init
+// Initialize the 8259 PIC
+// @return nothing
 void i8259_init(void) {
     // Mask all interrupts
     outb(I8259_INTMASK, MASTER_DATA);
@@ -38,7 +40,10 @@ void i8259_init(void) {
     outb(0xff, SLAVE_DATA);
 }
 
-/* Enable (unmask) the specified IRQ */
+// enable_irq
+// Enable (unmask) the specified IRQ
+// @param irq_num The IRQ to be enabled
+// @return nothing
 void enable_irq(uint32_t irq_num) {
     if(irq_num < 8) {
         master_mask = inb(MASTER_DATA);
@@ -49,7 +54,10 @@ void enable_irq(uint32_t irq_num) {
     }
 }
 
-/* Disable (mask) the specified IRQ */
+// disable_irq
+// Disable (mask) the specified IRQ
+// @param irq_num The IRQ to be disabled
+// @return nothing
 void disable_irq(uint32_t irq_num) {
     if(irq_num < 8) {
         master_mask = inb(MASTER_DATA);
@@ -60,7 +68,10 @@ void disable_irq(uint32_t irq_num) {
     }
 }
 
-/* Send end-of-interrupt signal for the specified IRQ */
+// send_eoi
+// Send end-of-interrupt signal for the specified IRQ
+// @param irq_num The IRQ to send the EOI to
+// @return nothing
 void send_eoi(uint32_t irq_num) {
     if(irq_num >= 8) {
         outb(EOI | (irq_num - 8), SLAVE_COMMAND);

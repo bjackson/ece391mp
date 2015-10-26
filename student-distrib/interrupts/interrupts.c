@@ -32,9 +32,9 @@ void init_idt() {
     set_trap_entry(19, (uint32_t) isr19);
 
     // User defined interrupts
-    set_int_entry(33, (uint32_t) isr33);
-    set_int_entry(40, (uint32_t) isr40);
-    set_sys_entry(128, (uint32_t) isr128);
+    set_int_entry(KEYBOARD_IDT, (uint32_t) isr33);
+    set_int_entry(RTC_IDT, (uint32_t) isr40);
+    set_sys_entry(SYSCALL_IDT, (uint32_t) isr128);
 }
 
 /**
@@ -168,7 +168,7 @@ void keyboard_isr() {
  *
  */
 void rtc_isr() {
-    //test_interrupts();
+    // test_interrupts();
 
     // Select register C and throw away contents
     outb(0x0C, RTC_INDEX_PORT);
@@ -176,4 +176,3 @@ void rtc_isr() {
 
     send_eoi(RTC_IRQ);
 }
-

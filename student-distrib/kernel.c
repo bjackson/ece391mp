@@ -13,6 +13,9 @@
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
+#define RTC_REGA 0x8A
+#define RTC_REGB 0x8B
+
 // Check if MAGIC is valid and print the Multiboot information structure pointed by ADDR.
 void entry (unsigned long magic, unsigned long addr) {
     multiboot_info_t *mbi;
@@ -165,13 +168,13 @@ void entry (unsigned long magic, unsigned long addr) {
      */
 
     // Set RTC interrupt frequency
-    outb(0x8A, RTC_INDEX_PORT);
+    outb(RTC_REGA, RTC_INDEX_PORT);
     outb(0x2F, RTC_DATA_PORT); // 0bx0101111 (DV = 2, RS = 15)
 
     // Enable interrupts
-    outb(0x8B, RTC_INDEX_PORT);
+    outb(RTC_REGB, RTC_INDEX_PORT);
     uint8_t prev = inb(RTC_DATA_PORT);
-    outb(0x8B, RTC_INDEX_PORT);
+    outb(RTC_REGB, RTC_INDEX_PORT);
     outb(prev | 0x40, RTC_DATA_PORT);
     enable_irq(RTC_IRQ); // Enable RTC
 

@@ -4,6 +4,8 @@
 
 #include "i8259.h"
 
+#define I8259_INTMASK 0xff
+
 /* Interrupt masks to determine which interrupts
  * are enabled and disabled */
 uint8_t master_mask; /* IRQs 0-7 */
@@ -12,8 +14,8 @@ uint8_t slave_mask; /* IRQs 8-15 */
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
     // Mask all interrupts
-    outb(0xff, MASTER_DATA);
-    outb(0xff, SLAVE_DATA);
+    outb(I8259_INTMASK, MASTER_DATA);
+    outb(I8259_INTMASK, SLAVE_DATA);
 
     // Start initialization sequence
     outb(ICW1, MASTER_COMMAND);
@@ -67,4 +69,3 @@ void send_eoi(uint32_t irq_num) {
         outb(EOI | irq_num, MASTER_COMMAND);
     }
 }
-

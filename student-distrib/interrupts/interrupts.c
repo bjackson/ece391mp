@@ -12,24 +12,25 @@ void init_idt() {
     memset(idt, 0x00, sizeof(idt_desc_t) * NUM_VEC);
 
     // Non-User defined exceptions and interrupts
-    set_trap_entry(0, (uint32_t) isr0);
-    set_trap_entry(1, (uint32_t) isr1);
-    set_int_entry(2, (uint32_t) isr2);
-    set_sys_entry(3, (uint32_t) isr3);
-    set_sys_entry(4, (uint32_t) isr4);
-    set_sys_entry(5, (uint32_t) isr5);
-    set_trap_entry(6, (uint32_t) isr6);
-    set_trap_entry(7, (uint32_t) isr7);
-    set_trap_entry(8, (uint32_t) isr8);
-    set_trap_entry(10, (uint32_t) isr10);
-    set_trap_entry(11, (uint32_t) isr11);
-    set_trap_entry(12, (uint32_t) isr12);
-    set_trap_entry(13, (uint32_t) isr13);
-    set_int_entry(14, (uint32_t) isr14);
-    set_trap_entry(16, (uint32_t) isr16);
-    set_trap_entry(17, (uint32_t) isr17);
-    set_trap_entry(18, (uint32_t) isr18);
-    set_trap_entry(19, (uint32_t) isr19);
+    set_trap_entry(DIVBYZERO_IDT,   (uint32_t) isr0);
+    set_trap_entry(DEBUGGER_IDT,    (uint32_t) isr1);
+    set_int_entry(NMI_IDT,          (uint32_t) isr2);
+    set_sys_entry(BREAKPOINT_IDT,   (uint32_t) isr3);
+    set_sys_entry(OVERFLOW_IDT,     (uint32_t) isr4);
+    set_sys_entry(BOUNDS_IDT,       (uint32_t) isr5);
+    set_trap_entry(INVOPCODE_IDT,   (uint32_t) isr6);
+    set_trap_entry(COPRUNAVAIL_IDT, (uint32_t) isr7);
+    set_trap_entry(DBLFAULT_IDT,    (uint32_t) isr8);
+    set_trap_entry(CPRSEGOVER_IDT,  (uint32_t) isr9)
+    set_trap_entry(INVTASKSTS_IDT,  (uint32_t) isr10);
+    set_trap_entry(SEGNPRESENT_IDT, (uint32_t) isr11);
+    set_trap_entry(STACKFAULT_IDT,  (uint32_t) isr12);
+    set_trap_entry(GPROTFAULT_IDT,  (uint32_t) isr13);
+    set_int_entry(PAGEFAULT_IDT,    (uint32_t) isr14);
+    set_trap_entry(MATHFAULT_IDT,   (uint32_t) isr16);
+    set_trap_entry(ALIGNCHECK_IDT,  (uint32_t) isr17);
+    set_trap_entry(MACHINECHECK_IDT,(uint32_t) isr18);
+    set_trap_entry(SIMDFLTPTEX_IDT, (uint32_t) isr19);
 
     // User defined interrupts
     set_int_entry(KEYBOARD_IDT, (uint32_t) isr33);

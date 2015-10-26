@@ -9,7 +9,8 @@
 #ifndef page_h
 #define page_h
 
-#include <stdio.h>
+#include "types.h"
+
 
 ///* get the physical address given a virtual address */
 //void * get_physaddr(void * virtualaddr);

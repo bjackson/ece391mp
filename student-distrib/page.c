@@ -8,13 +8,13 @@
 
 #include "page.h"
 
-#define MAX_ENTRIES
+#define MAX_ENTRIES 1024
 
 /* varaible for page tables. 4096 bytes because 4kb */
-uint32_t page_directory[3] __attribute__((aligned(4000)));
-uint32_t kernel_page_table[MAX_ENTRIES] __attribute__((aligned(4000))); //4,000-8,000
-uint32_t user1_page_table[MAX_ENTRIES] __attribute__((aligned(4000)));  //8,000-12,000
-uint32_t user2_page_table[MAX_ENTRIES] __attribute__((aligned(4000)));  //12 000-16,000
+uint32_t page_directory[3] __attribute__((aligned(0x4000)));
+uint32_t kernel_page_table[MAX_ENTRIES] __attribute__((aligned(0x4000))); //4,000-8,000
+uint32_t user1_page_table[MAX_ENTRIES] __attribute__((aligned(0x4000)));  //8,000-12,000
+uint32_t user2_page_table[MAX_ENTRIES] __attribute__((aligned(0x4000)));  //12 000-16,000
 
 // function being built as the starting point to do paging. everything after this functions is notes.
 /*
@@ -27,6 +27,7 @@ uint32_t user2_page_table[MAX_ENTRIES] __attribute__((aligned(4000)));  //12 000
  *
  */
 void init_pages() {
+    
     //Enable paging - form OSDev guide at http://wiki.osdev.org/Paging
     asm volatile (
             "movl $page_directory, %%eax      /* enable paging */           ;"
@@ -36,10 +37,8 @@ void init_pages() {
             "movl %%eax, %%cr0                                              ;"
             "movl %%cr4, %%eax                  /* enable PSE */            ;"
             "orl $0x00000010, %%eax                                         ;"
-            "movl %%eax, %%cr4                                              ;"
-            : /* no outputs */
-            : /* no inputs */
-            : "eax");
+            "movl %%eax, %%cr4                                              "
+            : : : "eax");
     
     int i;
     
@@ -47,21 +46,21 @@ void init_pages() {
     for (i = 0; i < MAX_ENTRIES; i++) {
         //init page address to array avlue and all settings to 0
         kernel_page_table[i] = i;
-        kernel_page_table[1] << 12;
+        //kernel_page_table[i] << 12;
     }
     
     // initialize user space 1 table
     for (i = 0; i < MAX_ENTRIES; i++) {
         //init page address to array avlue and all settings to 0
         user1_page_table[i] = i;
-        user1_page_table[1] << 12;
+        //user1_page_table[i] << 12;
     }
     
     // initialize user 2 table
     for (i = 0; i < MAX_ENTRIES; i++) {
         //init page address to array avlue and all settings to 0
         user2_page_table[i] = i;
-        user2_page_table[1] << 12;
+        //user2_page_table[i] << 12;
     }
     
     // load page tables into the directory

@@ -117,9 +117,16 @@ extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
           printf("Cause: General Protection Fault\n\n");
           haltOnException();
           break;
+//add another one for KB interrupts that calls the KB_INTERRUPT_HANDLER function
       default:
           printf("Not yet handled!");
           haltOnException();
   }
 
 }
+//KB_INTERRUPT_HANDLER function goes here
+//First, we grab the scan code with inb(KBD_DATA_PORT); where KBD_DATA_PORT is 0x60 in the little OS book
+//Then we take the scanned scancode and convert it to ASCII using some kind of table/array
+//Then we have to printf() the ASCII character we just converted to
+//THEN WE MUST PIC_ACKNOWLEDGE SO WE CAN GET THE NEXT CHARACTER
+//returns void, no need to give the case statement a return value since it doesn't care

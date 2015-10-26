@@ -11,11 +11,12 @@
 
 #include <stdio.h>
 
-/* get the physical address given a virtual address */
-void * get_physaddr(void * virtualaddr);
+///* get the physical address given a virtual address */
+//void * get_physaddr(void * virtualaddr);
+//
+///* get the virtual address given a physical address */
+//void map_page(void * physaddr, void * virtualaddr, unsigned int flags);
 
-/* get the virtual address given a physical address */
-void map_page(void * physaddr, void * virtualaddr, unsigned int flags);
-
+void init_paging();
 
 #endif /* page_h */

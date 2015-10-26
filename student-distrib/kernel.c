@@ -178,8 +178,11 @@ void entry (unsigned long magic, unsigned long addr) {
     // Enable interrupts
     sti();
 
+    // Test handling of page faults (uncomment for page fault)
+    //printf("%s\n", 0xDEADBEEF);
+
     /* Execute the first program (`shell') ... */
 
-    /* Spin (nicely, so we don't chew up cycles) */
+    // Spin (nicely, so we don't chew up cycles)
     asm volatile(".1: hlt; jmp .1;");
 }

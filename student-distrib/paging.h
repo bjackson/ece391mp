@@ -9,7 +9,7 @@
 
 #define MAX_ENTRIES 1024
 
-// Struct for page directory entries
+// Struct for 4KB page directory entries
 typedef union pd_entry_t {
     uint32_t val;
     struct {
@@ -27,6 +27,25 @@ typedef union pd_entry_t {
     } __attribute__((packed));
 } pd_entry_t;
 
+// Struct for 4MB page directory entries
+typedef union pd_large_entry_t {
+    uint32_t val;
+    struct {
+        uint8_t present : 1;
+        uint8_t read_write : 1;
+        uint8_t user_supervisor : 1;
+        uint8_t write_through : 1;
+        uint8_t cache_disabled : 1;
+        uint8_t accessed : 1;
+        uint8_t dirty : 1;
+        uint8_t size : 1;
+        uint8_t global : 1;
+        uint8_t available : 3;
+        uint16_t reserved0 : 10;
+        uint32_t addr : 10;
+    } __attribute__((packed));
+} pd_large_entry_t;
+
 // Struct for page table entries
 typedef union pt_entry_t {
     uint32_t val;
@@ -38,7 +57,7 @@ typedef union pt_entry_t {
         uint8_t cache_disabled : 1;
         uint8_t accessed : 1;
         uint8_t dirty : 1;
-        uint8_t unused0 : 1;
+        uint8_t reserved0 : 1;
         uint8_t global : 1;
         uint8_t available : 3;
         uint32_t addr : 20;

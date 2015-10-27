@@ -8,6 +8,7 @@
 #include "devices/i8259.h"
 #include "interrupts/interrupts.h"
 #include "paging.h"
+#include "devices/rtc.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -162,21 +163,7 @@ void entry (unsigned long magic, unsigned long addr) {
 
     enable_irq(KEYBOARD_IRQ); // Enable keyboard interrupt
 
-    /**
-     * Enable RTC
-     * Note: Need to move this to separate file (open() function?)
-     */
-
-    // Set RTC interrupt frequency
-    outb(RTC_REGA, RTC_INDEX_PORT);
-    outb(0x2F, RTC_DATA_PORT); // 0bx0101111 (DV = 2, RS = 15)
-
-    // Enable interrupts
-    outb(RTC_REGB, RTC_INDEX_PORT);
-    uint8_t prev = inb(RTC_DATA_PORT);
-    outb(RTC_REGB, RTC_INDEX_PORT);
-    outb(prev | 0x40, RTC_DATA_PORT);
-    enable_irq(RTC_IRQ); // Enable RTC
+    init_rtc(); // Initialize RTC
 
     // Enable interrupts
     sti();
@@ -187,5 +174,5 @@ void entry (unsigned long magic, unsigned long addr) {
     /* Execute the first program (`shell') ... */
 
     // Spin (nicely, so we don't chew up cycles)
-    asm volatile(".1: hlt; jmp .1;");
+    asm volatile (".1hlt: hlt; jmp .1hlt;");
 }

@@ -4,6 +4,26 @@
  * vim:ts=4 expandtab
  */
 #include "interrupts.h"
+#include "../lib.h"
+#include "../types.h"
+
+// Special/modifier keys
+#define LEFT_SHIFT_PRESS        0x2A
+#define RIGHT_SHIFT_PRESS       0x36
+#define LEFT_SHIFT_RELEASE      0xAA
+#define RIGHT_SHIFT_RELEASE     0xB6
+
+#define CONTROL_PRESS           0x1D
+#define CONTROL_RELEASE         0x9D
+
+#define ALT_PRESS               0x38
+#define ALT_RELEASE             0xB8
+
+// Indicates whether these keys were pressed
+uint8_t shift_pressed = 0;
+uint8_t ctrl_pressed  = 0;
+uint8_t alt_pressed   = 0;
+
 
 /**
  *
@@ -21,7 +41,7 @@ void init_idt() {
     set_trap_entry(INVOPCODE_IDT,   (uint32_t) isr6);
     set_trap_entry(COPRUNAVAIL_IDT, (uint32_t) isr7);
     set_trap_entry(DBLFAULT_IDT,    (uint32_t) isr8);
-    set_trap_entry(CPRSEGOVER_IDT,  (uint32_t) isr9)
+
     set_trap_entry(INVTASKSTS_IDT,  (uint32_t) isr10);
     set_trap_entry(SEGNPRESENT_IDT, (uint32_t) isr11);
     set_trap_entry(STACKFAULT_IDT,  (uint32_t) isr12);
@@ -65,7 +85,7 @@ void set_sys_entry(uint8_t idx, uint32_t handler) {
 void haltOnException() {
   cli();
   printf("Halting the system!");
-  asm volatile(".1: hlt; jmp .1;");
+  asm volatile(".1hltex: hlt; jmp .1hltex;");
 }
 
 /**
@@ -153,6 +173,49 @@ void keyboard_isr() {
     };
 
     uint8_t scan_code = inb(KEYBOARD_PORT);
+
+    switch (scan_code) {
+      case RIGHT_SHIFT_PRESS: {
+        shift_pressed = 1;
+        break;
+      }
+      case LEFT_SHIFT_PRESS: {
+        shift_pressed = 1;
+        break;
+      }
+      case RIGHT_SHIFT_RELEASE: {
+        shift_pressed = 0;
+        break;
+      }
+      case LEFT_SHIFT_RELEASE: {
+        shift_pressed = 0;
+        break;
+      }
+      case ALT_PRESS: {
+        alt_pressed = 1;
+        break;
+      }
+      case ALT_RELEASE: {
+        alt_pressed = 0;
+        break;
+      }
+      case CONTROL_PRESS: {
+        ctrl_pressed = 1;
+        break;
+      }
+      case CONTROL_RELEASE: {
+        ctrl_pressed = 0;
+        break;
+      }
+    }
+
+    uint8_t key = scancodes[scan_code - SCANCODE_MAX];
+
+    if (ctrl_pressed == 1 && key == 'l') {
+      clear();
+      send_eoi(KEYBOARD_IRQ);
+      return;
+    }
 
     // Only process 'break' codes for now
     if(scan_code >= SCANCODE_MAX) {

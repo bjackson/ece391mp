@@ -40,6 +40,8 @@ Makefile.dep: $(SRC)
 .PHONY: clean
 clean:
 	rm -f *.o Makefile.dep bootimg
+	rm -f interrupts/*.o
+	rm -f devices/*.o
 
 ifneq ($(MAKECMDGOALS),dep)
 ifneq ($(MAKECMDGOALS),clean)

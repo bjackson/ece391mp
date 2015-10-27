@@ -8,6 +8,8 @@
 #define NUM_ROWS 25
 #define ATTRIB 0x7
 
+#define TAB_SPACES 4
+
 static int screen_x;
 static int screen_y;
 static char* video_mem = (char *)VIDEO;
@@ -180,6 +182,24 @@ puts(int8_t* s)
 	return index;
 }
 
+void scroll_down(void) {
+  int row, col;
+  for (row = 0; row < NUM_ROWS; row++) {
+    for (col = 0; col < NUM_COLS; col++) {
+      if (row != 0) {
+        *(uint8_t *)(video_mem + ((NUM_COLS*(row - 1) + col) << 1)) = *(uint8_t *)(video_mem + ((NUM_COLS*(row) + col) << 1));
+        *(uint8_t *)(video_mem + ((NUM_COLS*(row - 1) + col) << 1) + 1) = ATTRIB;
+      }
+    }
+  }
+
+  // Clear last row
+  for (col = 0; col < NUM_COLS; col++) {
+    *(uint8_t *)(video_mem + ((NUM_COLS*(NUM_ROWS - 1) + col) << 1)) = ' ';
+    *(uint8_t *)(video_mem + ((NUM_COLS*(NUM_ROWS - 1) + col) << 1) + 1) = ATTRIB;
+  }
+}
+
 /*
 * void putc(uint8_t c);
 *   Inputs: uint_8* c = character to print
@@ -193,12 +213,45 @@ putc(uint8_t c)
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x=0;
+
+        if (screen_y >= NUM_ROWS) {
+          scroll_down();
+          screen_y--;
+        }
+    } else if (c == '\t') {
+        screen_x += TAB_SPACES;
+        screen_x %= NUM_COLS;
+    } else if (c == '\b') {
+        screen_x--;
+        if (screen_x < 0) {
+          screen_x = NUM_COLS - 1;
+          screen_y--;
+          if (screen_y < 0) {
+            screen_y = 0;
+          }
+        }
+        screen_x %= NUM_COLS;
+        // Clear char
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = ' ';
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
-        screen_x %= NUM_COLS;
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+
+        if (screen_x == NUM_COLS) {
+          screen_x = 0;
+          screen_y++;
+        }
+
+        if (screen_y >= NUM_ROWS) {
+          scroll_down();
+          screen_y--;
+        }
+
+        //screen_x %= NUM_COLS;
+
+        //screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
     }
 }
 

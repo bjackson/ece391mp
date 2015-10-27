@@ -19,10 +19,13 @@
 #define ALT_PRESS               0x38
 #define ALT_RELEASE             0xB8
 
+#define CAPS_LOCK_PRESS         0x3A
+
 // Indicates whether these keys were pressed
 uint8_t shift_pressed = 0;
 uint8_t ctrl_pressed  = 0;
 uint8_t alt_pressed   = 0;
+uint8_t caps_on       = 0;
 
 
 /**
@@ -207,10 +210,23 @@ void keyboard_isr() {
         ctrl_pressed = 0;
         break;
       }
+      case CAPS_LOCK_PRESS: {
+        caps_on = (caps_on == 1) ? 0 : 1; // Toggle caps lock
+        break;
+      }
     }
 
     uint8_t key = scancodes[scan_code - SCANCODE_MAX];
 
+    // Uppercase character if caps lock is on
+    if (caps_on == 1) {
+      if (key >= 97 && key <= 122) { // Only upcase alphas
+        key -= ('a' - 'A'); // Upcase the letter
+      }
+    }
+
+
+    // On CTRL-L, clear the screen.
     if (ctrl_pressed == 1 && key == 'l') {
       clear();
       send_eoi(KEYBOARD_IRQ);
@@ -221,7 +237,7 @@ void keyboard_isr() {
     if(scan_code >= SCANCODE_MAX) {
         scan_code -= SCANCODE_MAX;
         if(scancodes[scan_code] != '$') {
-            printf("%c", scancodes[scan_code]);
+            printf("%c", key);
         }
     }
 

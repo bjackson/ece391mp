@@ -28,6 +28,8 @@ uint8_t alt_pressed   = 0;
 uint8_t caps_on       = 0;
 
 
+uint8_t upcase_char(uint8_t character);
+
 /**
  *
  */
@@ -159,20 +161,20 @@ extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
 void keyboard_isr() {
     // Lookup table for conversion from keyboard scan code to ASCII character
     static uint8_t scancodes[128] = {
-        '$', '$',
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
-        '$', '$',
-        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p',
-        '$', '$', '$', '$',
-        'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l',
-        '$', '$', '$', '$', '$',
-        'z', 'x', 'c', 'v', 'b', 'n', 'm',
-        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$',
-        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$',
-        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$',
-        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$',
-        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$',
-        '$', '$'
+        '$', '$', //0x01
+        '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', // 0x0D
+        '$', '$', // 0x0F
+        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', // 0x19
+        '[', ']', '\n', '$', // 0x1D
+        'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', // 0x26
+        ';', '\'', '`', '$', '$', // 0x2B
+        'z', 'x', 'c', 'v', 'b', 'n', 'm', // 0x32
+        ',', '.', '/', '$', '$', '$', ' ', '$', '$', '$', '$', '$', '$', '$', '$', // 0x41
+        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '+', '$', '$', // 0x50
+        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', // 0x5F
+        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', // 0x6E
+        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', // 0x7D
+        '$', '$' // 0x7F
     };
 
     uint8_t scan_code = inb(KEYBOARD_PORT);
@@ -219,10 +221,14 @@ void keyboard_isr() {
     uint8_t key = scancodes[scan_code - SCANCODE_MAX];
 
     // Uppercase character if caps lock is on
-    if (caps_on == 1) {
+    if (caps_on || shift_pressed) {
       if (key >= 97 && key <= 122) { // Only upcase alphas
         key -= ('a' - 'A'); // Upcase the letter
       }
+    }
+
+    if (shift_pressed) {
+      key = upcase_char(key);
     }
 
 
@@ -242,6 +248,77 @@ void keyboard_isr() {
     }
 
     send_eoi(KEYBOARD_IRQ);
+}
+
+uint8_t upcase_char(uint8_t character) {
+  switch (character) {
+    case '=': {
+      return '+';
+    }
+    case '-': {
+      return '_';
+    }
+    case '1': {
+      return '!';
+    }
+    case '2': {
+      return '@';
+    }
+    case '3': {
+      return '#';
+    }
+    case '4': {
+      return '$';
+    }
+    case '5': {
+      return '%';
+    }
+    case '6': {
+      return '^';
+    }
+    case '7': {
+      return '&';
+    }
+    case '8': {
+      return '*';
+    }
+    case '9': {
+      return '(';
+    }
+    case '0': {
+      return ')';
+    }
+    case '[': {
+      return '{';
+    }
+    case ']': {
+      return '}';
+    }
+    case '\\': {
+      return '|';
+    }
+    case ';': {
+      return ':';
+    }
+    case '\'': {
+      return '"';
+    }
+    case ',': {
+      return '<';
+    }
+    case '.': {
+      return '>';
+    }
+    case '/': {
+      return '?';
+    }
+    case '`': {
+      return '~';
+    }
+    default: {
+      return character;
+    }
+  }
 }
 
 /**

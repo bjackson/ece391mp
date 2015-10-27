@@ -149,7 +149,6 @@ void entry (unsigned long magic, unsigned long addr) {
     clear(); // Clear video memory
     printf("TrumpOS - Making Computing Great Again\n");
     printf("======================================\n\n");
-    printf("trump@whitehouse.gov> ");
 
     /**
      * Initialize devices, memory, filesystem, enable device interrupts on the

@@ -10,6 +10,8 @@
 #include "paging.h"
 #include "devices/rtc.h"
 
+#include "devices/terminal.h"
+
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
@@ -167,6 +169,13 @@ void entry (unsigned long magic, unsigned long addr) {
 
     // Enable interrupts
     sti();
+
+    printf("\n%d\n", terminal_read(0, 0, 0));
+    printf("\n%d\n", terminal_read(0, 0, 0));
+    printf("\n%d\n", terminal_read(0, 0, 0));
+    printf("\n%d\n", terminal_read(0, 0, 0));
+    printf("\n%d\n", terminal_read(0, 0, 0));
+    printf("\n%d\n", terminal_read(0, 0, 0));
 
     // Test handling of page faults (uncomment for page fault)
     //printf("%s\n", 0xDEADBEEF);

@@ -6,6 +6,9 @@
 #include "interrupts.h"
 #include "../lib.h"
 #include "../types.h"
+#include "../devices/terminal.h"
+
+
 
 // Special/modifier keys
 #define LEFT_SHIFT_PRESS        0x2A
@@ -231,7 +234,6 @@ void keyboard_isr() {
       key = upcase_char(key);
     }
 
-
     // On CTRL-L, clear the screen.
     if (ctrl_pressed == 1 && key == 'l') {
       clear();
@@ -239,10 +241,16 @@ void keyboard_isr() {
       return;
     }
 
+    if (key == '\b') {
+      backspace();
+    }
+
     // Only process 'break' codes for now
     if(scan_code >= SCANCODE_MAX) {
         scan_code -= SCANCODE_MAX;
         if(scancodes[scan_code] != '$') {
+            keyboard_buffer[keyboard_buffer_index] = key;
+            keyboard_buffer_index++;
             printf("%c", key);
         }
     }

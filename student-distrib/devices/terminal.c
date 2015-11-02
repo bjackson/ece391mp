@@ -21,7 +21,7 @@ int32_t terminal_open(const uint8_t* filename) {
 }
 
 int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
-  memset(read_buffer, '\0', 128);
+  memset(read_buffer, '\0', 128); // Clear read buffer from previous calls
   uint32_t bufferIndex = 0;
 
   uint32_t spin = 0;
@@ -39,7 +39,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
   }
   keyboard_buffer_index = 0;
   readyToRead = 0;
-  memset(keyboard_buffer, '\0', 128);
+  memset(keyboard_buffer, '\0', 128); // Clear keyboard buffer for new input
   return bufferIndex;
 }
 

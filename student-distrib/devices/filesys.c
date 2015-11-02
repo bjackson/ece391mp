@@ -134,7 +134,25 @@ void fs_test_print_file(const char* name) {
 }
 
 void fs_test_print_exec(const char* name) {
-    return 0;
+    printf("\nExec: %s:\n", name);
+
+    dentry_t entry;
+    if(read_dentry_by_name(name, &entry) == -1) {
+        printf("Filesys test error: Cant read dentry by name\n");
+        return;
+    }
+
+    inode_t* node = (inode_t*) (fs_inode_start_addr +
+            entry.inode_num * FS_BLOCK_SIZE);
+
+    void* data_block_ptr = (void*) (fs_data_start_addr +
+            (node->blocks[0] * FS_BLOCK_SIZE));
+
+    char file_buffer[16];
+    memset(file_buffer, 0x00, 16);
+
+    memcpy(file_buffer, data_block_ptr, 16);
+    printf("%s\n", file_buffer);
 }
 
 void fs_test_ls_dir() {
@@ -144,7 +162,7 @@ void fs_test_ls_dir() {
         dentry_t entry;
         read_dentry_by_index(i, &entry);
 
-        if(entry.type != FS_TYPE_DIR) {
+        if(entry.type == FS_TYPE_FILE) {
             inode_t* node = (inode_t*) (fs_inode_start_addr +
                     entry.inode_num * FS_BLOCK_SIZE);
 
@@ -157,16 +175,16 @@ void fs_test_ls_dir() {
 
 void fs_test() {
     // Print out a complete file
-    fs_test_print_file("frame0.txt");
+    //fs_test_print_file("frame0.txt");
 
     // Print out a very long file
-    fs_test_print_file("verylargetxtwithverylongname.tx");
+    //fs_test_print_file("verylargetxtwithverylongname.tx");
 
     // Print out the first few bytes of an executable
-    //fs_test_print_exec("cat");
+    fs_test_print_exec("cat");
 
     // List directory contents - include file lengths and some block nums
-    //fs_test_ls_dir();
+    fs_test_ls_dir();
 
     // Disable interrupts and spin forever so the screen isn't cleared
     cli();

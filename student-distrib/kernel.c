@@ -9,8 +9,8 @@
 #include "interrupts/interrupts.h"
 #include "paging.h"
 #include "devices/rtc.h"
-
 #include "devices/terminal.h"
+#include "devices/filesys.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -22,6 +22,7 @@
 // Check if MAGIC is valid and print the Multiboot information structure pointed by ADDR.
 void entry (unsigned long magic, unsigned long addr) {
     multiboot_info_t *mbi;
+    uint32_t fs_start_addr;
 
     /* Clear the screen. */
     clear();
@@ -56,7 +57,12 @@ void entry (unsigned long magic, unsigned long addr) {
         int mod_count = 0;
         int i;
         module_t* mod = (module_t*)mbi->mods_addr;
+
         while(mod_count < mbi->mods_count) {
+            if(mod_count == 0) {
+                fs_start_addr = mod->mod_start;
+            }
+
             printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
             printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
             printf("First few bytes of module:\n");
@@ -67,8 +73,7 @@ void entry (unsigned long magic, unsigned long addr) {
             mod_count++;
             mod++;
         }
-    }
-    /* Bits 4 and 5 are mutually exclusive! */
+    } /* Bits 4 and 5 are mutually exclusive! */
     if (CHECK_FLAG (mbi->flags, 4) && CHECK_FLAG (mbi->flags, 5))
     {
         printf ("Both bits 4 and 5 are set.\n");
@@ -169,6 +174,12 @@ void entry (unsigned long magic, unsigned long addr) {
 
     // Enable interrupts
     sti();
+
+    // Initialize the file system
+    fs_init(fs_start_addr);
+
+    // Temporary function for running filesystem test cases
+    fs_test();
 
     uint8_t largeBuffer[256];
     uint8_t tooSmallBuffer[64];

@@ -182,7 +182,7 @@ void entry (unsigned long magic, unsigned long addr) {
     fs_test();
 
     uint8_t largeBuffer[256];
-    uint8_t tooSmallBuffer[64];
+    //uint8_t tooSmallBuffer[64];
 
     terminal_open(NULL);
 

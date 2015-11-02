@@ -17,11 +17,11 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes);
 
 
 // for old code
-//#define RTC_REGA 0x8A
-//#define RTC_REGB 0x8B
+#define RTC_REGA 0x8A
+#define RTC_REGB 0x8B
 //
-//void init_rtc(void);
+void init_rtc(void);
 //
-//void set_rtc_frequency(unsigned char frequency);
+void set_rtc_frequency(unsigned char frequency);
 
 #endif

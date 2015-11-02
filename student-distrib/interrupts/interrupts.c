@@ -7,6 +7,7 @@
 #include "../lib.h"
 #include "../types.h"
 #include "../devices/terminal.h"
+#include "../devices/rtc.h"
 
 
 
@@ -361,7 +362,7 @@ void disable_inits() {
     
     // Disable NMI by setting the 0x80 bit
     uint8_t previous = inb(0x70);
-    outb(prev | 0x80, 0x70);
+    outb(previous | 0x80, 0x70);
 }
 
 /*

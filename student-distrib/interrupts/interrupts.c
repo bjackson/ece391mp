@@ -249,8 +249,10 @@ void keyboard_isr() {
     if(scan_code >= SCANCODE_MAX) {
         scan_code -= SCANCODE_MAX;
         if(scancodes[scan_code] != '$') {
+          if (key != '\b') {
             keyboard_buffer[keyboard_buffer_index] = key;
             keyboard_buffer_index++;
+          }
             if (keyboard_buffer_index == KEYBOARD_BUFFER_SIZE - 1 || key == '\n') {
               readyToRead = TRUE;
             }

@@ -52,3 +52,9 @@ int32_t terminal_close(int32_t fd) {
   // Terminal should not be allowed to be closed.
   return -1;
 }
+
+int32_t terminal_clear(void) {
+  clear();
+
+  return 0;
+}

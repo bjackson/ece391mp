@@ -98,6 +98,28 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     return -1;
 }
 
+/**
+ *
+ */
+int32_t fs_read_dir() {
+    printf("\nDirectory Contents:\n");
+    uint8_t i;
+    for(i = 0; i < fs_stats->num_dentries; i++) {
+        dentry_t entry;
+        read_dentry_by_index(i, &entry);
+
+        if(entry.type == FS_TYPE_FILE) {
+            inode_t* node = (inode_t*) (fs_inode_start_addr +
+                    entry.inode_num * FS_BLOCK_SIZE);
+
+            printf("name: %s, ", entry.fname);
+            printf("len: %dB\n", node->length);
+        }
+    }
+
+    return 0;
+}
+
 void fs_test_print_file(const char* name) {
     printf("\nFile: %s:\n", name);
 
@@ -155,38 +177,21 @@ void fs_test_print_exec(const char* name) {
     printf("%s\n", file_buffer);
 }
 
-void fs_test_ls_dir() {
-    printf("\nDirectory Contents:\n");
-    uint8_t i;
-    for(i = 0; i < fs_stats->num_dentries; i++) {
-        dentry_t entry;
-        read_dentry_by_index(i, &entry);
-
-        if(entry.type == FS_TYPE_FILE) {
-            inode_t* node = (inode_t*) (fs_inode_start_addr +
-                    entry.inode_num * FS_BLOCK_SIZE);
-
-            printf("name: %s, ", entry.fname);
-            printf("len: %dB\n", node->length);
-        }
-    }
-}
-
-
 void fs_test() {
     // Print out a complete file
-    //fs_test_print_file("frame0.txt");
+    fs_test_print_file("frame0.txt");
 
     // Print out a very long file
-    //fs_test_print_file("verylargetxtwithverylongname.tx");
+    fs_test_print_file("verylargetxtwithverylongname.tx");
 
     // Print out the first few bytes of an executable
     fs_test_print_exec("cat");
 
     // List directory contents - include file lengths and some block nums
-    fs_test_ls_dir();
+    fs_read_dir();
 
     // Disable interrupts and spin forever so the screen isn't cleared
     cli();
     while(1);
 }
+

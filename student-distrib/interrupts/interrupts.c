@@ -251,6 +251,9 @@ void keyboard_isr() {
         if(scancodes[scan_code] != '$') {
             keyboard_buffer[keyboard_buffer_index] = key;
             keyboard_buffer_index++;
+            if (keyboard_buffer_index == KEYBOARD_BUFFER_SIZE - 1 || key == '\n') {
+              readyToRead = TRUE;
+            }
             printf("%c", key);
         }
     }

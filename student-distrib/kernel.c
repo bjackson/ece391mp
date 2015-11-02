@@ -170,6 +170,12 @@ void entry (unsigned long magic, unsigned long addr) {
     // Enable interrupts
     sti();
 
+    terminal_open(NULL);
+
+    terminal_write(0, "Hello!\n", 0);
+
+    // terminal_write(0, "Hello there, this is a really long string of text hopefully it will span several lines and I won't have to return to this statement and add more characters. Is this enought? Is it? Is it? Please tell me.\n", 0);
+
     printf("\n%d\n", terminal_read(0, 0, 0));
     printf("\n%d\n", terminal_read(0, 0, 0));
     printf("\n%d\n", terminal_read(0, 0, 0));

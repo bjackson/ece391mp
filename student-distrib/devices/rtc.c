@@ -1,11 +1,14 @@
+
 #include "rtc.h"
 #include "../lib.h"
 #include "../interrupts/interrupts.h"
+#include "../types.h"
 
 #define RTC_INDEX_PORT 0x70
 #define RTC_DATA_PORT 0x71
 #define MIN_RATE 2
 #define MAX_RATE 15
+
 
 /*
  * Initializes the RTC
@@ -16,9 +19,9 @@
 int32_t rtc_init() {
     
     // disable interupts to keep RTC from entering an undefined state
-    disable_ints();
-    outb(0x0B, RTC_INDEX_PORT)
-    uint8_t previous = inb(RTC_DATA_PORT):
+    disable_inits();
+    outb(0x0B, RTC_INDEX_PORT);
+    uint8_t previous = inb(RTC_DATA_PORT);
     outb(0x0B, RTC_INDEX_PORT);
     outb(previous | 0x40, RTC_DATA_PORT);
     
@@ -27,6 +30,8 @@ int32_t rtc_init() {
     
     // enable interrupts again
     enable_inits();
+    
+    tick_counter = 0;
     
     return 0;
 }
@@ -48,9 +53,9 @@ int32_t rtc_set_frequency(int32_t rate) {
     
     
     // send new clock to registers
-    disable_ints();
-    outb(0x0A, RTC_INDEX_PORT)
-    uint8_t previous = inb(RTC_DATA_PORT):
+    disable_inits();
+    outb(0x0A, RTC_INDEX_PORT);
+    uint8_t previous = inb(RTC_DATA_PORT);
     outb(0x0A, RTC_INDEX_PORT);
     outb((previous & 0xF0) | frequency, RTC_DATA_PORT);
     enable_inits();

@@ -2,7 +2,10 @@
 #ifndef _RTC_H
 #define _RTC_H
 
-uint32_t volatile tick_counter;
+#include "../types.h"
+#include "../lib.h"
+
+volatile uint32_t tick_counter;
 
 int32_t rtc_init();
 int32_t rtc_set_frequency(int32_t rate);

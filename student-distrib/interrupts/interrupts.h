@@ -81,10 +81,10 @@ void keyboard_isr();
 void rtc_isr();
 
 // Disable interrupts. Used by RTC
-void disable_inits()
+void disable_inits();
 
 // Enable interrupts. Used by RTC
-void enable_inits()
+void enable_inits();
 
 // Interrupt handler functions - in interrupts_asm.S
 extern void isr0();

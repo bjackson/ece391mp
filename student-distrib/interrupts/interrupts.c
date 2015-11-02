@@ -346,6 +346,31 @@ void rtc_isr() {
     // Select register C and throw away contents
     outb(0x0C, RTC_INDEX_PORT);
     inb(RTC_DATA_PORT);
+    
+    // increment tick counter
+    tick_counter++;
 
     send_eoi(RTC_IRQ);
+}
+
+/*
+ * Disable interrupts. Used by RTC
+ */
+void disable_inits() {
+    cli();
+    
+    // Disable NMI by setting the 0x80 bit
+    uint8_t previous = inb(0x70);
+    outb(prev | 0x80, 0x70);
+}
+
+/*
+ * Reenable interrupts. Used by RTC
+ */
+void enable_inits() {
+    sti();
+    
+    // Re-enable NMI
+    uint8_t previous = inb(0x70);
+    outb(previous & 0x7F, 0x70);
 }

@@ -242,7 +242,10 @@ void keyboard_isr() {
     }
 
     if (key == '\b') {
-      backspace();
+      if (backspace() != 0) {
+        send_eoi(KEYBOARD_IRQ);
+        return;
+      }
     }
 
     // Only process 'break' codes for now

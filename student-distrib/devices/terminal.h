@@ -8,7 +8,7 @@
 extern uint8_t keyboard_buffer[KEYBOARD_BUFFER_SIZE];
 extern uint8_t read_buffer[KEYBOARD_BUFFER_SIZE];
 
-extern uint32_t keyboard_buffer_index;
+extern int32_t keyboard_buffer_index;
 extern uint32_t readyToRead;
 
 int32_t terminal_open(const uint8_t* filename);

@@ -10,6 +10,8 @@
 #define TRUE 1
 #define FALSE 0
 
+#define VIDEO 0xB8000
+
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
 int32_t puts(int8_t *s);

@@ -1,5 +1,5 @@
 /**
- * paging.h - <description here>
+ * paging.h
  */
 #ifndef PAGING_H
 #define PAGING_H
@@ -8,6 +8,12 @@
 #include "lib.h"
 
 #define MAX_ENTRIES 1024
+
+#define FOUR_KB (4 * 1024)
+#define FOUR_MB (4 * 1024 * 1024)
+
+#define ACCESS_ALL 1
+#define ACCESS_SUPER 0
 
 // Struct for 4KB page directory entries
 typedef union pd_entry_t {
@@ -67,10 +73,13 @@ typedef union pt_entry_t {
 // Initialize the paging structures
 void init_paging();
 
-// Return the physical address given a virtual address
-void* get_physaddr(void* virtualaddr);
+// Map a small (4KB) page
+void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access);
 
-// Return the virtual address given a physical address
-void map_page(void * physaddr, void * virtualaddr, unsigned int flags);
+// Map a large (4MB) page
+void map_large_page(void* phys, void* virt, uint8_t access);
+
+// Register a page directory entry for a 4KB page table
+void register_page_table(uint32_t index, uint32_t* page_table, uint8_t access);
 
 #endif /* PAGING_H */

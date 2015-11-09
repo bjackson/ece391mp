@@ -200,10 +200,6 @@ void entry (unsigned long magic, unsigned long addr) {
     printf("%s\n", 0xDEADBEEF);
      */
 
-    // Test system calls
-    char* arg = "frame1.txt";
-    printf("Return Value: %d\n", debug_do_call(5, (int32_t) (void*) arg, 0, 0));
-
     /* Execute the first program (`shell') ... */
 
     // Spin (nicely, so we don't chew up cycles)

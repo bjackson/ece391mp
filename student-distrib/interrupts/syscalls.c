@@ -11,7 +11,7 @@ extern file_desc_t kernel_file_array[FILE_ARRAY_SIZE];
 /**
  *
  */
-extern int32_t sys_halt(uint8_t status) {
+int32_t sys_halt(uint8_t status) {
     printf("Halt!\n");
     return -1;
 }
@@ -19,7 +19,7 @@ extern int32_t sys_halt(uint8_t status) {
 /**
  *
  */
-extern int32_t sys_execute(const uint8_t* command) {
+int32_t sys_execute(const uint8_t* command) {
     printf("Execute!\n");
     return -1;
 }
@@ -27,7 +27,7 @@ extern int32_t sys_execute(const uint8_t* command) {
 /**
  *
  */
-extern int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
+int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
     printf("Read!\n");
     return -1;
 }
@@ -35,7 +35,7 @@ extern int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
 /**
  *
  */
-extern int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
+int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
     printf("Write!\n");
     return -1;
 }
@@ -43,7 +43,7 @@ extern int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
 /**
  *
  */
-extern int32_t sys_open(const uint8_t* filename) {
+int32_t sys_open(const uint8_t* filename) {
     if(filename == NULL) {
         printf("open: NULL filename\n");
         return -1;
@@ -72,7 +72,7 @@ extern int32_t sys_open(const uint8_t* filename) {
                 file.close = rtc_close;
             } else if(dentry.type == FS_TYPE_DIR) {
                 file.file_pos = 0;
-                file.read = fs_read;
+                file.read = fs_dir_read;
                 file.write = fs_write;
                 file.open = fs_open;
                 file.close = fs_close;
@@ -109,7 +109,7 @@ extern int32_t sys_open(const uint8_t* filename) {
 /**
  *
  */
-extern int32_t sys_close(int32_t fd) {
+int32_t sys_close(int32_t fd) {
     if(fd == STDIN_FD || fd == STDOUT_FD) {
         printf("close: Can't close stdin/stdout\n");
         return -1;
@@ -133,7 +133,7 @@ extern int32_t sys_close(int32_t fd) {
 /**
  *
  */
-extern int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
+int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
     printf("Get Args!\n");
     return -1;
 }
@@ -141,7 +141,7 @@ extern int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
 /**
  *
  */
-extern int32_t sys_vidmap(uint8_t** screen_start) {
+int32_t sys_vidmap(uint8_t** screen_start) {
     printf("Vidmap!\n");
     return -1;
 }

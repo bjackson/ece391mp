@@ -163,29 +163,39 @@ void entry (unsigned long magic, unsigned long addr) {
      */
     i8259_init(); // Init PIC
     enable_irq(SLAVE_IRQ); // Enable IRQs 8-15
+    enable_irq(KEYBOARD_IRQ); // Enable keyboard interrupt
 
     init_idt(); // Initialize interrupt handlers
 
     init_paging(); // Initialize paging
 
-    enable_irq(KEYBOARD_IRQ); // Enable keyboard interrupt
-
     init_rtc(); // Initialize RTC
+
+    fs_init(fs_start_addr); // Initialize the file system
+
+    terminal_open(NULL); // Initialize the terminal driver
 
     // Enable interrupts
     sti();
 
-    // Initialize the file system
-    fs_init(fs_start_addr);
+    /**
+     * TEST CODE
 
-    // Initialize the terminal driver
-    terminal_open(NULL);
+    fs_test(); // Test the filesystem
 
-    // Temporary function for running filesystem test cases
-    //fs_test();
+    // Test the terminal driver
+    int32_t result;
+    uint8_t input_buffer[256];
+    memset(input_buffer, 0x00, sizeof(input_buffer));
+    while((result = terminal_read(0, input_buffer, 256)) > 0) {
+        printf("Read %d bytes\n", result);
+        printf("Read: %s", input_buffer);
+        memset(input_buffer, 0x00, sizeof(input_buffer));
+    }
 
     // Test handling of page faults (uncomment for page fault)
-    //printf("%s\n", 0xDEADBEEF);
+    printf("%s\n", 0xDEADBEEF);
+     */
 
     /* Execute the first program (`shell') ... */
 

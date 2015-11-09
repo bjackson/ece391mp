@@ -5,12 +5,17 @@
 #include "terminal.h"
 #include "../lib.h"
 
-static volatile uint8_t read_ready;
+// Holds the current line of input
 static uint8_t keyboard_buffer[KEYBOARD_BUFFER_SIZE];
+
+// Holds a copy of the previous line of input (after hitting enter)
 static uint8_t read_buffer[KEYBOARD_BUFFER_SIZE];
 
 // Tracks the index of the next character to be inserted
 static uint32_t keyboard_buffer_index;
+
+// Indicates whether the read_buffer is ready to be read from
+static volatile uint8_t read_ready;
 
 /**
  *
@@ -27,34 +32,38 @@ int32_t terminal_open(const uint8_t* filename) {
 
 /**
  *
+ */
 int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
-    // Clear read buffer from previous calls
     memset(read_buffer, 0x00, sizeof(read_buffer));
 
-    memset(buf, '\0', nbytes);
-
-    uint32_t bufferIndex = 0;
-
+    // Wait for read_ready to be set
     uint32_t spin = 0;
-    while (readyToRead != TRUE) {
+    while (!read_ready) {
         spin++;
     }
 
-    while (bufferIndex <= KEYBOARD_BUFFER_SIZE - 1 && bufferIndex < nbytes) {
-        read_buffer[bufferIndex] = keyboard_buffer[bufferIndex];
-        buf[bufferIndex] = keyboard_buffer[bufferIndex];
-        if (keyboard_buffer[bufferIndex] == '\n') {
-            bufferIndex++;
-            break;
+    int32_t bytes_to_read = (nbytes > KEYBOARD_BUFFER_SIZE) ?
+        KEYBOARD_BUFFER_SIZE : nbytes;
+
+    cli();
+    int i;
+    for(i = 0; i < bytes_to_read; i++) {
+        uint8_t next = read_buffer[i];
+        buf[i] = next;
+
+        // Stop returning bytes after encountering a newline
+        if(next == '\n') {
+            read_ready = 0;
+            sti();
+            return i + 1;
         }
-        bufferIndex++;
     }
-    keyboard_buffer_index = 0;
-    readyToRead = 0;
-    memset(keyboard_buffer, '\0', 128); // Clear keyboard buffer for new input
-    return bufferIndex;
+
+    read_ready = 0;
+    sti();
+
+    return bytes_to_read;
 }
- */
 
 /**
  *
@@ -67,10 +76,12 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
         // Handle backspace
         if(next == '\b') {
             cli();
+            if(keyboard_buffer_index > 0) {
+                putc('\b');
+            }
             keyboard_buffer_index = (keyboard_buffer_index == 0) ? 0 :
                 --keyboard_buffer_index;
             keyboard_buffer[keyboard_buffer_index] = 0x00;
-            putc('\b');
             sti();
             continue;
         }

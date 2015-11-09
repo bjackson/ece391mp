@@ -178,27 +178,11 @@ void entry (unsigned long magic, unsigned long addr) {
     // Initialize the file system
     fs_init(fs_start_addr);
 
-    // Temporary function for running filesystem test cases
-    fs_test();
-
-    uint8_t largeBuffer[256];
-    //uint8_t tooSmallBuffer[64];
-
+    // Initialize the terminal driver
     terminal_open(NULL);
 
-    terminal_write(0, "Hello!", 0);
-    printf("\n%d\n", terminal_read(0, largeBuffer, 128));
-
-    // terminal_write(0, "Hello there, this is a really long string of text hopefully it will span several lines and I won't have to return to this statement and add more characters. Is this enought? Is it? Is it? Please tell me.\n", 0);
-
-
-    // printf("\n%d\n", terminal_read(0, largeBuffer, 128));
-    // printf("%s", largeBuffer);
-    // printf("\n%d\n", terminal_read(0, largeBuffer, 256));
-    // printf("\n%d\n", terminal_read(0, largeBuffer, 128));
-    // printf("\n%d\n", terminal_read(0, tooSmallBuffer, 64));
-    // printf("\n%d\n", terminal_read(0, tooSmallBuffer, 64));
-    // printf("\n%d\n", terminal_read(0, tooSmallBuffer, 16));
+    // Temporary function for running filesystem test cases
+    //fs_test();
 
     // Test handling of page faults (uncomment for page fault)
     //printf("%s\n", 0xDEADBEEF);
@@ -208,3 +192,4 @@ void entry (unsigned long magic, unsigned long addr) {
     // Spin (nicely, so we don't chew up cycles)
     asm volatile (".1hlt: hlt; jmp .1hlt;");
 }
+

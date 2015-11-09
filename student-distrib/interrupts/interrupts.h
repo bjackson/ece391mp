@@ -9,6 +9,7 @@
 #include "../x86_desc.h"
 #include "../lib.h"
 #include "../devices/i8259.h"
+#include "../tasks.h"
 
 #define MAX_EXCEPTION_ISR 31
 

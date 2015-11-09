@@ -201,12 +201,8 @@ void entry (unsigned long magic, unsigned long addr) {
      */
 
     // Test system calls
-    asm volatile (
-            "movl $5, %%eax;"
-            "int $0x80;"
-            : : : "eax");
-    register int32_t retval asm("eax");
-    printf("Return Value: %d\n", retval);
+    char* arg = "frame1.txt";
+    printf("Return Value: %d\n", debug_do_call(5, (int32_t) (void*) arg, 0, 0));
 
     /* Execute the first program (`shell') ... */
 

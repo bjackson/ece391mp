@@ -129,15 +129,15 @@ write_asm:
     jmp     isr128_sys_done
 
 open_asm:
-    pushl   $0
-    call    sys_open                   # sys_open(NULL);
+    pushl   %ebx                       # ebx: filename
+    call    sys_open                   # sys_open(filename);
     addl    $4, %esp
     movl    %eax, ret_value
     jmp     isr128_sys_done
 
 close_asm:
-    pushl   $0
-    call    sys_close                  # sys_close(0);
+    pushl   %ebx                       # ebx: fd
+    call    sys_close                  # sys_close(fd);
     addl    $4, %esp
     movl    %eax, ret_value
     jmp     isr128_sys_done

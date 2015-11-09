@@ -44,6 +44,11 @@ extern int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
  *
  */
 extern int32_t sys_open(const uint8_t* filename) {
+    if(filename == NULL) {
+        printf("open: NULL filename\n");
+        return -1;
+    }
+
     dentry_t dentry;
     if(read_dentry_by_name(filename, &dentry) == -1) {
         printf("open: Named file does not exist\n");
@@ -87,7 +92,13 @@ extern int32_t sys_open(const uint8_t* filename) {
             kernel_file_array[i] = file;
 
             // Pass-through to specific open() function
-            return file.open(filename);
+            if(file.open(filename) == -1) {
+                printf("open: specific open() function failed\n");
+                return -1;
+            }
+
+            // Return newly allocated file descriptor
+            return i;
         }
     }
 
@@ -135,3 +146,18 @@ extern int32_t sys_vidmap(uint8_t** screen_start) {
     return -1;
 }
 
+/**
+ *
+ */
+int32_t debug_do_call(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3) {
+    asm volatile (
+            "pushl %%ebx;"
+            "movl 12(%%esp), %%eax;"
+            "movl 16(%%esp), %%ebx;"
+            "movl 20(%%esp), %%ecx;"
+            "movl 24(%%esp), %%edx;"
+            "int $0x80;"
+            "popl %%ebx;" : : );
+    register int32_t retval asm("eax");
+    return retval;
+}

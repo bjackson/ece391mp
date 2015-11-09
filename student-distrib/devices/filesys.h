@@ -1,5 +1,5 @@
 /**
- * filesys.h - <description here>
+ * filesys.h
  * vim:ts=4 expandtab
  */
 
@@ -8,6 +8,7 @@
 
 #include "../types.h"
 #include "../lib.h"
+#include "../tasks.h"
 
 #define FS_BLOCK_SIZE 4096
 #define FS_FNAME_LEN 32
@@ -54,7 +55,7 @@ int32_t fs_open(const uint8_t* fname);
 int32_t fs_close(int32_t fd);
 
 //
-int32_t fs_read(int32_t fd, uint8_t* buf, int32_t nbytes);
+int32_t fs_read(int32_t fd, void* buf, int32_t nbytes);
 
 //
 int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes);

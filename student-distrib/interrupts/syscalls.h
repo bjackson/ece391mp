@@ -8,6 +8,9 @@
 
 #include "../types.h"
 #include "../lib.h"
+#include "../devices/filesys.h"
+#include "../tasks.h"
+#include "../devices/rtc.h"
 
 //
 extern int32_t sys_halt(uint8_t status);

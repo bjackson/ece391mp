@@ -4,6 +4,7 @@
  */
 #include "terminal.h"
 #include "../lib.h"
+#include "../tasks.h"
 
 // Holds the current line of input
 static uint8_t keyboard_buffer[KEYBOARD_BUFFER_SIZE];
@@ -33,7 +34,12 @@ int32_t terminal_open(const uint8_t* filename) {
 /**
  *
  */
-int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
+int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
+    if(fd != STDIN_FD) {
+        printf("terminal_read: Invalid file descriptor\n");
+        return -1;
+    }
+
     memset(read_buffer, 0x00, sizeof(read_buffer));
 
     // Wait for read_ready to be set
@@ -49,7 +55,7 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
     int i;
     for(i = 0; i < bytes_to_read; i++) {
         uint8_t next = read_buffer[i];
-        buf[i] = next;
+        ((uint8_t*) buf)[i] = next;
 
         // Stop returning bytes after encountering a newline
         if(next == '\n') {
@@ -69,6 +75,11 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes) {
  *
  */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
+    if(fd != STDOUT_FD) {
+        printf("terminal_write: Invalid file descriptor\n");
+        return -1;
+    }
+
     int i;
     for(i = 0; i < nbytes; i++) {
         uint8_t next = ((uint8_t*) buf)[i];
@@ -80,7 +91,7 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
                 putc('\b');
             }
             keyboard_buffer_index = (keyboard_buffer_index == 0) ? 0 :
-                --keyboard_buffer_index;
+                keyboard_buffer_index - 1;
             keyboard_buffer[keyboard_buffer_index] = 0x00;
             sti();
             continue;

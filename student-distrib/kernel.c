@@ -8,6 +8,7 @@
 #include "devices/i8259.h"
 #include "interrupts/interrupts.h"
 #include "paging.h"
+#include "tasks.h"
 #include "devices/rtc.h"
 #include "devices/terminal.h"
 #include "devices/filesys.h"
@@ -170,6 +171,8 @@ void entry (unsigned long magic, unsigned long addr) {
     init_paging(); // Initialize paging
 
     init_rtc(); // Initialize RTC
+
+    init_kernel_file_array(); // Init file descriptor array for the kernel
 
     fs_init(fs_start_addr); // Initialize the file system
 

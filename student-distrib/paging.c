@@ -19,10 +19,10 @@ void init_paging() {
     register_page_table(0, kernel_page_table, ACCESS_ALL);
 
     // Map page for video memory in kernel page table
-    map_page(kernel_page_table, VIDEO, VIDEO, ACCESS_ALL);
+    map_page(kernel_page_table, ((void*) VIDEO), ((void*) VIDEO), ACCESS_ALL);
 
     // Map large page for kernel code
-    map_large_page(FOUR_MB, FOUR_MB, ACCESS_SUPER);
+    map_large_page(((void*) FOUR_MB), ((void*) FOUR_MB), ACCESS_SUPER);
 
     // Enable paging - from OSDev guide at http://wiki.osdev.org/Paging
     asm volatile (

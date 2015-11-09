@@ -197,6 +197,14 @@ void entry (unsigned long magic, unsigned long addr) {
     printf("%s\n", 0xDEADBEEF);
      */
 
+    // Test system calls
+    asm volatile (
+            "movl $5, %%eax;"
+            "int $0x80;"
+            : : : "eax");
+    register int32_t retval asm("eax");
+    printf("Return Value: %d\n", retval);
+
     /* Execute the first program (`shell') ... */
 
     // Spin (nicely, so we don't chew up cycles)

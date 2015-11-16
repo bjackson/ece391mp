@@ -130,7 +130,7 @@ void restore_parent_paging(uint32_t pid, uint32_t parent_pid) {
     set_page_dir(parent_pid);
 
     // Clear paging structures of old process
-    memset(page_dirs[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
-    memset(page_tables[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
+    //memset(page_dirs[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
+    //memset(page_tables[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
 }
 

@@ -20,18 +20,26 @@ int32_t sys_halt(uint8_t status) {
     }
     pcb_t pcb = *pcb_ptr;
 
-    // Restore parent's paging
-    restore_parent_paging(pcb.pid, pcb.parent_pid);
-
     // Clear pcb structure
     memset(get_pcb_ptr(), 0x00, sizeof(pcb_t));
 
     // Free up PID for future use
     pid_use_array[pcb.pid] = 0;
 
+    // Write TSS with parent process's kernel stack
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = ((8 * MB) - ((pcb.parent_pid) * (8 * KB)) - 4);
+
+    // Save old ESP and EBP in registers
+    register uint32_t old_esp = pcb.old_esp;
+    register uint32_t old_ebp = pcb.old_ebp;
+
+    // Restore parent's paging
+    restore_parent_paging(pcb.pid, pcb.parent_pid);
+
     // Restore parent's ESP/EBP
-    asm volatile ("movl %0, %%esp;"::"r"(pcb.old_esp));
-    asm volatile ("movl %0, %%ebp;"::"r"(pcb.old_ebp));
+    asm volatile ("movl %0, %%esp;"::"r"(old_esp));
+    asm volatile ("movl %0, %%ebp;"::"r"(old_ebp));
     asm volatile ("jmp halt_ret_lbl;");
 
     // This function should never return to the caller

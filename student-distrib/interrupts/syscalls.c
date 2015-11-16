@@ -29,7 +29,7 @@ int32_t sys_execute(const uint8_t* command) {
     memset(executable_fname, 0x00, FS_FNAME_LEN);
     int i = 0;
     while(1) {
-        if(command[i] == 0x0 || command[i] == ' ') {
+        if(command[i] == 0x00 || command[i] == ' ') {
             break;
         }
         executable_fname[i] = command[i];
@@ -54,14 +54,14 @@ int32_t sys_execute(const uint8_t* command) {
     }
 
     // Check for presence of magic number in header
-    if(((uint32_t*) header)[0] != EXE_HEADER_MAGIC) {
+    if(((uint32_t*) header)[EXE_HEADER_MAGICNUM_IDX] != EXE_HEADER_MAGIC) {
         printf("execute: Magic number not present\n");
         sys_close(fd);
         return -1;
     }
 
     // Get code entry point from header
-    uint32_t entry_point = ((uint32_t*) header)[6];
+    uint32_t entry_point = ((uint32_t*) header)[EXE_HEADER_ENTRY_IDX];
 
     int new_pid;
     for(new_pid = 1; new_pid <= MAX_TASKS; new_pid++) {

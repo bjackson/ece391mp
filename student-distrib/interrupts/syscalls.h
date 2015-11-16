@@ -13,8 +13,10 @@
 #include "../devices/rtc.h"
 #include "../paging.h"
 
-#define EXE_HEADER_LEN 40
-#define EXE_HEADER_MAGIC 0x464C457F
+#define EXE_HEADER_LEN            40
+#define EXE_HEADER_MAGIC          0x464C457F
+#define EXE_HEADER_ENTRY_IDX      6
+#define EXE_HEADER_MAGICNUM_IDX   0
 
 #define SYSCALL_HALT_NUM          1
 #define SYSCALL_EXECUTE_NUM       2

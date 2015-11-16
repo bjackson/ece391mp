@@ -111,19 +111,19 @@ execute_asm:
     jmp     isr128_sys_done
 
 read_asm:
-    pushl   $0
-    pushl   $0
-    pushl   $0
-    call    sys_read                   # sys_read(0, NULL, 0);
+    pushl   %edx                       # edx: nbytes
+    pushl   %ecx                       # ecx: buf
+    pushl   %ebx                       # ebx: fd
+    call    sys_read                   # sys_read(fd, buf, nbytes);
     addl    $12, %esp
     movl    %eax, ret_value
     jmp     isr128_sys_done
 
 write_asm:
-    pushl   $0
-    pushl   $0
-    pushl   $0
-    call    sys_write                  # sys_write(0, NULL, 0);
+    pushl   %edx                       # edx: nbytes
+    pushl   %ecx                       # ecx: buf
+    pushl   %ebx                       # ebx: fd
+    call    sys_write                  # sys_write(fd, buf, nbytes);
     addl    $12, %esp
     movl    %eax, ret_value
     jmp     isr128_sys_done

@@ -74,3 +74,11 @@ void init_pcb(uint32_t pid) {
     void* pcb_mem_location = (void*) ((8 * MB) - (pid * (8 * KB)));
     memcpy(pcb_mem_location, &pcb, sizeof(pcb_t));
 }
+
+/**
+ *
+ */
+pcb_t* get_pcb_ptr() {
+    register uint32_t esp asm ("esp");
+    return (pcb_t*) (esp & 0xFFFFE000);
+}

@@ -44,4 +44,7 @@ void init_kernel_file_array();
 //
 void init_pcb(uint32_t pid);
 
+//
+pcb_t* get_pcb_ptr();
+
 #endif // TASKS_H

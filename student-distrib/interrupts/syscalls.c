@@ -141,18 +141,17 @@ int32_t sys_execute(const uint8_t* command) {
  *
  */
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
-    printf("Read!\n");
-    while(1);
-    return -1;
+    sti(); // Enable further interrupts
+    file_desc_t file = get_pcb_ptr()->file_array[fd];
+    return file.read(fd, buf, nbytes);
 }
 
 /**
  *
  */
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
-    printf("Write!\n");
-    while(1);
-    return -1;
+    file_desc_t file = get_pcb_ptr()->file_array[fd];
+    return file.write(fd, buf, nbytes);
 }
 
 /**

@@ -8,6 +8,9 @@
 // File descriptor table used by the kernel (will probably be moved later)
 file_desc_t kernel_file_array[FILE_ARRAY_SIZE];
 
+// If PID in use, pid_use_array[pid] = 1, 0 otherwise
+uint32_t pid_use_array[MAX_TASKS + 1] = {0};
+
 /**
  *
  */
@@ -40,7 +43,7 @@ void init_kernel_file_array() {
 /**
  *
  */
-void init_pcb(uint32_t pid) {
+pcb_t* init_pcb(uint32_t pid) {
     pcb_t pcb;
     memset(&pcb, 0x00, sizeof(pcb_t));
 
@@ -73,12 +76,34 @@ void init_pcb(uint32_t pid) {
     // Place into memory
     void* pcb_mem_location = (void*) ((8 * MB) - (pid * (8 * KB)));
     memcpy(pcb_mem_location, &pcb, sizeof(pcb_t));
+
+    return (pcb_t*) pcb_mem_location;
 }
 
 /**
  *
  */
 pcb_t* get_pcb_ptr() {
-    register uint32_t esp asm ("esp");
-    return (pcb_t*) (esp & 0xFFFFE000);
+
+    /*
+     * We only want to return the pcb pointer if are running a process. If
+     * this function is called by the kernel before starting the shell, it will
+     * return NULL
+     */
+    int i;
+    for(i = 1; i <= MAX_TASKS; i++) {
+        if(pid_use_array[i] != 0) {
+            register uint32_t esp asm ("esp");
+            return (pcb_t*) (esp & 0xFFFFE000);
+        }
+    }
+    return NULL;
+}
+
+/**
+ *
+ */
+file_desc_t* get_file_array() {
+    pcb_t* pcb = get_pcb_ptr();
+    return (pcb == NULL) ? kernel_file_array : pcb->file_array;
 }

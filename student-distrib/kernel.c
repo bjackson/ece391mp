@@ -199,12 +199,13 @@ void entry (unsigned long magic, unsigned long addr) {
 
     // Test handling of page faults (uncomment for page fault)
     printf("%s\n", 0xDEADBEEF);
-
      */
 
     /* Execute the first program (`shell') ... */
-    //sys_execute("hello");
-    sys_execute("shell");
+    sys_execute("hello");
+    //sys_execute("shell");
+
+    printf("Reached EOK (end-of-kernel)\n");
 
     // Spin (nicely, so we don't chew up cycles)
     asm volatile (".1hlt: hlt; jmp .1hlt;");

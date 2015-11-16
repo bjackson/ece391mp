@@ -53,7 +53,7 @@ int32_t fs_close(int32_t fd) {
  *
  */
 int32_t fs_read(int32_t fd, void* buf, int32_t nbytes) {
-    file_desc_t* file = &kernel_file_array[fd];
+    file_desc_t* file = &(get_file_array()[fd]);
 
     if((file->flags & 0x1) == 0) {
         printf("fs_read: Specified file is closed\n");
@@ -69,7 +69,7 @@ int32_t fs_read(int32_t fd, void* buf, int32_t nbytes) {
  *
  */
 int32_t fs_dir_read(int32_t fd, void* buf, int32_t nbytes) {
-    file_desc_t* file = &kernel_file_array[fd];
+    file_desc_t* file = &(get_file_array()[fd]);
 
     if((file->flags & 0x1) == 0) {
         printf("fs_dir_read: Specified file is closed\n");
@@ -168,7 +168,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
  *
  */
 int32_t fs_len(int32_t fd) {
-    file_desc_t* file = &kernel_file_array[fd];
+    file_desc_t* file = &(get_file_array()[fd]);
 
     if((file->flags & 0x1) == 0) {
         printf("fs_len: Specified file is closed\n");
@@ -183,7 +183,7 @@ int32_t fs_len(int32_t fd) {
  *
  */
 int32_t fs_seek(int32_t fd, uint32_t pos) {
-    file_desc_t* file = &kernel_file_array[fd];
+    file_desc_t* file = &(get_file_array()[fd]);
 
     if((file->flags & 0x1) == 0) {
         printf("fs_seek: Specified file is closed\n");

@@ -7,9 +7,7 @@
 
 // Declared in tasks.c
 extern file_desc_t kernel_file_array[FILE_ARRAY_SIZE];
-
-// If PID in use, pid_use_array[pid] = 1, 0 otherwise
-static uint32_t pid_use_array[MAX_TASKS + 1] = {0};
+extern uint32_t pid_use_array[MAX_TASKS + 1];
 
 /**
  *
@@ -46,8 +44,7 @@ int32_t sys_execute(const uint8_t* command) {
     // Read the executable file header
     uint8_t header[EXE_HEADER_LEN];
     memset(header, 0x00, EXE_HEADER_LEN);
-    //if(sys_read(fd, header, EXE_HEADER_LEN) == -1) {
-    if(fs_read(fd, header, EXE_HEADER_LEN) == -1) {
+    if(sys_read(fd, header, EXE_HEADER_LEN) == -1) {
         printf("execute: Can't read executable header\n");
         sys_close(fd);
         return -1;
@@ -88,19 +85,30 @@ int32_t sys_execute(const uint8_t* command) {
     // Set up paging structures for new process
     init_task_paging(new_pid);
 
+    // Fetch old PCB structure (or NULL if we're running pre-task kernel)
+    pcb_t* old_pcb = get_pcb_ptr();
+
     // Load program image into memory from the file system
     void* program_image_mem = (void*) 0x08048000;
-    //if(sys_read(fd, program_image_mem, fs_len(fd)) == -1) {
-    if(fs_read(fd, program_image_mem, fs_len(fd)) == -1) {
+    if(sys_read(fd, program_image_mem, fs_len(fd)) == -1) {
         printf("execute: Program loader read failed\n");
         sys_close(fd);
-        //TODO: Restore paging
+        restore_parent_paging(new_pid, (old_pcb == NULL) ? KERNEL_PID : old_pcb->pid);
+        return -1;
+    }
+
+    // Close executable file, as it is now in memory
+    if(sys_close(fd) == -1) {
+        printf("execute: Couldn't close executable file\n");
+        restore_parent_paging(new_pid, (old_pcb == NULL) ? KERNEL_PID : old_pcb->pid);
         return -1;
     }
 
     // Set up process control block
-    init_pcb(new_pid);
+    pcb_t* new_pcb = init_pcb(new_pid);
 
+    // Mark PID as used
+    pid_use_array[new_pid] = 1;
 
     // Initiate Context Switch
 
@@ -108,7 +116,12 @@ int32_t sys_execute(const uint8_t* command) {
     tss.ss0 = KERNEL_DS;
     tss.esp0 = ((8 * MB) - ((new_pid - 1) * (8 * KB)) - 4);
 
-    //TODO: Save current esp/ebp or anything else in PCB
+    // Save esp/ebp and the parent PID in the PCB
+    new_pcb->parent_pid = (old_pcb == NULL) ? KERNEL_PID : old_pcb->pid;
+    register uint32_t esp asm ("esp");
+    new_pcb->old_esp = esp;
+    register uint32_t ebp asm ("ebp");
+    new_pcb->old_ebp = ebp;
 
     // Load USER_DS into stack segment selectors
     asm volatile ("movw %w0, %%ax;"::"r"(USER_DS));
@@ -141,8 +154,8 @@ int32_t sys_execute(const uint8_t* command) {
  *
  */
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
+    file_desc_t file = get_file_array()[fd];
     sti(); // Enable further interrupts
-    file_desc_t file = get_pcb_ptr()->file_array[fd];
     return file.read(fd, buf, nbytes);
 }
 
@@ -150,7 +163,7 @@ int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
  *
  */
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
-    file_desc_t file = get_pcb_ptr()->file_array[fd];
+    file_desc_t file = get_file_array()[fd];
     return file.write(fd, buf, nbytes);
 }
 
@@ -169,9 +182,11 @@ int32_t sys_open(const uint8_t* filename) {
         return -1;
     }
 
+    file_desc_t* file_array = get_file_array();
+
     int i;
     for(i = 2; i < FILE_ARRAY_SIZE; i++) {
-        file_desc_t file = kernel_file_array[i];
+        file_desc_t file = file_array[i];
 
         // Check if file descriptor is unused
         if((file.flags & 0x1) == 0) {
@@ -198,12 +213,12 @@ int32_t sys_open(const uint8_t* filename) {
                 file.close = fs_close;
             } else {
                 memset(&file, 0x00, sizeof(file_desc_t));
-                kernel_file_array[i] = file;
+                file_array[i] = file;
                 printf("open: Invalid dentry type\n");
                 return -1;
             }
 
-            kernel_file_array[i] = file;
+            file_array[i] = file;
 
             // Pass-through to specific open() function
             if(file.open(filename) == -1) {
@@ -229,12 +244,14 @@ int32_t sys_close(int32_t fd) {
         return -1;
     }
 
-    file_desc_t file = kernel_file_array[fd];
+    file_desc_t* file_array = get_file_array();
+
+    file_desc_t file = file_array[fd];
     if(file.flags & 0x1) {
         // Remove the file descriptor from the file array
         file_desc_t empty;
         memset(&empty, 0x00, sizeof(file_desc_t));
-        kernel_file_array[fd] = empty;
+        file_array[fd] = empty;
 
         // Pass-through to specific close() function
         return file.close(fd);

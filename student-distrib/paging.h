@@ -90,4 +90,7 @@ void init_task_paging(uint32_t pid);
 //
 void set_page_dir(uint32_t pid);
 
+//
+void restore_parent_paging(uint32_t pid, uint32_t parent_pid);
+
 #endif /* PAGING_H */

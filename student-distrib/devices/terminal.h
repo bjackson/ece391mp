@@ -22,6 +22,9 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes);
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes);
 
 //
+int32_t terminal_write_key(uint8_t key);
+
+//
 void terminal_clear();
 
 #endif /* TERMINAL_H */

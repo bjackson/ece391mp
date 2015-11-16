@@ -201,8 +201,10 @@ void entry (unsigned long magic, unsigned long addr) {
     printf("%s\n", 0xDEADBEEF);
      */
 
-    // Execute the first program
-    do_syscall(SYSCALL_EXECUTE_NUM, (uint32_t) "hello", 0, 0);
+    // Always execute a shell
+    for(;;) {
+        do_syscall(SYSCALL_EXECUTE_NUM, (uint32_t) "shell", 0, 0);
+    }
 
     // We should never reach here, other than in debugging
     printf("Reached EOK (end-of-kernel)\n");

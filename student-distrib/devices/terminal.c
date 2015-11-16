@@ -83,39 +83,6 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
     int i;
     for(i = 0; i < nbytes; i++) {
         uint8_t next = ((uint8_t*) buf)[i];
-
-        // Handle backspace
-        if(next == '\b') {
-            cli();
-            if(keyboard_buffer_index > 0) {
-                putc('\b');
-            }
-            keyboard_buffer_index = (keyboard_buffer_index == 0) ? 0 :
-                keyboard_buffer_index - 1;
-            keyboard_buffer[keyboard_buffer_index] = 0x00;
-            sti();
-            continue;
-        }
-
-        // Handle enter
-        if(next == '\n') {
-            cli();
-            keyboard_buffer[keyboard_buffer_index] = '\n';
-            memcpy(read_buffer, keyboard_buffer, sizeof(keyboard_buffer));
-            memset(keyboard_buffer, 0x00, KEYBOARD_BUFFER_SIZE);
-            keyboard_buffer_index = 0;
-            putc('\n');
-            read_ready = 1;
-            sti();
-            continue;
-        }
-
-        // Save at least one character for the line feed
-        if(keyboard_buffer_index == KEYBOARD_BUFFER_SIZE - 1) {
-            return i;
-        }
-
-        keyboard_buffer[keyboard_buffer_index++] = next;
         putc(next);
     }
 
@@ -128,6 +95,47 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
 int32_t terminal_close(int32_t fd) {
   // Terminal should not be allowed to be closed.
   return -1;
+}
+
+/**
+ *
+ */
+int32_t terminal_write_key(uint8_t key) {
+
+    // Handle backspace
+    if(key == '\b') {
+        cli();
+        if(keyboard_buffer_index > 0) {
+            putc('\b');
+        }
+        keyboard_buffer_index = (keyboard_buffer_index == 0) ? 0 :
+            keyboard_buffer_index - 1;
+        keyboard_buffer[keyboard_buffer_index] = 0x00;
+        sti();
+        return 0;
+    }
+
+    // Handle enter
+    if(key == '\n') {
+        cli();
+        keyboard_buffer[keyboard_buffer_index] = '\n';
+        memcpy(read_buffer, keyboard_buffer, sizeof(keyboard_buffer));
+        memset(keyboard_buffer, 0x00, KEYBOARD_BUFFER_SIZE);
+        keyboard_buffer_index = 0;
+        putc('\n');
+        read_ready = 1;
+        sti();
+        return 0;
+    }
+
+    // Save at least one character for the line feed
+    if(keyboard_buffer_index == KEYBOARD_BUFFER_SIZE - 1) {
+        return -1;
+    }
+
+    keyboard_buffer[keyboard_buffer_index++] = key;
+    putc(key);
+    return 0;
 }
 
 /**

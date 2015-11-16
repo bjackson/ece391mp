@@ -213,7 +213,7 @@ void keyboard_isr() {
 
     // Only process make (press) codes and handled codes
     if(scan_code < SCANCODE_MAX && scancodes[scan_code] != '$') {
-        terminal_write(STDOUT_FD, &key, 1);
+        terminal_write_key(key);
     }
 
     send_eoi(KEYBOARD_IRQ);

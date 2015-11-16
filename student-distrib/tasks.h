@@ -30,10 +30,18 @@ typedef struct {
     uint32_t flags;
 } file_desc_t;
 
+typedef struct {
+    uint32_t pid;
+    file_desc_t file_array[FILE_ARRAY_SIZE];
+} pcb_t;
+
 // File descriptor table used by the kernel (will probably be moved later)
 extern file_desc_t kernel_file_array[FILE_ARRAY_SIZE];
 
 //
 void init_kernel_file_array();
+
+//
+void init_pcb(uint32_t pid);
 
 #endif // TASKS_H

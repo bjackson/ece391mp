@@ -37,3 +37,40 @@ void init_kernel_file_array() {
     kernel_file_array[STDOUT_FD] = stdout_kernel;
 }
 
+/**
+ *
+ */
+void init_pcb(uint32_t pid) {
+    pcb_t pcb;
+    memset(&pcb, 0x00, sizeof(pcb_t));
+
+    pcb.pid = pid;
+
+    // Initialize stdin file desctriptor
+    file_desc_t stdin;
+    memset(&stdin, 0x00, sizeof(file_desc_t));
+    stdin.read = terminal_read;
+    stdin.write = terminal_write;
+    stdin.open = terminal_open;
+    stdin.close = terminal_close;
+    stdin.inode_num = 0;
+    stdin.file_pos = 0;
+    stdin.flags = 1; // In-use
+    pcb.file_array[STDIN_FD] = stdin;
+
+    // Initialize kernel stdout file desctriptor
+    file_desc_t stdout;
+    memset(&stdout, 0x00, sizeof(file_desc_t));
+    stdout.read = terminal_read;
+    stdout.write = terminal_write;
+    stdout.open = terminal_open;
+    stdout.close = terminal_close;
+    stdout.inode_num = 0;
+    stdout.file_pos = 0;
+    stdout.flags = 1; // In-use
+    pcb.file_array[STDOUT_FD] = stdout;
+
+    // Place into memory
+    void* pcb_mem_location = (void*) ((8 * MB) - (pid * (8 * KB)));
+    memcpy(pcb_mem_location, &pcb, sizeof(pcb_t));
+}

@@ -74,7 +74,10 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry);
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 
 //
-int32_t filelen(int32_t fd);
+int32_t fs_len(int32_t fd);
+
+//
+int32_t fs_seek(int32_t fd, uint32_t pos);
 
 //
 void fs_test();

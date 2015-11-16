@@ -167,16 +167,31 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 /**
  *
  */
-int32_t filelen(int32_t fd) {
+int32_t fs_len(int32_t fd) {
     file_desc_t* file = &kernel_file_array[fd];
 
     if((file->flags & 0x1) == 0) {
-        printf("filelen: Specified file is closed\n");
+        printf("fs_len: Specified file is closed\n");
         return -1;
     }
 
     inode_t* node = (inode_t*) (fs_inode_start_addr + file->inode_num * FS_BLOCK_SIZE);
     return node->length;
+}
+
+/**
+ *
+ */
+int32_t fs_seek(int32_t fd, uint32_t pos) {
+    file_desc_t* file = &kernel_file_array[fd];
+
+    if((file->flags & 0x1) == 0) {
+        printf("fs_seek: Specified file is closed\n");
+        return -1;
+    }
+
+    file->file_pos = pos;
+    return 0;
 }
 
 void fs_test() {

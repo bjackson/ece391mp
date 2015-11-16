@@ -53,6 +53,13 @@ int32_t sys_execute(const uint8_t* command) {
         return -1;
     }
 
+    // Seek to beginning of executable for program loader
+    if(fs_seek(fd, 0) == -1) {
+        printf("execute: Couldn't seek to beginning of executable\n");
+        sys_close(fd);
+        return -1;
+    }
+
     // Check for presence of magic number in header
     if(((uint32_t*) header)[EXE_HEADER_MAGICNUM_IDX] != EXE_HEADER_MAGIC) {
         printf("execute: Magic number not present\n");
@@ -63,6 +70,9 @@ int32_t sys_execute(const uint8_t* command) {
     // Get code entry point from header
     uint32_t entry_point = ((uint32_t*) header)[EXE_HEADER_ENTRY_IDX];
 
+    cli(); // Begin critical section
+
+    // Search for available PID
     int new_pid;
     for(new_pid = 1; new_pid <= MAX_TASKS; new_pid++) {
         if(pid_use_array[new_pid] == 0) {
@@ -75,19 +85,53 @@ int32_t sys_execute(const uint8_t* command) {
         return -1;
     }
 
+    // Set up paging structures for new process
     init_task_paging(new_pid);
 
-    /*
-    void* program_image_mem = (void*) 0x00048000 + 128MB;
-    //if(sys_read(fd, program_image_mem, filelen(fd)) == -1) {
-    if(fs_read(fd, program_image_mem, filelen(fd)) == -1) {
+    // Load program image into memory from the file system
+    void* program_image_mem = (void*) 0x08048000;
+    //if(sys_read(fd, program_image_mem, fs_len(fd)) == -1) {
+    if(fs_read(fd, program_image_mem, fs_len(fd)) == -1) {
         printf("execute: Program loader read failed\n");
         sys_close(fd);
+        //TODO: Restore paging
         return -1;
     }
 
-    //goto *((void*) entry_point);
-    */
+    // Set up process control block
+    init_pcb(new_pid);
+
+
+    // Initiate Context Switch
+
+    // Write TSS with new process's kernel stack
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = ((8 * MB) - ((new_pid - 1) * (8 * KB)) - 4);
+
+    //TODO: Save current esp/ebp or anything else in PCB
+
+    // Load USER_DS into stack segment selectors
+    asm volatile ("movw %w0, %%ax;"::"r"(USER_DS));
+    asm volatile ("movw %%ax, %%ds;\
+                   movw %%ax, %%es;\
+                   movw %%ax, %%fs;\
+                   movw %%ax, %%gs;":);
+
+    // Push artificial IRET context on stack
+    asm volatile ("pushl %0;"::"r"(USER_DS)); // Stack segment selector
+    asm volatile ("pushl %0;"::"r"((132 * MB) - 4)); // Stack pointer
+    asm volatile ("pushfl;\
+                   popl %%ecx;\
+                   orl  $0x200, %%ecx;\
+                   pushl %%ecx;":); // EFLAGS (with IF set)
+    asm volatile ("pushl %0;"::"r"(USER_CS)); // Code segment selector
+    asm volatile ("pushl %0;"::"r"(entry_point)); // EIP
+
+    // IRET - Going to user mode!
+    asm volatile("iret;");
+
+    //TODO: Put label here for sys_halt
+    //TODO: Sti()?
 
     //sys_close(fd);
     return -1;
@@ -98,6 +142,7 @@ int32_t sys_execute(const uint8_t* command) {
  */
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
     printf("Read!\n");
+    while(1);
     return -1;
 }
 
@@ -106,6 +151,7 @@ int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
  */
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
     printf("Write!\n");
+    while(1);
     return -1;
 }
 

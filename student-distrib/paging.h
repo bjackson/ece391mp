@@ -10,10 +10,6 @@
 
 #define MAX_ENTRIES 1024
 
-#define FOUR_KB (4 * 1024)
-#define FOUR_MB (4 * 1024 * 1024)
-#define MB (1024 * 1024)
-
 #define ACCESS_ALL 1
 #define ACCESS_SUPER 0
 #define GLOBAL 1

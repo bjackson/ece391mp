@@ -15,6 +15,17 @@
 #define EXE_HEADER_LEN 40
 #define EXE_HEADER_MAGIC 0x464C457F
 
+#define SYSCALL_HALT_NUM          1
+#define SYSCALL_EXECUTE_NUM       2
+#define SYSCALL_READ_NUM          3
+#define SYSCALL_WRITE_NUM         4
+#define SYSCALL_OPEN_NUM          5
+#define SYSCALL_CLOSE_NUM         6
+#define SYSCALL_GETARGS_NUM       7
+#define SYSCALL_VIDMAP_NUM        8
+#define SYSCALL_SETHANDLER_NUM    9
+#define SYSCALL_SIGRETURN_NUM     10
+
 //
 int32_t sys_halt(uint8_t status);
 

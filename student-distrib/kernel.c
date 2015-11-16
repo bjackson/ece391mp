@@ -7,6 +7,7 @@
 #include "lib.h"
 #include "devices/i8259.h"
 #include "interrupts/interrupts.h"
+#include "interrupts/syscalls.h"
 #include "paging.h"
 #include "tasks.h"
 #include "devices/rtc.h"
@@ -19,8 +20,6 @@
 
 #define RTC_REGA 0x8A
 #define RTC_REGB 0x8B
-
-#define SYS_CALL_EXECUTE 2
 
 // Check if MAGIC is valid and print the Multiboot information structure pointed by ADDR.
 void entry (unsigned long magic, unsigned long addr) {
@@ -203,7 +202,7 @@ void entry (unsigned long magic, unsigned long addr) {
 
      */
     char* param = "shell";
-    debug_do_call(SYS_CALL_EXECUTE, (uint32_t) (void*) param, 0, 0);
+    debug_do_call(SYSCALL_EXECUTE_NUM, (uint32_t) (void*) param, 0, 0);
 
     /* Execute the first program (`shell') ... */
 

@@ -20,6 +20,8 @@
 #define RTC_REGA 0x8A
 #define RTC_REGB 0x8B
 
+#define SYS_CALL_EXECUTE 2
+
 // Check if MAGIC is valid and print the Multiboot information structure pointed by ADDR.
 void entry (unsigned long magic, unsigned long addr) {
     multiboot_info_t *mbi;
@@ -201,11 +203,10 @@ void entry (unsigned long magic, unsigned long addr) {
 
      */
     char* param = "shell";
-    debug_do_call(2, (uint32_t) (void*) param, 0, 0);
+    debug_do_call(SYS_CALL_EXECUTE, (uint32_t) (void*) param, 0, 0);
 
     /* Execute the first program (`shell') ... */
 
     // Spin (nicely, so we don't chew up cycles)
     asm volatile (".1hlt: hlt; jmp .1hlt;");
 }
-

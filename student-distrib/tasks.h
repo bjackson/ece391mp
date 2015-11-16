@@ -15,6 +15,10 @@
 
 #define FILE_ARRAY_SIZE 8
 
+#define MAX_TASKS 2
+
+#define KERNEL_PID 0
+
 // Struct for file descriptor array entry
 typedef struct {
     int32_t (*read)(int32_t fd, void* buf, int32_t nbytes);

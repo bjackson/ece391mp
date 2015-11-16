@@ -6,14 +6,18 @@
 
 #include "types.h"
 #include "lib.h"
+#include "tasks.h"
 
 #define MAX_ENTRIES 1024
 
 #define FOUR_KB (4 * 1024)
 #define FOUR_MB (4 * 1024 * 1024)
+#define MB (1024 * 1024)
 
 #define ACCESS_ALL 1
 #define ACCESS_SUPER 0
+#define GLOBAL 1
+#define NOT_GLOBAL 0
 
 // Struct for 4KB page directory entries
 typedef union pd_entry_t {
@@ -77,9 +81,17 @@ void init_paging();
 void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access);
 
 // Map a large (4MB) page
-void map_large_page(void* phys, void* virt, uint8_t access);
+void map_large_page(uint32_t* page_dir, void* phys, void* virt,
+        uint8_t access, uint8_t global);
 
 // Register a page directory entry for a 4KB page table
-void register_page_table(uint32_t index, uint32_t* page_table, uint8_t access);
+void register_page_table(uint32_t* page_dir, uint32_t index,
+        uint32_t* page_table, uint8_t access);
+
+//
+void init_task_paging(uint32_t pid);
+
+//
+void set_page_dir(uint32_t pid);
 
 #endif /* PAGING_H */

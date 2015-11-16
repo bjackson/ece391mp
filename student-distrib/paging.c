@@ -5,28 +5,29 @@
  */
 #include "paging.h"
 
-uint32_t page_directory[MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
-uint32_t kernel_page_table[MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
+uint32_t page_dirs[MAX_TASKS][MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
+uint32_t page_tables[MAX_TASKS][MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
 
 /**
  *
  */
 void init_paging() {
-    memset(page_directory, 0x00, sizeof(uint32_t) * MAX_ENTRIES);
-    memset(kernel_page_table, 0x00, sizeof(uint32_t) * MAX_ENTRIES);
+    memset(page_dirs, 0x00, sizeof(uint32_t) * MAX_ENTRIES * MAX_TASKS);
+    memset(page_tables, 0x00, sizeof(uint32_t) * MAX_ENTRIES * MAX_TASKS);
 
     // Kernel page table
-    register_page_table(0, kernel_page_table, ACCESS_ALL);
+    register_page_table(page_dirs[KERNEL_PID], 0, page_tables[KERNEL_PID], ACCESS_SUPER);
 
     // Map page for video memory in kernel page table
-    map_page(kernel_page_table, ((void*) VIDEO), ((void*) VIDEO), ACCESS_ALL);
+    map_page(page_tables[KERNEL_PID], ((void*) VIDEO), ((void*) VIDEO), ACCESS_ALL);
 
     // Map large page for kernel code
-    map_large_page(((void*) FOUR_MB), ((void*) FOUR_MB), ACCESS_SUPER);
+    map_large_page(page_dirs[KERNEL_PID], ((void*) FOUR_MB), ((void*) FOUR_MB),
+            ACCESS_SUPER, GLOBAL);
 
     // Enable paging - from OSDev guide at http://wiki.osdev.org/Paging
     asm volatile (
-            "movl $page_directory, %%eax   /* Load paging directory */      ;"
+            "movl $page_dirs, %%eax        /* Load paging directory */      ;"
             "movl %%eax, %%cr3                                              ;"
 
             "movl %%cr4, %%eax             /* Enable PSE */                 ;"
@@ -60,7 +61,8 @@ void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access) {
 /**
  *
  */
-void map_large_page(void* phys, void* virt, uint8_t access) {
+void map_large_page(uint32_t* page_dir, void* phys, void* virt,
+        uint8_t access, uint8_t global) {
     pd_large_entry_t kernel_pd_entry;
     memset(&kernel_pd_entry, 0x00, sizeof(pd_entry_t));
 
@@ -70,16 +72,17 @@ void map_large_page(void* phys, void* virt, uint8_t access) {
     kernel_pd_entry.write_through = 1;  // Write-Through caching enabled
     kernel_pd_entry.cache_disabled = 0; // Caching not disabled
     kernel_pd_entry.size = 1;           // 4MB pages
-    kernel_pd_entry.global = 0;         // Flush TLB if CR3 is reset
+    kernel_pd_entry.global = global;    // If global, don't flush TLB if CR3 is reset
     kernel_pd_entry.addr = ((uint32_t) phys) >> 22;
 
-    page_directory[((uint32_t) virt) >> 22] = kernel_pd_entry.val;
+    page_dir[((uint32_t) virt) >> 22] = kernel_pd_entry.val;
 }
 
 /**
  *
  */
-void register_page_table(uint32_t index, uint32_t* page_table, uint8_t access) {
+void register_page_table(uint32_t* page_dir, uint32_t index,
+        uint32_t* page_table, uint8_t access) {
     pd_entry_t pd_entry;
     memset(&pd_entry, 0x00, sizeof(pd_entry_t));
 
@@ -90,6 +93,30 @@ void register_page_table(uint32_t index, uint32_t* page_table, uint8_t access) {
     pd_entry.size = 0;            // 4KB pages
     pd_entry.addr = ((uint32_t) page_table) >> 12;
 
-    page_directory[index] = pd_entry.val;
+    page_dir[index] = pd_entry.val;
+}
+
+/**
+ *
+ */
+void init_task_paging(uint32_t pid) {
+    // Register kernel page table
+    register_page_table(page_dirs[pid], 0, page_tables[KERNEL_PID], ACCESS_SUPER);
+
+    // Map large page for kernel code
+    map_large_page(page_dirs[pid], ((void*) FOUR_MB), ((void*) FOUR_MB),
+            ACCESS_SUPER, GLOBAL);
+
+    // Map large page for loading user-level program
+    map_large_page(page_dirs[pid], ((void*) (FOUR_MB + (pid * FOUR_MB))),
+            ((void*) (128 * MB)), ACCESS_ALL, NOT_GLOBAL);
+
+    // Change CR3 register to new paging directory
+    set_page_dir(pid);
+}
+
+void set_page_dir(uint32_t pid) {
+    // Load CR3 with address of page directory for process with pid
+    asm volatile ("movl %0, %%cr3;"::"r"(&(page_dirs[pid])));
 }
 

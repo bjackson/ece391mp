@@ -8,6 +8,9 @@
 // Declared in tasks.c
 extern file_desc_t kernel_file_array[FILE_ARRAY_SIZE];
 
+// If PID in use, pid_use_array[pid] = 1, 0 otherwise
+static uint32_t pid_use_array[MAX_TASKS + 1] = {0};
+
 /**
  *
  */
@@ -60,6 +63,33 @@ int32_t sys_execute(const uint8_t* command) {
     // Get code entry point from header
     uint32_t entry_point = ((uint32_t*) header)[6];
 
+    int new_pid;
+    for(new_pid = 1; new_pid <= MAX_TASKS; new_pid++) {
+        if(pid_use_array[new_pid] == 0) {
+            break;
+        }
+    }
+    if(new_pid == MAX_TASKS + 1) {
+        printf("execute: Reached maximum number of tasks\n");
+        sys_close(fd);
+        return -1;
+    }
+
+    init_task_paging(new_pid);
+
+    /*
+    void* program_image_mem = (void*) 0x00048000 + 128MB;
+    //if(sys_read(fd, program_image_mem, filelen(fd)) == -1) {
+    if(fs_read(fd, program_image_mem, filelen(fd)) == -1) {
+        printf("execute: Program loader read failed\n");
+        sys_close(fd);
+        return -1;
+    }
+
+    //goto *((void*) entry_point);
+    */
+
+    //sys_close(fd);
     return -1;
 }
 

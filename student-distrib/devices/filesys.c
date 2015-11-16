@@ -164,6 +164,21 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     return bytes_read;
 }
 
+/**
+ *
+ */
+int32_t filelen(int32_t fd) {
+    file_desc_t* file = &kernel_file_array[fd];
+
+    if((file->flags & 0x1) == 0) {
+        printf("filelen: Specified file is closed\n");
+        return -1;
+    }
+
+    inode_t* node = (inode_t*) (fs_inode_start_addr + file->inode_num * FS_BLOCK_SIZE);
+    return node->length;
+}
+
 void fs_test() {
     uint8_t buffer[40];
     memset(buffer, 0x00, sizeof(buffer));

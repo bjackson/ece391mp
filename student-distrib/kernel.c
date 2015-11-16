@@ -201,10 +201,9 @@ void entry (unsigned long magic, unsigned long addr) {
     printf("%s\n", 0xDEADBEEF);
 
      */
-    char* param = "shell";
-    debug_do_call(SYSCALL_EXECUTE_NUM, (uint32_t) (void*) param, 0, 0);
 
     /* Execute the first program (`shell') ... */
+    sys_execute("shell");
 
     // Spin (nicely, so we don't chew up cycles)
     asm volatile (".1hlt: hlt; jmp .1hlt;");

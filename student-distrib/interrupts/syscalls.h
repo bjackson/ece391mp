@@ -11,6 +11,7 @@
 #include "../devices/filesys.h"
 #include "../tasks.h"
 #include "../devices/rtc.h"
+#include "../paging.h"
 
 #define EXE_HEADER_LEN 40
 #define EXE_HEADER_MAGIC 0x464C457F

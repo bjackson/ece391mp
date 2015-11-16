@@ -13,8 +13,29 @@ extern uint32_t pid_use_array[MAX_TASKS + 1];
  *
  */
 int32_t sys_halt(uint8_t status) {
-    printf("Halt!\n");
-    return -1;
+    pcb_t* pcb_ptr = get_pcb_ptr();
+    if(pcb_ptr == NULL) {
+        printf("halt: Can't halt the kernel!\n");
+        return -1;
+    }
+    pcb_t pcb = *pcb_ptr;
+
+    // Restore parent's paging
+    restore_parent_paging(pcb.pid, pcb.parent_pid);
+
+    // Clear pcb structure
+    memset(get_pcb_ptr(), 0x00, sizeof(pcb_t));
+
+    // Free up PID for future use
+    pid_use_array[pcb.pid] = 0;
+
+    // Restore parent's ESP/EBP
+    asm volatile ("movl %0, %%esp;"::"r"(pcb.old_esp));
+    asm volatile ("movl %0, %%ebp;"::"r"(pcb.old_ebp));
+    asm volatile ("jmp halt_ret_lbl;");
+
+    // This function should never return to the caller
+    return 0xDEADBEEF;
 }
 
 /**
@@ -114,7 +135,7 @@ int32_t sys_execute(const uint8_t* command) {
 
     // Write TSS with new process's kernel stack
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = ((8 * MB) - ((new_pid - 1) * (8 * KB)) - 4);
+    tss.esp0 = ((8 * MB) - ((new_pid) * (8 * KB)) - 4);
 
     // Save esp/ebp and the parent PID in the PCB
     new_pcb->parent_pid = (old_pcb == NULL) ? KERNEL_PID : old_pcb->pid;
@@ -143,11 +164,10 @@ int32_t sys_execute(const uint8_t* command) {
     // IRET - Going to user mode!
     asm volatile("iret;");
 
-    //TODO: Put label here for sys_halt
-    //TODO: Sti()?
-
-    //sys_close(fd);
-    return -1;
+    // Back from halt()!
+    asm volatile("halt_ret_lbl:");
+    sti();
+    return 0; //TODO: status
 }
 
 /**
@@ -280,15 +300,14 @@ int32_t sys_vidmap(uint8_t** screen_start) {
 /**
  *
  */
-int32_t debug_do_call(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3) {
-    asm volatile (
-            "pushl %%ebx;"
-            "movl 12(%%esp), %%eax;"
-            "movl 16(%%esp), %%ebx;"
-            "movl 20(%%esp), %%ecx;"
-            "movl 24(%%esp), %%edx;"
-            "int $0x80;"
-            "popl %%ebx;" : : );
+int32_t do_syscall(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3) {
+    asm volatile ("pushl %%ebx;\
+                   movl %0, %%eax;\
+                   movl %1, %%ebx;\
+                   movl %2, %%ecx;\
+                   movl %3, %%edx;\
+                   int $0x80;\
+                   popl %%ebx;" :: "g"(number), "g"(arg1), "g"(arg2), "g"(arg3));
     register int32_t retval asm("eax");
     return retval;
 }

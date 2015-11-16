@@ -55,6 +55,6 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes);
 int32_t sys_vidmap(uint8_t** screen_start);
 
 //
-int32_t debug_do_call(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3);
+int32_t do_syscall(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3);
 
 #endif // SYSCALLS_H

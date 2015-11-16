@@ -200,25 +200,25 @@ void fs_test() {
 
     // Open a file and read from it
     int32_t arg = (int32_t) (char*) "frame0.txt";
-    int32_t fd = debug_do_call(5, arg, 0, 0); // open("frame0.txt");
+    int32_t fd = do_syscall(5, arg, 0, 0); // open("frame0.txt");
     if(fd != -1) {
         while(fs_read(fd, buffer, sizeof(buffer) - 1) > 0) {
             printf("%s", buffer);
             memset(buffer, 0x00, sizeof(buffer) - 1);
         }
     }
-    debug_do_call(6, fd, 0, 0); // close(fd);
+    do_syscall(6, fd, 0, 0); // close(fd);
 
     // Open a directory and read from it
     arg = (int32_t) (char*) ".";
-    fd = debug_do_call(5, arg, 0, 0); // open(".");
+    fd = do_syscall(5, arg, 0, 0); // open(".");
     if(fd != -1) {
         while(fs_dir_read(fd, buffer, sizeof(buffer) - 1) > 0) {
             printf("%s\n", buffer);
             memset(buffer, 0x00, sizeof(buffer) - 1);
         }
     }
-    debug_do_call(6, fd, 0, 0); // close(fd);
+    do_syscall(6, fd, 0, 0); // close(fd);
 
     // Disable interrupts and spin forever so the screen isn't cleared
     cli();

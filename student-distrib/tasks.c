@@ -74,7 +74,7 @@ pcb_t* init_pcb(uint32_t pid) {
     pcb.file_array[STDOUT_FD] = stdout;
 
     // Place into memory
-    void* pcb_mem_location = (void*) ((8 * MB) - (pid * (8 * KB)));
+    void* pcb_mem_location = (void*) ((8 * MB) - ((pid + 1) * (8 * KB)));
     memcpy(pcb_mem_location, &pcb, sizeof(pcb_t));
 
     return (pcb_t*) pcb_mem_location;

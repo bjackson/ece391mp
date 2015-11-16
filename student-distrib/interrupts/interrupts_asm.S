@@ -81,12 +81,14 @@ isr_common:
 isr128:
     cli                                # Disable further interrupts
     pusha                              # Push all registers on the stack
+    pushl   $0xDEADBEEF                # Push stack marker
 
     addl    $-1, %eax                  # syscal_num -= 1 (start counting at 0)
 
     cmpl    $7, %eax                   # if (syscall_num <= 7)
     jbe     isr128_valid_num
 
+    addl    $4, %esp                   # Remove stack marker
     popa                               # Restore all registers from the stack
     movl    $-1, %eax                  # Return value: -1 (failed)
     jmp     isr128_return
@@ -97,9 +99,10 @@ isr128_valid_num:
     jmp     *syscall_jump(, %eax, 4)   # Jump to proper syscall
 
 halt_asm:
-    pushl   $0
-    call    sys_halt                   # sys_halt(0);
-    addl    $4, %esp
+    #movz   %bl, %bx
+    pushw   %bx                        # bx: status
+    call    sys_halt                   # sys_halt(status);
+    addl    $2, %esp
     movl    %eax, ret_value
     jmp     isr128_sys_done
 
@@ -158,12 +161,11 @@ vidmap_asm:
 
 isr128_sys_done:
     leave                              # Restore old stack frame
+    add     $4, %esp                   # Remove stack marker
     popa                               # Restore all registers from the stack
     movl    ret_value, %eax            # eax: Return value
 
 isr128_return:
     sti                                # Re-enable interrupts
     iret
-
-
 

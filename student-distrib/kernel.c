@@ -198,7 +198,10 @@ void entry (unsigned long magic, unsigned long addr) {
 
     // Test handling of page faults (uncomment for page fault)
     printf("%s\n", 0xDEADBEEF);
+
      */
+    char* param = "shell";
+    debug_do_call(2, (uint32_t) (void*) param, 0, 0);
 
     /* Execute the first program (`shell') ... */
 

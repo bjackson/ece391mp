@@ -12,6 +12,9 @@
 #include "../tasks.h"
 #include "../devices/rtc.h"
 
+#define EXE_HEADER_LEN 40
+#define EXE_HEADER_MAGIC 0x464C457F
+
 //
 int32_t sys_halt(uint8_t status);
 

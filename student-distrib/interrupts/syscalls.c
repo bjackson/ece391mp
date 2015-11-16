@@ -20,7 +20,46 @@ int32_t sys_halt(uint8_t status) {
  *
  */
 int32_t sys_execute(const uint8_t* command) {
-    printf("Execute!\n");
+    // Copy command until first space as executable
+    //TODO: parse args for getargs syscall
+    uint8_t executable_fname[FS_FNAME_LEN];
+    memset(executable_fname, 0x00, FS_FNAME_LEN);
+    int i = 0;
+    while(1) {
+        if(command[i] == 0x0 || command[i] == ' ') {
+            break;
+        }
+        executable_fname[i] = command[i];
+        i++;
+    }
+
+    // Open the executable file
+    int fd = sys_open(executable_fname);
+    if(fd == -1) {
+        printf("execute: Filename invalid\n");
+        return -1;
+    }
+
+    // Read the executable file header
+    uint8_t header[EXE_HEADER_LEN];
+    memset(header, 0x00, EXE_HEADER_LEN);
+    //if(sys_read(fd, header, EXE_HEADER_LEN) == -1) {
+    if(fs_read(fd, header, EXE_HEADER_LEN) == -1) {
+        printf("execute: Can't read executable header\n");
+        sys_close(fd);
+        return -1;
+    }
+
+    // Check for presence of magic number in header
+    if(((uint32_t*) header)[0] != EXE_HEADER_MAGIC) {
+        printf("execute: Magic number not present\n");
+        sys_close(fd);
+        return -1;
+    }
+
+    // Get code entry point from header
+    uint32_t entry_point = ((uint32_t*) header)[6];
+
     return -1;
 }
 

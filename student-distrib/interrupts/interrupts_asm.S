@@ -104,8 +104,8 @@ halt_asm:
     jmp     isr128_sys_done
 
 execute_asm:
-    pushl   $0
-    call    sys_execute                # sys_execute(NULL);
+    pushl   %ebx                       # ebx: command
+    call    sys_execute                # sys_execute(command);
     addl    $4, %esp
     movl    %eax, ret_value
     jmp     isr128_sys_done

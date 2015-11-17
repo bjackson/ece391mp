@@ -203,7 +203,7 @@ void entry (unsigned long magic, unsigned long addr) {
 
     // Always execute a shell
     for(;;) {
-        do_syscall(SYSCALL_EXECUTE_NUM, (uint32_t) "shell", 0, 0);
+        do_execute((uint8_t *)"shell");
     }
 
     // We should never reach here, other than in debugging

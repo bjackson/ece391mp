@@ -146,8 +146,8 @@ close_asm:
     jmp     isr128_sys_done
 
 getargs_asm:
-    pushl   %ecx
-    pushl   %ebx
+    pushl   %ecx                       # ecx: nbytes
+    pushl   %ebx                       # ebx: buf
     call    sys_getargs                # sys_getargs(NULL, 0);
     addl    $8, %esp
     movl    %eax, ret_value

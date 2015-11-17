@@ -319,12 +319,10 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
     pcb_t *pcb = get_pcb_ptr();
 
     int32_t args_size = strlen((int8_t*)pcb->args);
-    if (args_size > nbytes) {
+    if (args_size + 1 > nbytes) { // Plus one, because need to account for NULL-termination
       printf("sys_getargs: user-supplied buffer is too small. args size: (%d), buffer size: (%d)\n", args_size, nbytes);
       return -1;
     }
-
-
 
     memset(buf, 0x00, nbytes);
     uint32_t i;

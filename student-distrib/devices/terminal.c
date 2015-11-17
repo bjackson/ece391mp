@@ -6,6 +6,9 @@
 #include "../lib.h"
 #include "../tasks.h"
 
+#define NUM_COLS 80
+#define NUM_ROWS 25
+
 // Holds the current line of input
 static uint8_t keyboard_buffer[KEYBOARD_BUFFER_SIZE];
 
@@ -149,5 +152,5 @@ void terminal_clear() {
 
     keyboard_buffer_index = 0;
     read_ready = 0;
+    set_cursor(0, 0);
 }
-

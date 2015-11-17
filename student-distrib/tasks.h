@@ -19,6 +19,8 @@
 
 #define KERNEL_PID 0
 
+#define MAX_ARGS_LENGTH 128
+
 // Struct for file descriptor array entry
 typedef struct {
     int32_t (*read)(int32_t fd, void* buf, int32_t nbytes);
@@ -36,6 +38,7 @@ typedef struct {
     uint32_t parent_pid;
     uint32_t old_esp;
     uint32_t old_ebp;
+    uint8_t args[MAX_ARGS_LENGTH];
 } pcb_t;
 
 // File descriptor table used by the kernel (will probably be moved later)

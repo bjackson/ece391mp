@@ -146,8 +146,8 @@ close_asm:
     jmp     isr128_sys_done
 
 getargs_asm:
-    pushl   $0
-    pushl   $0
+    pushl   %ecx
+    pushl   %ebx
     call    sys_getargs                # sys_getargs(NULL, 0);
     addl    $8, %esp
     movl    %eax, ret_value
@@ -168,4 +168,3 @@ isr128_sys_done:
 isr128_return:
     sti                                # Re-enable interrupts
     iret
-

@@ -54,6 +54,7 @@ int32_t sys_execute(const uint8_t* command) {
     //TODO: parse args for getargs syscall
     uint8_t executable_fname[FS_FNAME_LEN];
     memset(executable_fname, 0x00, FS_FNAME_LEN);
+
     int i = 0;
     while(1) {
         if(command[i] == 0x00 || command[i] == ' ') {
@@ -61,6 +62,18 @@ int32_t sys_execute(const uint8_t* command) {
         }
         executable_fname[i] = command[i];
         i++;
+    }
+
+    uint8_t task_args[MAX_ARGS_LENGTH];
+    memset(task_args, 0x00, MAX_ARGS_LENGTH);
+    // Copy args into task_args
+    int ia = i;
+    if (command[ia] == ' ') {
+      ia++;
+      while (ia < MAX_ARGS_LENGTH && ia < strlen((int8_t*)command) && command[ia] != 0x00) {
+        task_args[ia - i - 1] = command[ia];
+        ia++;
+      }
     }
 
     // Open the executable file
@@ -151,6 +164,9 @@ int32_t sys_execute(const uint8_t* command) {
     new_pcb->old_esp = esp;
     register uint32_t ebp asm ("ebp");
     new_pcb->old_ebp = ebp;
+
+    // Put arguments in task's PCB
+    memcpy(new_pcb->args, task_args, MAX_ARGS_LENGTH);
 
     // Load USER_DS into stack segment selectors
     asm volatile ("movw %w0, %%ax;"::"r"(USER_DS));
@@ -294,7 +310,29 @@ int32_t sys_close(int32_t fd) {
  */
 int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
     printf("Get Args!\n");
-    return -1;
+
+    if (buf == NULL) {
+      printf("sys_getargs: user-supplied buffer is null\n");
+      return -1;
+    }
+
+    pcb_t *pcb = get_pcb_ptr();
+
+    int32_t args_size = strlen((int8_t*)pcb->args);
+    if (args_size > nbytes) {
+      printf("sys_getargs: user-supplied buffer is too small. args size: (%d), buffer size: (%d)\n", args_size, nbytes);
+      return -1;
+    }
+
+
+
+    memset(buf, 0x00, nbytes);
+    uint32_t i;
+    for (i = 0; i < MAX_ARGS_LENGTH && i < nbytes; i++) {
+      buf[i] = pcb->args[i];
+    }
+
+    return 0;
 }
 
 /**

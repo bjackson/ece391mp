@@ -358,6 +358,7 @@ int32_t do_syscall(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3) {
 
 // Execute a command
 // @param command the command to execute
+// @return status code
 int32_t do_execute(uint8_t *command) {
   return do_syscall(SYSCALL_EXECUTE_NUM, (uint32_t) command, 0, 0);
 }

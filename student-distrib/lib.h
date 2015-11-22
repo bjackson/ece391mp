@@ -35,6 +35,15 @@ int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
 void set_cursor(int row, int col);
 
+
+
+#define assert(x)		\
+	do { \
+		if (!(x)) { \
+			printf("[%s:%d] assertion failed: %s\n", __FILE__, __LINE__, #x); \
+		} \
+	} while (0)
+
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit
  * unsigned int */

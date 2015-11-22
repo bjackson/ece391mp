@@ -201,6 +201,7 @@ void entry (unsigned long magic, unsigned long addr) {
     printf("%s\n", 0xDEADBEEF);
      */
 
+
     // Always execute a shell
     for(;;) {
         do_execute((uint8_t *)"shell");

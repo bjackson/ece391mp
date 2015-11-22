@@ -23,7 +23,11 @@ void init_paging() {
 
     // Map large page for kernel code
     map_large_page(page_dirs[KERNEL_PID], ((void*) FOUR_MB), ((void*) FOUR_MB),
-            ACCESS_SUPER, GLOBAL);
+            ACCESS_SUPER, GLOBAL, FALSE);
+
+    // Map E1000 network card into memory
+    map_large_page(page_dirs[KERNEL_PID], ((void*) E1000_BASE),
+            ((void*) E1000_BASE), ACCESS_SUPER, GLOBAL, TRUE);
 
     // Enable paging - from OSDev guide at http://wiki.osdev.org/Paging
     asm volatile (
@@ -62,7 +66,7 @@ void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access) {
  *
  */
 void map_large_page(uint32_t* page_dir, void* phys, void* virt,
-        uint8_t access, uint8_t global) {
+        uint8_t access, uint8_t global, uint8_t cache_disabled) {
     pd_large_entry_t kernel_pd_entry;
     memset(&kernel_pd_entry, 0x00, sizeof(pd_entry_t));
 
@@ -70,7 +74,7 @@ void map_large_page(uint32_t* page_dir, void* phys, void* virt,
     kernel_pd_entry.read_write = 1;     // Read/Write
     kernel_pd_entry.user_supervisor = access;
     kernel_pd_entry.write_through = 1;  // Write-Through caching enabled
-    kernel_pd_entry.cache_disabled = 0; // Caching not disabled
+    kernel_pd_entry.cache_disabled = cache_disabled; // Caching not disabled
     kernel_pd_entry.size = 1;           // 4MB pages
     kernel_pd_entry.global = global;    // If global, don't flush TLB if CR3 is reset
     kernel_pd_entry.addr = ((uint32_t) phys) >> 22;
@@ -105,11 +109,11 @@ void init_task_paging(uint32_t pid) {
 
     // Map large page for kernel code
     map_large_page(page_dirs[pid], ((void*) FOUR_MB), ((void*) FOUR_MB),
-            ACCESS_SUPER, GLOBAL);
+            ACCESS_SUPER, GLOBAL, FALSE);
 
     // Map large page for loading user-level program
     map_large_page(page_dirs[pid], ((void*) (FOUR_MB + (pid * FOUR_MB))),
-            ((void*) (128 * MB)), ACCESS_ALL, NOT_GLOBAL);
+            ((void*) (128 * MB)), ACCESS_ALL, NOT_GLOBAL, FALSE);
 
     // Change CR3 register to new paging directory
     set_page_dir(pid);
@@ -133,4 +137,3 @@ void restore_parent_paging(uint32_t pid, uint32_t parent_pid) {
     //memset(page_dirs[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
     //memset(page_tables[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
 }
-

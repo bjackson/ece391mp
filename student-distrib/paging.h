@@ -7,6 +7,7 @@
 #include "types.h"
 #include "lib.h"
 #include "tasks.h"
+#include "devices/e1000.h"
 
 #define MAX_ENTRIES 1024
 
@@ -78,7 +79,7 @@ void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access);
 
 // Map a large (4MB) page
 void map_large_page(uint32_t* page_dir, void* phys, void* virt,
-        uint8_t access, uint8_t global);
+        uint8_t access, uint8_t global, uint8_t cache_disabled);
 
 // Register a page directory entry for a 4KB page table
 void register_page_table(uint32_t* page_dir, uint32_t index,

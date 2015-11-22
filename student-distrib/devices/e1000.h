@@ -13,16 +13,17 @@
 #define E1000_RCV_PKT_SIZE    2048
 
 // E1000 Registers, defined as offset words from base
-#define E1000_STATUS          0x2
+#define E1000_STATUS          0x8 / 4
 
 
-#define E1000_STATUS_UNINIT          0x80080783
+#define E1000_STATUS_UNINIT   0x80080783
 
 volatile uint32_t *e1000_mmio;
 
 typedef struct __attribute__((packed)) tx_desc
 {
-	uint32_t address;
+	uint32_t bufaddr;
+  uint32_t bufaddr_63_32;
 	uint16_t length;
 	uint8_t cso;
 	uint8_t cmd;
@@ -33,10 +34,23 @@ typedef struct __attribute__((packed)) tx_desc
 
 typedef struct __attribute__((packed)) rcv_desc
 {
-	uint32_t address;
+	uint32_t bufaddr;
+  uint32_t bufaddr_63_32;
 	uint16_t length;
 	uint16_t checksum;
-	uint8_t status;
+  union {
+    struct {
+        uint8_t dd : 1;
+        uint8_t eop : 1;
+        uint8_t ixsm : 1;
+        uint8_t vp : 1;
+        uint8_t rsv : 1;
+        uint8_t tcpcs : 1;
+        uint8_t ipcs : 1;
+        uint8_t pif : 1;
+    };
+    uint8_t status;
+};
 	uint8_t errors;
 	uint16_t special;
 } rcv_desc_t;

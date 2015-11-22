@@ -13,6 +13,7 @@
 #include "devices/rtc.h"
 #include "devices/terminal.h"
 #include "devices/filesys.h"
+#include "devices/e1000.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -177,6 +178,8 @@ void entry (unsigned long magic, unsigned long addr) {
 
     fs_init(fs_start_addr); // Initialize the file system
 
+    e1000_init(); // Initialize network card
+
     terminal_open(NULL); // Initialize the terminal driver
 
     // Enable interrupts
@@ -200,6 +203,10 @@ void entry (unsigned long magic, unsigned long addr) {
     // Test handling of page faults (uncomment for page fault)
     printf("%s\n", 0xDEADBEEF);
      */
+
+     assert_do(3 < 1, {
+       printf("OUCH\n");
+     });
 
 
     // Always execute a shell

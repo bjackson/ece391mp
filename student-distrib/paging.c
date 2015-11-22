@@ -81,6 +81,22 @@ void map_large_page(uint32_t* page_dir, void* phys, void* virt,
 
     page_dir[((uint32_t) virt) >> 22] = kernel_pd_entry.val;
 }
+// Translates a kernel virtual address to a physical address
+// @param virtual virtual address to translate
+// @return physical address
+uint32_t k_virt_to_phys(void* virtual) {
+
+  uint32_t page_idx = (uint32_t) virtual >> 22;
+
+  assert(page_idx < MAX_TASKS);
+
+  uint32_t offset = (uint32_t) virtual & 0x003FFFFF;
+
+  uint32_t phys_addr = ((pd_large_entry_t) page_dirs[KERNEL_PID][page_idx]).addr + offset;
+
+  return phys_addr;
+
+}
 
 /**
  *

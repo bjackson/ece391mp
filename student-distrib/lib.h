@@ -44,6 +44,14 @@ void set_cursor(int row, int col);
 		} \
 	} while (0)
 
+#define assert_do(x, ifnot)		\
+	do { \
+		if (!(x)) { \
+			printf("[%s:%d] assertion failed: %s\n", __FILE__, __LINE__, #x); \
+			ifnot \
+		} \
+	} while (0)
+
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit
  * unsigned int */

@@ -39,3 +39,6 @@
 Makefile.dep
 bootimg
 mp3.img
+
+# Pcap files
+qemu.pcap

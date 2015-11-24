@@ -204,9 +204,15 @@ void entry (unsigned long magic, unsigned long addr) {
     printf("%s\n", 0xDEADBEEF);
      */
 
-     assert_do(3 < 1, {
-       printf("OUCH\n");
-     });
+     uint8_t e1000_test_data[100] = "ILLUSIONS, MICHAEL.";
+
+     e1000_transmit(e1000_test_data, 30);
+
+     e1000_transmit(e1000_test_data, 100);
+
+     e1000_transmit(e1000_test_data, 100);
+
+     e1000_transmit(e1000_test_data, 100);
 
 
     // Always execute a shell

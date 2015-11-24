@@ -96,4 +96,7 @@ void restore_parent_paging(uint32_t pid, uint32_t parent_pid);
 
 uint32_t k_virt_to_phys(void* virtual);
 
+void mmap(uint32_t* page_dir, void* phys, void* virt,
+        uint8_t access, uint8_t global);
+
 #endif /* PAGING_H */

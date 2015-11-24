@@ -26,8 +26,8 @@ void init_paging() {
             ACCESS_SUPER, GLOBAL, FALSE);
 
     // Map E1000 network card into memory
-    map_large_page(page_dirs[KERNEL_PID], ((void*) E1000_BASE),
-            ((void*) E1000_BASE), ACCESS_SUPER, GLOBAL, TRUE);
+    mmap(page_dirs[KERNEL_PID], ((void*) E1000_BASE),
+            ((void*) E1000_BASE), ACCESS_SUPER, GLOBAL);
 
     // Enable paging - from OSDev guide at http://wiki.osdev.org/Paging
     asm volatile (
@@ -68,7 +68,7 @@ void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access) {
 void map_large_page(uint32_t* page_dir, void* phys, void* virt,
         uint8_t access, uint8_t global, uint8_t cache_disabled) {
     pd_large_entry_t kernel_pd_entry;
-    memset(&kernel_pd_entry, 0x00, sizeof(pd_entry_t));
+    memset(&kernel_pd_entry, 0x00, sizeof(pd_large_entry_t));
 
     kernel_pd_entry.present = 1;        // Present
     kernel_pd_entry.read_write = 1;     // Read/Write
@@ -81,6 +81,25 @@ void map_large_page(uint32_t* page_dir, void* phys, void* virt,
 
     page_dir[((uint32_t) virt) >> 22] = kernel_pd_entry.val;
 }
+
+void mmap(uint32_t* page_dir, void* phys, void* virt,
+        uint8_t access, uint8_t global) {
+    pd_large_entry_t kernel_pd_entry;
+    memset(&kernel_pd_entry, 0x00, sizeof(pd_large_entry_t));
+
+    kernel_pd_entry.present = 1;        // Present
+    kernel_pd_entry.read_write = 1;     // Read/Write
+    kernel_pd_entry.user_supervisor = access;
+    kernel_pd_entry.write_through = 0;  // Write-Through caching disabled
+    kernel_pd_entry.cache_disabled = 1; // Caching disabled
+    kernel_pd_entry.size = 1;           // 4MB pages
+    kernel_pd_entry.global = global;    // If global, don't flush TLB if CR3 is reset
+    kernel_pd_entry.addr = ((uint32_t) phys) >> 22;
+
+    page_dir[((uint32_t) virt) >> 22] = kernel_pd_entry.val;
+}
+
+
 // Translates a kernel virtual address to a physical address
 // @param virtual virtual address to translate
 // @return physical address
@@ -92,8 +111,8 @@ uint32_t k_virt_to_phys(void* virtual) {
 
   uint32_t offset = (uint32_t) virtual & 0x003FFFFF;
 
-  uint32_t phys_addr = ((pd_large_entry_t) page_dirs[KERNEL_PID][page_idx]).addr + offset;
-
+  uint32_t phys_addr = (((pd_large_entry_t) page_dirs[KERNEL_PID][page_idx]).addr << 22) + offset;
+  // debug("phys_addr: 0x%x\n", phys_addr);
   return phys_addr;
 
 }

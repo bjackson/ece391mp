@@ -30,7 +30,9 @@
 #define E1000_TCTL_PSP        0x00000008    // pad short packets
 #define E1000_TCTL_CT         0x00000ff0    // collision threshold
 #define E1000_TCTL_COLD       0x003ff000    // collision distance
-#define E1000_TX_STS_DD       0x01          // DD packet status
+#define E1000_TX_STS_DD       0x00000001    // DD packet status
+#define E1000_TX_CMD_RS      0x00000008    // Report Status
+#define E1000_TX_CMD_EOP     0x00000001    // End of Packet
 
 volatile uint32_t *e1000_mmio;
 
@@ -92,5 +94,7 @@ typedef struct __attribute__((packed)) rcv_pkt
 } rcv_pkt_t;
 
 int32_t e1000_init();
+
+int32_t e1000_transmit(uint8_t* data, uint32_t length);
 
 #endif

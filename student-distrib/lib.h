@@ -5,10 +5,16 @@
 #ifndef _LIB_H
 #define _LIB_H
 
+
+#pragma clang diagnostic ignored "-Wincompatible-library-redeclaration"
+
 #include "types.h"
 
 #define TRUE 1
 #define FALSE 0
+
+// Define as 1 to turn on debug messages
+#define KDEBUG 1
 
 #define VIDEO 0xB8000
 
@@ -34,6 +40,22 @@ int32_t bad_userspace_addr(const void* addr, int32_t len);
 int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
 void set_cursor(int row, int col);
+
+
+#ifdef KDEBUG
+	#if KDEBUG == 1
+		#define debug(format, ...)	\
+			do {	\
+				printf("[%s:%d] " format, __FILE__, __LINE__, ## __VA_ARGS__); \
+			} while(0)
+	#else
+		#define debug(format, ...)	\
+			do { } while(0)
+	#endif
+#else
+	#define debug(format, ...)	\
+		do { } while(0)
+#endif
 
 
 

@@ -8,6 +8,7 @@ tx_pkt_t tx_packets[E1000_DESC_SIZE];
 rcv_desc_t rcv_descriptors[E1000_DESC_SIZE] __attribute__ ((aligned (16)));
 rcv_pkt_t rcv_packets[E1000_DESC_SIZE];
 
+
 int32_t e1000_init() {
   //Clear descriptors and packets
   memset(tx_descriptors,  0x00, sizeof(tx_desc_t)  * E1000_DESC_SIZE);
@@ -29,11 +30,17 @@ int32_t e1000_init() {
   // Initialize descriptors
   uint32_t i;
   for (i = 0; i < E1000_DESC_SIZE; i++) {
+    memset(tx_packets[i].buf,  0x00, E1000_TX_PKT_SIZE);
+    memset(rcv_packets[i].buf, 0x00, E1000_TX_PKT_SIZE);
+
     tx_descriptors[i].bufaddr  = k_virt_to_phys(tx_packets[i].buf);
-    tx_descriptors[i].bufaddr_63_32 = 0;
+    // tx_descriptors[i].bufaddr_63_32 = 0;
+
     rcv_descriptors[i].bufaddr = k_virt_to_phys(rcv_packets[i].buf);
     rcv_descriptors[i].bufaddr_63_32 = 0;
-    tx_descriptors[i].status  |= E1000_TX_STS_DD;
+
+    tx_descriptors[i].dd = 1;
+    tx_descriptors[i].rs = 1;
   }
 
   debug("&tx_buff: 0x%x\n", k_virt_to_phys(tx_packets[0].buf));
@@ -42,26 +49,23 @@ int32_t e1000_init() {
   // Initialize TX descriptor registers
   e1000_mmio[E1000_TDBAL] = k_virt_to_phys(tx_descriptors);
   e1000_mmio[E1000_TDBAH] = 0x00;
-  e1000_mmio[E1000_TDLEN] = sizeof(tx_desc_t) * E1000_DESC_SIZE;
+
 
   // Set head and tail (TX)
   e1000_mmio[E1000_TDH] = 0x00;
   e1000_mmio[E1000_TDT] = 0x00;
+  e1000_mmio[E1000_TDLEN] = sizeof(tx_desc_t) * E1000_DESC_SIZE;
 
-  // Initialize TX Control Register
-  // e1000_mmio[E1000_TCTL]  = 0;
-  e1000_mmio[E1000_TCTL] |= E1000_TCTL_EN;
-  e1000_mmio[E1000_TCTL] |= E1000_TCTL_PSP;
-  e1000_mmio[E1000_TCTL] &= ~E1000_TCTL_CT;
-  e1000_mmio[E1000_TCTL] |= (0x10) << 4;
-  e1000_mmio[E1000_TCTL] &= ~E1000_TCTL_COLD;
-  e1000_mmio[E1000_TCTL] |= (0x40) << 12;
+  debug("TDLEN: %d\n", e1000_mmio[E1000_TDLEN]);
 
-  // Initialize TX IPG Register
-  e1000_mmio[E1000_TIPG]  =  0x00;        // Reserved
-  e1000_mmio[E1000_TIPG] |= (0x06) << 20; // IPGR2
-  e1000_mmio[E1000_TIPG] |= (0x04) << 10; // IPGR1
-  e1000_mmio[E1000_TIPG] |=  0x0A;        // IPGT
+  // Init TXCTL register
+  e1000_init_txctl();
+
+  // Initialize TXIPG Register
+  e1000_init_tipg();
+
+  // Initialize RX registers
+  e1000_init_rx();
 
 
   return 0;
@@ -75,24 +79,85 @@ int32_t e1000_transmit(uint8_t* data, uint32_t length) {
   uint32_t tdt_idx = e1000_mmio[E1000_TDT];
 
   // Ensure that queue is not full
-  if (tx_descriptors[tdt_idx].status & E1000_TX_STS_DD) {
-    memset(tx_packets[tdt_idx].buf, 0x00, E1000_TX_PKT_SIZE);
-    memcpy(tx_packets[tdt_idx].buf, data, length);
+  if (tx_descriptors[tdt_idx].dd == 1) {
+    tx_desc_t *desc = &tx_descriptors[tdt_idx];
+    tx_pkt_t *pkt = &tx_packets[tdt_idx];
 
-    debug("tdt: %d, &tx_buff: 0x%x\n", tdt_idx, k_virt_to_phys(tx_packets[tdt_idx].buf));
-    debug("tx_buff: %s\n", tx_packets[tdt_idx].buf);
+    // Clear packet buffer
+    memset(pkt->buf, 0x00, E1000_TX_PKT_SIZE);
 
-    tx_descriptors[tdt_idx].length = length;
+    memcpy(pkt->buf, data, length);
 
-    tx_descriptors[tdt_idx].status &= ~E1000_TX_STS_DD;   // Set descriptor as sent
-    tx_descriptors[tdt_idx].cmd    |= E1000_TX_CMD_RS;
-    tx_descriptors[tdt_idx].cmd    |= E1000_TX_CMD_EOP;  // End of packet
+    // desc->bufaddr = (uint64_t)k_virt_to_phys(pkt->buf);
+    desc->length = length;
 
-    e1000_mmio[E1000_TDT] = (tdt_idx + 1) % E1000_DESC_SIZE; // Cycle through packets
+    debug("tdt: %d, &tx_buff: 0x%x\n", tdt_idx, k_virt_to_phys(pkt->buf));
+    debug("tx_buff: %s\n", pkt->buf);
+    debug("&desc: 0x%x\n", k_virt_to_phys(desc));
+
+    desc->status  = 0;
+    desc->dd      = 0;   // Set descriptor as in use
+    desc->rs      = 1;
+    desc->eop     = 1;  // End of packet
+    desc->special = 0;
+
+    // Update TDT register, which tells e1000
+    // that a new packet is available to transmit
+    tdt_idx = (tdt_idx + 1) % E1000_DESC_SIZE;
+    e1000_mmio[E1000_TDT] = tdt_idx;
   } else {
-    debug("E1000 transmit queue is full.");
+    debug("E1000 transmit queue is full.\n");
     return -1;
   }
+
+  return 0;
+}
+
+int32_t e1000_init_tipg() {
+  uint32_t tipg = 0;
+  tipg  =  0x00;        // Reserved
+  tipg |= (0x06) << 20; // IPGR2
+  tipg |= (0x08) << 10; // IPGR1
+  tipg |=  0x0A;        // IPGT
+
+  e1000_mmio[E1000_TIPG] = tipg;
+
+  return 0;
+}
+
+int32_t e1000_init_txctl() {
+  // uint32_t tctl = 0;
+  // tctl |= E1000_TCTL_EN;
+  // tctl |= E1000_TCTL_PSP;
+  // tctl &= ~E1000_TCTL_CT;
+  // tctl |= (0x10) << 4;
+  // tctl &= ~E1000_TCTL_COLD;
+  // tctl |= (0x40) << 12;
+  tctl_reg_t tctl;
+  tctl.val = 0;
+  tctl.en = 1;
+  tctl.psp = 1;
+  tctl.ct = 0x10;
+  tctl.cold = 0x40;
+
+  e1000_mmio[E1000_TCTL] = tctl.val;
+
+  return 0;
+}
+
+int32_t e1000_init_rx() {
+  e1000_init_rxctl();
+
+  return 0;
+}
+
+int32_t e1000_init_rxctl() {
+  // For the time being, disable RX.
+  uint32_t rctl = 0;
+
+  rctl |= E1000_RCTL_EN; // Enable RX
+
+  e1000_mmio[E1000_RCTL] = rctl;
 
   return 0;
 }

@@ -13,6 +13,7 @@
 #include "../devices/rtc.h"
 #include "../paging.h"
 #include "../x86_desc.h"
+#include "../devices/e1000.h"
 
 #define EXE_HEADER_LEN            40
 #define EXE_HEADER_MAGIC          0x464C457F

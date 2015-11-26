@@ -204,20 +204,26 @@ void entry (unsigned long magic, unsigned long addr) {
     printf("%s\n", 0xDEADBEEF);
      */
 
-     uint8_t e1000_test_data[100] = "ILLUSIONS, MICHAEL.";
+    // int8_t e1000_test_data1[] = "ILLUSIONS, MICHAEL.";
+    // int8_t e1000_test_data2[] = "Bob Loblaw Law Blog";
+    // int8_t e1000_test_data3[] = "You're gonna get some hop-ons.";
+    // int8_t e1000_test_data4[] = "And that's why you always leave a note.";
+    int8_t arp_pkt[] = "\xff\xff\xff\xff\xff\xff\x52\x55\x0a\x00\x02\x02\x08\x06\x00\x01\x08\x00\x06\x04\x00\x01\x52\x55\x0a\x00\x02\x02\x0a\x00\x02\x02\x00\x00\x00\x00\x00\x00\x0a\x00\x02\x0f";
 
-     e1000_transmit(e1000_test_data, 30);
-
-     e1000_transmit(e1000_test_data, 100);
-
-     e1000_transmit(e1000_test_data, 100);
-
-     e1000_transmit(e1000_test_data, 100);
+    // int32_t i;
+    // for (i = 0; i < 70; i++) {
+    //   e1000_transmit((uint8_t *)e1000_test_data1, strlen(e1000_test_data1));
+    // }
+    e1000_transmit((uint8_t *)arp_pkt, strlen(arp_pkt));
+    // e1000_transmit((uint8_t *)e1000_test_data2, strlen(e1000_test_data2));
+    // e1000_transmit((uint8_t *)e1000_test_data3, strlen(e1000_test_data3));
+    // e1000_transmit((uint8_t *)e1000_test_data4, strlen(e1000_test_data4));
 
 
     // Always execute a shell
     for(;;) {
         do_execute((uint8_t *)"shell");
+        e1000_transmit((uint8_t *)arp_pkt, strlen(arp_pkt));
     }
 
     // We should never reach here, other than in debugging

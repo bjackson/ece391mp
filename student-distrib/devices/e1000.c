@@ -30,8 +30,6 @@ int32_t e1000_init() {
   // Initialize descriptors
   uint32_t i;
   for (i = 0; i < E1000_DESC_SIZE; i++) {
-    memset(tx_packets[i].buf,  0x00, E1000_TX_PKT_SIZE);
-    memset(rcv_packets[i].buf, 0x00, E1000_TX_PKT_SIZE);
 
     tx_descriptors[i].bufaddr  = k_virt_to_phys(tx_packets[i].buf);
     // tx_descriptors[i].bufaddr_63_32 = 0;
@@ -114,10 +112,10 @@ int32_t e1000_transmit(uint8_t* data, uint32_t length) {
 }
 
 int32_t e1000_init_tipg() {
-  uint32_t tipg = 0;
+  uint32_t tipg = 0x00;
   tipg  =  0x00;        // Reserved
   tipg |= (0x06) << 20; // IPGR2
-  tipg |= (0x08) << 10; // IPGR1
+  tipg |= (0x04) << 10; // IPGR1
   tipg |=  0x0A;        // IPGT
 
   e1000_mmio[E1000_TIPG] = tipg;

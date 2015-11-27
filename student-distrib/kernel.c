@@ -214,7 +214,7 @@ void entry (unsigned long magic, unsigned long addr) {
     // for (i = 0; i < 70; i++) {
     //   e1000_transmit((uint8_t *)e1000_test_data1, strlen(e1000_test_data1));
     // }
-    e1000_transmit((uint8_t *)arp_pkt, strlen(arp_pkt));
+    // e1000_transmit((uint8_t *)arp_pkt, strlen(arp_pkt));
     // e1000_transmit((uint8_t *)e1000_test_data2, strlen(e1000_test_data2));
     // e1000_transmit((uint8_t *)e1000_test_data3, strlen(e1000_test_data3));
     // e1000_transmit((uint8_t *)e1000_test_data4, strlen(e1000_test_data4));

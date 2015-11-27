@@ -61,10 +61,14 @@ void entry (unsigned long magic, unsigned long addr) {
         int i;
         module_t* mod = (module_t*)mbi->mods_addr;
 
+        fs_start_addr = mod->mod_start;
+
+        printf("fs_start_addr: 0x%x\n", fs_start_addr);
+
         while(mod_count < mbi->mods_count) {
-            if(mod_count == 0) {
-                fs_start_addr = mod->mod_start;
-            }
+            // if(mod_count == 0) {
+            //     fs_start_addr = mod->mod_start;
+            // }
 
             printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
             printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
@@ -199,6 +203,22 @@ void entry (unsigned long magic, unsigned long addr) {
         printf("Read: %s", input_buffer);
         memset(input_buffer, 0x00, sizeof(input_buffer));
     }
+    // Initialize the file system
+    fs_init(fs_start_addr);
+
+    // Enable interrupts
+    sti();
+
+    // Temporary function for running filesystem test cases
+    fs_test();
+
+    //uint8_t largeBuffer[256];
+    //uint8_t tooSmallBuffer[64];
+
+    //terminal_open(NULL);
+
+    //terminal_write(0, "Hello!", 0);
+    //printf("\n%d\n", terminal_read(0, largeBuffer, 128));
 
     // Test handling of page faults (uncomment for page fault)
     printf("%s\n", 0xDEADBEEF);
@@ -210,6 +230,8 @@ void entry (unsigned long magic, unsigned long addr) {
     // int8_t e1000_test_data4[] = "And that's why you always leave a note.";
     int8_t arp_pkt[42] = "\xff\xff\xff\xff\xff\xff\x52\x55\x0a\x00\x02\x02\x08\x06\x00\x01\x08\x00\x06\x04\x00\x01\x52\x55\x0a\x00\x02\x02\x0a\x00\x02\x02\x00\x00\x00\x00\x00\x00\x0a\x00\x02\x0f";
 
+    e1000_transmit((uint8_t *)arp_pkt, 42);
+    e1000_transmit((uint8_t *)arp_pkt, 42);
     e1000_transmit((uint8_t *)arp_pkt, 42);
 
     // Always execute a shell

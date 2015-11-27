@@ -99,4 +99,6 @@ uint32_t k_virt_to_phys(void* virtual);
 void mmap(uint32_t* page_dir, void* phys, void* virt,
         uint8_t access, uint8_t global);
 
+int32_t map_kernel_code(uint32_t pid);
+
 #endif /* PAGING_H */

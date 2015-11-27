@@ -9,8 +9,10 @@
 
 #define NULL 0
 
-#define FOUR_KB (4 * 1024)
-#define FOUR_MB (4 * 1024 * 1024)
+#define FOUR_KB   (4 * 1024)
+#define FOUR_MB   (4 * 1024 * 1024)
+#define EIGHT_MB  (8 * 1024 * 1024)
+#define TWELVE_MB (12 * 1024 * 1024)
 #define KB (1024)
 #define MB (1024 * 1024)
 

@@ -14,6 +14,9 @@ CC=gcc
 LBITS := $(shell getconf LONG_BIT)
 ifeq ($(LBITS), 64)
 	CC += -m32
+	LDFLAGS += -m32
+	CPPFLAGS += -m32
+	ASFLAGS += -m32
 endif
 
 #If you have any .h files in another directory, add -I<dir> to this line

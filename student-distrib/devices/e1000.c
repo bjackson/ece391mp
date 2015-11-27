@@ -2,19 +2,21 @@
 #include "../paging.h"
 #include "../lib.h"
 
-tx_desc_t tx_descriptors[E1000_DESC_SIZE] __attribute__ ((aligned (16)));
-tx_pkt_t tx_packets[E1000_DESC_SIZE];
+volatile tx_desc_t tx_descriptors[E1000_DESC_SIZE] __attribute__ ((aligned (16)));
+volatile tx_pkt_t tx_packets[E1000_DESC_SIZE];
 
-rcv_desc_t rcv_descriptors[E1000_DESC_SIZE] __attribute__ ((aligned (16)));
-rcv_pkt_t rcv_packets[E1000_DESC_SIZE];
+volatile rx_desc_t rx_descriptors[E1000_DESC_SIZE] __attribute__ ((aligned (16)));
+volatile rx_pkt_t rx_packets[E1000_DESC_SIZE];
 
 
 int32_t e1000_init() {
+  // *tx_packets = (tx_pkt_t *)E1000_PKT_LOC;
+  // *rx_packets = (rx_pkt_t *)(E1000_PKT_LOC + (sizeof(tx_pkt_t) * E1000_DESC_SIZE));
   //Clear descriptors and packets
-  memset(tx_descriptors,  0x00, sizeof(tx_desc_t)  * E1000_DESC_SIZE);
-  memset(rcv_descriptors, 0x00, sizeof(rcv_desc_t) * E1000_DESC_SIZE);
-  memset(tx_packets,      0x00, sizeof(tx_pkt_t)   * E1000_DESC_SIZE);
-  memset(rcv_packets,     0x00, sizeof(rcv_pkt_t)  * E1000_DESC_SIZE);
+  memset((void *)tx_descriptors,  0x00, sizeof(tx_desc_t) * E1000_DESC_SIZE);
+  memset((void *)rx_descriptors,  0x00, sizeof(rx_desc_t) * E1000_DESC_SIZE);
+  memset((void *)tx_packets,      0x00, sizeof(tx_pkt_t)  * E1000_DESC_SIZE);
+  memset((void *)rx_packets,      0x00, sizeof(rx_pkt_t)  * E1000_DESC_SIZE);
 
   e1000_mmio = (uint32_t *)E1000_BASE;
 
@@ -31,8 +33,8 @@ int32_t e1000_init() {
   uint32_t i;
   for (i = 0; i < E1000_DESC_SIZE; i++) {
 
-    tx_descriptors[i].bufaddr  = k_virt_to_phys(tx_packets[i].buf);
-    rcv_descriptors[i].bufaddr = k_virt_to_phys(rcv_packets[i].buf);
+    tx_descriptors[i].bufaddr  = k_virt_to_phys((void *)tx_packets[i].buf);
+    rx_descriptors[i].bufaddr = k_virt_to_phys((void *)rx_packets[i].buf);
 
     tx_descriptors[i].dd = 1;
     tx_descriptors[i].rs = 1;
@@ -41,7 +43,7 @@ int32_t e1000_init() {
 
 
   // Initialize TX descriptor registers
-  e1000_mmio[E1000_TDBAL] = k_virt_to_phys(tx_descriptors);
+  e1000_mmio[E1000_TDBAL] = k_virt_to_phys((void *)tx_descriptors);
   e1000_mmio[E1000_TDBAH] = 0x00;
 
   debug("E1000_TDBAL: 0x%x\n", e1000_mmio[E1000_TDBAL]);
@@ -76,8 +78,8 @@ int32_t e1000_transmit(uint8_t* data, uint32_t length) {
 
   // Ensure that queue is not full
   if (tx_descriptors[tdt_idx].dd == 1) {
-    tx_desc_t *desc = &tx_descriptors[tdt_idx];
-    tx_pkt_t *pkt = &tx_packets[tdt_idx];
+    tx_desc_t *desc = (void *)&tx_descriptors[tdt_idx];
+    tx_pkt_t *pkt = (void *)&tx_packets[tdt_idx];
 
     // Clear packet buffer
     memset(pkt->buf, 0x00, E1000_TX_PKT_SIZE);
@@ -87,9 +89,9 @@ int32_t e1000_transmit(uint8_t* data, uint32_t length) {
     // desc->bufaddr = (uint64_t)k_virt_to_phys(pkt->buf);
     desc->length = length;
 
-    debug("tdt: %d, &tx_buff: 0x%x\n", tdt_idx, k_virt_to_phys(pkt->buf));
-    debug("tx_buff: %s\n", pkt->buf);
-    debug("&desc: 0x%x\n", k_virt_to_phys(desc));
+    // debug("tdt: %d, &tx_buff: 0x%x\n", tdt_idx, k_virt_to_phys(pkt->buf));
+    // debug("tx_buff: %s\n", pkt->buf);
+    // debug("&desc: 0x%x\n", k_virt_to_phys(desc));
 
     // desc->status  = 0;
     desc->dd      = 0;   // Set descriptor as in use
@@ -105,6 +107,36 @@ int32_t e1000_transmit(uint8_t* data, uint32_t length) {
   } else {
     debug("E1000 transmit queue is full.\n");
     return -1;
+  }
+
+  return length;
+}
+
+int32_t e1000_receive(uint8_t* data, uint32_t length) {
+  assert_do(length != 0, {
+    return -1;
+  });
+
+  uint32_t rdt_idx = e1000_mmio[E1000_RDT];
+
+  if (rx_descriptors[rdt_idx].dd == 1) {
+    rx_desc_t *desc = (void*)&rx_descriptors[rdt_idx];
+    rx_pkt_t *pkt = (void*)&rx_packets[rdt_idx];
+
+    uint32_t pkt_length = desc->length;
+    if (pkt_length > length) {
+      return -1;
+    }
+
+    memcpy(data, pkt->buf, pkt_length);
+
+    desc->dd = 0;
+    desc->eop = 0;
+
+    rdt_idx = (rdt_idx + 1) % E1000_DESC_SIZE;
+
+    e1000_mmio[E1000_RDT] = rdt_idx;
+    return pkt_length;
   }
 
   return 0;
@@ -143,18 +175,70 @@ int32_t e1000_init_txctl() {
 }
 
 int32_t e1000_init_rx() {
+
+  initialize_MAC_address();
+
+  // Initialize RX descriptor registers
+  e1000_mmio[E1000_RDBAL] = k_virt_to_phys((void *)rx_descriptors);
+  e1000_mmio[E1000_RDBAH] = 0x00;
+
+  debug("E1000_RDBAL: 0x%x\n", e1000_mmio[E1000_RDBAL]);
+
+
+  // Set head and tail (RX)
+  e1000_mmio[E1000_RDLEN] = sizeof(rx_desc_t) * E1000_DESC_SIZE;
+  e1000_mmio[E1000_RDH] = 0x00;
+  e1000_mmio[E1000_RDT] = 0x00;
+
   e1000_init_rxctl();
+
 
   return 0;
 }
 
 int32_t e1000_init_rxctl() {
   // For the time being, disable RX.
-  uint32_t rctl = 0;
+  rctl_reg_t rctl;
+  rctl.val = 0;
 
-  rctl |= E1000_RCTL_EN; // Enable RX
+  rctl.en = 1; // Enable RX
+  rctl.lpe = 1; // Allow long packets
+  rctl.lbm = 0; // Turn off loopback-mode
+  rctl.rdmts = 2; // INT at 1/8 of RDLEN
+  rctl.mo = 0;
+  rctl.bam = 1; // Allow to accept broadcast packets.
+  rctl.bsize = 0; // 2048 byte size packets
 
-  e1000_mmio[E1000_RCTL] = rctl;
+  e1000_mmio[E1000_RCTL] = rctl.val;
+
+  return 0;
+}
+
+uint16_t e1000_read_from_eeprom(uint32_t read_register) {
+  //  31-16  15-8  7-5   4   3-1    0
+  //  Data Address RSV. DONE RSV. START
+  e1000_mmio[E1000_EERD] = read_register << 8; // Address in bits 8-15
+	e1000_mmio[E1000_EERD] |= (E1000_EERD_START);
+
+	while (!(e1000_mmio[E1000_EERD] & E1000_EERD_DONE)) // Wait till finished reading
+  ;
+
+  return (uint16_t)(e1000_mmio[E1000_EERD] >> 16); // Data is in high 16 bits
+}
+
+int32_t initialize_MAC_address() {
+  // Initialize MAC Address
+  uint32_t ral = 0;
+  uint32_t rah = 0;
+
+  ral  = e1000_read_from_eeprom(E1000_EERD_EADDR_12); // Bytes 1-2
+  ral |= (uint32_t)(e1000_read_from_eeprom(E1000_EERD_EADDR_34)) << 16; // Bytes 3-4
+  rah  = e1000_read_from_eeprom(E1000_EERD_EADDR_56); // Bytes 5-6
+
+  e1000_mmio[E1000_RAL] = ral;
+  e1000_mmio[E1000_RAH] = rah;
+
+  debug("E1000 MAC: %x %x\n", ral, rah);
 
   return 0;
 }

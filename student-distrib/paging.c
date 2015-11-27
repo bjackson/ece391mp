@@ -29,6 +29,8 @@ void init_paging() {
     mmap(page_dirs[KERNEL_PID], ((void*) E1000_BASE),
             ((void*) E1000_BASE), ACCESS_SUPER, GLOBAL);
 
+
+
     // Enable paging - from OSDev guide at http://wiki.osdev.org/Paging
     asm volatile (
             "movl $page_dirs, %%eax        /* Load paging directory */      ;"
@@ -143,8 +145,7 @@ void init_task_paging(uint32_t pid) {
     register_page_table(page_dirs[pid], 0, page_tables[KERNEL_PID], ACCESS_SUPER);
 
     // Map large page for kernel code
-    map_large_page(page_dirs[pid], ((void*) FOUR_MB), ((void*) FOUR_MB),
-            ACCESS_SUPER, GLOBAL, FALSE);
+    assert(map_kernel_code(pid) == 0);
 
     // Map large page for loading user-level program
     map_large_page(page_dirs[pid], ((void*) (FOUR_MB + (pid * FOUR_MB))),
@@ -152,6 +153,14 @@ void init_task_paging(uint32_t pid) {
 
     // Change CR3 register to new paging directory
     set_page_dir(pid);
+}
+
+int32_t map_kernel_code(uint32_t pid) {
+  map_large_page(page_dirs[pid], ((void*) FOUR_MB), ((void*) FOUR_MB),
+          ACCESS_SUPER, GLOBAL, FALSE);
+
+
+  return 0;
 }
 
 /**

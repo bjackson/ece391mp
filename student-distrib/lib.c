@@ -3,7 +3,6 @@
  */
 
 #include "lib.h"
-#define VIDEO 0xB8000
 #define NUM_COLS 80
 #define NUM_ROWS 25
 #define ATTRIB 0x7
@@ -13,6 +12,8 @@
 static int screen_x;
 static int screen_y;
 static char* video_mem = (char *)VIDEO;
+
+
 
 /*
 * void clear(void);
@@ -33,6 +34,7 @@ clear(void)
 	screen_x = 0;
 	screen_y = 0;
 }
+
 
 /* Standard printf().
  * Only supports the following format strings:
@@ -200,6 +202,18 @@ void scroll_down(void) {
   }
 }
 
+// Sets the location of the blinking cursor
+// @param row row
+// @param col column
+void set_cursor(int row, int col) {
+  uint16_t position = row * NUM_COLS + col;
+
+  outb(0x0F, 0x3D4);
+  outb((uint8_t)(position & 0xFF), 0x3D5); // Write first part of position
+  outb(0x0E, 0x3D4);
+  outb((uint8_t)((position >> 8) & 0xFF), 0x3D5); // Write second part of position;
+}
+
 /*
 * void putc(uint8_t c);
 *   Inputs: uint_8* c = character to print
@@ -250,6 +264,7 @@ putc(uint8_t c)
         }
 
     }
+    set_cursor(screen_y, screen_x);
 }
 
 /*

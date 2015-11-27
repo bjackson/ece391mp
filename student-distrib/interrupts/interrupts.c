@@ -1,5 +1,5 @@
 /**
- * interrupts.c - <description here>
+ * interrupts.c
  *
  * vim:ts=4 expandtab
  */
@@ -7,31 +7,13 @@
 #include "../lib.h"
 #include "../types.h"
 #include "../devices/terminal.h"
-
-
-
-// Special/modifier keys
-#define LEFT_SHIFT_PRESS        0x2A
-#define RIGHT_SHIFT_PRESS       0x36
-#define LEFT_SHIFT_RELEASE      0xAA
-#define RIGHT_SHIFT_RELEASE     0xB6
-
-#define CONTROL_PRESS           0x1D
-#define CONTROL_RELEASE         0x9D
-
-#define ALT_PRESS               0x38
-#define ALT_RELEASE             0xB8
-
-#define CAPS_LOCK_PRESS         0x3A
+#include "../devices/rtc.h"
 
 // Indicates whether these keys were pressed
-uint8_t shift_pressed = 0;
 uint8_t ctrl_pressed  = 0;
 uint8_t alt_pressed   = 0;
-uint8_t caps_on       = 0;
-
-
-uint8_t upcase_char(uint8_t character);
+uint8_t caps_lock     = 0;
+uint8_t shift_bitmask = 0; // Bit 1 for left, Bit 0 for right
 
 /**
  *
@@ -164,16 +146,19 @@ extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
 void keyboard_isr() {
     // Lookup table for conversion from keyboard scan code to ASCII character
     static uint8_t scancodes[128] = {
-        '$', '$', //0x01
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', // 0x0D
-        '\b', '\t', // 0x0F
-        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', // 0x19
-        '[', ']', '\n', '$', // 0x1D
-        'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', // 0x26
-        ';', '\'', '`', '$', '$', // 0x2B
-        'z', 'x', 'c', 'v', 'b', 'n', 'm', // 0x32
-        ',', '.', '/', '$', '$', '$', ' ', '$', '$', '$', '$', '$', '$', '$', '$', // 0x41
-        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '+', '$', '$', // 0x50
+        '$', '$', // Keyboard error, ESC
+        '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
+        '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
+        '$', // 0x1D
+        'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'',
+        '`', '$', '$',
+        'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/',
+        '$', '$', '$',
+        ' ',
+        '$', '$', '$', '$', '$', '$', '$', '$', // 0x41
+        '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$',
+        '+',
+        '$', '$', // 0x50
         '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', // 0x5F
         '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', // 0x6E
         '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', '$', // 0x7D
@@ -183,151 +168,57 @@ void keyboard_isr() {
     uint8_t scan_code = inb(KEYBOARD_PORT);
 
     switch (scan_code) {
-      case RIGHT_SHIFT_PRESS: {
-        shift_pressed = 1;
+      case RIGHT_SHIFT_PRESS:
+        shift_bitmask |= 0x1;
         break;
-      }
-      case LEFT_SHIFT_PRESS: {
-        shift_pressed = 1;
+      case LEFT_SHIFT_PRESS:
+        shift_bitmask |= 0x2;
         break;
-      }
-      case RIGHT_SHIFT_RELEASE: {
-        shift_pressed = 0;
+      case RIGHT_SHIFT_RELEASE:
+        shift_bitmask &= 0xE;
         break;
-      }
-      case LEFT_SHIFT_RELEASE: {
-        shift_pressed = 0;
+      case LEFT_SHIFT_RELEASE:
+        shift_bitmask &= 0xD;
         break;
-      }
-      case ALT_PRESS: {
+      case ALT_PRESS:
         alt_pressed = 1;
         break;
-      }
-      case ALT_RELEASE: {
+      case ALT_RELEASE:
         alt_pressed = 0;
         break;
-      }
-      case CONTROL_PRESS: {
+      case CONTROL_PRESS:
         ctrl_pressed = 1;
         break;
-      }
-      case CONTROL_RELEASE: {
+      case CONTROL_RELEASE:
         ctrl_pressed = 0;
         break;
-      }
-      case CAPS_LOCK_PRESS: {
-        caps_on = (caps_on == 1) ? 0 : 1; // Toggle caps lock
+      case CAPS_LOCK_PRESS:
+        caps_lock = (caps_lock) ? 0 : 1; // Toggle caps lock
         break;
-      }
     }
 
-    uint8_t key = scancodes[scan_code - SCANCODE_MAX];
+    uint8_t key = scancodes[scan_code];
 
-    // Uppercase character if caps lock is on
-    if (caps_on || shift_pressed) {
-      if (key >= 97 && key <= 122) { // Only upcase alphas
-        key -= ('a' - 'A'); // Upcase the letter
-      }
-    }
-
-    if (shift_pressed) {
-      key = upcase_char(key);
-    }
-
-    // On CTRL-L, clear the screen.
+    // On CTRL-L, clear the screen
     if (ctrl_pressed == 1 && key == 'l') {
-      clear();
-      send_eoi(KEYBOARD_IRQ);
-      return;
+        terminal_clear();
+        send_eoi(KEYBOARD_IRQ);
+        return;
     }
 
-    if (key == '\b') {
-      backspace();
+    // Uppercase character if caps lock is on or a shift is pressed
+    if(caps_lock || shift_bitmask) {
+        key = upcase_char(key);
     }
 
-    // Only process 'break' codes for now
-    if(scan_code >= SCANCODE_MAX) {
-        scan_code -= SCANCODE_MAX;
-        if(scancodes[scan_code] != '$') {
-            keyboard_buffer[keyboard_buffer_index] = key;
-            keyboard_buffer_index++;
-            printf("%c", key);
-        }
+    // Only process make (press) codes and handled codes
+    if(scan_code < SCANCODE_MAX && scancodes[scan_code] != '$') {
+        terminal_write_key(key);
     }
 
     send_eoi(KEYBOARD_IRQ);
 }
 
-uint8_t upcase_char(uint8_t character) {
-  switch (character) {
-    case '=': {
-      return '+';
-    }
-    case '-': {
-      return '_';
-    }
-    case '1': {
-      return '!';
-    }
-    case '2': {
-      return '@';
-    }
-    case '3': {
-      return '#';
-    }
-    case '4': {
-      return '$';
-    }
-    case '5': {
-      return '%';
-    }
-    case '6': {
-      return '^';
-    }
-    case '7': {
-      return '&';
-    }
-    case '8': {
-      return '*';
-    }
-    case '9': {
-      return '(';
-    }
-    case '0': {
-      return ')';
-    }
-    case '[': {
-      return '{';
-    }
-    case ']': {
-      return '}';
-    }
-    case '\\': {
-      return '|';
-    }
-    case ';': {
-      return ':';
-    }
-    case '\'': {
-      return '"';
-    }
-    case ',': {
-      return '<';
-    }
-    case '.': {
-      return '>';
-    }
-    case '/': {
-      return '?';
-    }
-    case '`': {
-      return '~';
-    }
-    default: {
-      return character;
-    }
-  }
-}
 
 /**
  *
@@ -339,5 +230,88 @@ void rtc_isr() {
     outb(0x0C, RTC_INDEX_PORT);
     inb(RTC_DATA_PORT);
 
+    // increment tick counter
+    tick_counter++;
+
     send_eoi(RTC_IRQ);
+}
+
+/**
+ * Disable interrupts. Used by RTC
+ */
+void disable_inits() {
+    cli();
+
+    // Disable NMI by setting the 0x80 bit
+    uint8_t previous = inb(0x70);
+    outb(previous | 0x80, 0x70);
+}
+
+/**
+ * Reenable interrupts. Used by RTC
+ */
+void enable_inits() {
+    sti();
+
+    // Re-enable NMI
+    uint8_t previous = inb(0x70);
+    outb(previous & 0x7F, 0x70);
+}
+
+/**
+ *
+ */
+uint8_t upcase_char(uint8_t character) {
+    // Upcase alphas mathematically
+    if (character >= 97 && character <= 122) {
+        return character - ('a' - 'A');
+    }
+
+    // Upcase the rest with a map
+    switch (character) {
+        case '=':
+            return '+';
+        case '-':
+            return '_';
+        case '1':
+            return '!';
+        case '2':
+            return '@';
+        case '3':
+            return '#';
+        case '4':
+            return '$';
+        case '5':
+            return '%';
+        case '6':
+            return '^';
+        case '7':
+            return '&';
+        case '8':
+            return '*';
+        case '9':
+            return '(';
+        case '0':
+            return ')';
+        case '[':
+            return '{';
+        case ']':
+            return '}';
+        case '\\':
+            return '|';
+        case ';':
+            return ':';
+        case '\'':
+            return '"';
+        case ',':
+            return '<';
+        case '.':
+            return '>';
+        case '/':
+            return '?';
+        case '`':
+            return '~';
+        default:
+            return character;
+    }
 }

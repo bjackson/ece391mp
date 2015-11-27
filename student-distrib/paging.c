@@ -1,69 +1,37 @@
 /**
- * paging.c - <description here>
+ * paging.c
  *
  * vim:ts=4 expandtab
  */
 #include "paging.h"
 
-uint32_t page_directory[MAX_ENTRIES] __attribute__((aligned(4 * 1024)));
-uint32_t kernel_page_table[MAX_ENTRIES] __attribute__((aligned(4 * 1024)));
+uint32_t page_dirs[MAX_TASKS][MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
+uint32_t page_tables[MAX_TASKS][MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
 
-// function being built as the starting point to do paging. everything after this functions is notes.
-/*
- * init_paging
- *      DESCRIPTION: Initializes paging
- *      INPUTS: none
- *      OUTPUTS: none
- *      RETURN VALUE: none
- *      SIDE EFFECTS:
+/**
+ *
  */
 void init_paging() {
-    memset(page_directory, 0x00, sizeof(uint32_t) * MAX_ENTRIES);
-    memset(kernel_page_table, 0x00, sizeof(uint32_t) * MAX_ENTRIES);
+    memset(page_dirs, 0x00, sizeof(uint32_t) * MAX_ENTRIES * MAX_TASKS);
+    memset(page_tables, 0x00, sizeof(uint32_t) * MAX_ENTRIES * MAX_TASKS);
 
-    // 0MB - 4MB
-    int i;
-    for(i = 0; i < MAX_ENTRIES; i++) {
-        pt_entry_t pt_entry;
-        memset(&pt_entry, 0x00, sizeof(pt_entry_t));
+    // Kernel page table
+    register_page_table(page_dirs[KERNEL_PID], 0, page_tables[KERNEL_PID], ACCESS_SUPER);
 
-        pt_entry.present = (i == 0) ? 0 : 1;
-        pt_entry.read_write = 1;
-        pt_entry.user_supervisor = 1;
-        pt_entry.write_through = 1;
-        pt_entry.cache_disabled = 0;
-        pt_entry.dirty = 0;
-        pt_entry.global = 0;
-        pt_entry.addr = i;
-        kernel_page_table[i] = pt_entry.val;
-    }
-    pd_entry_t pd_entry;
-    memset(&pd_entry, 0x00, sizeof(pd_entry_t));
-    pd_entry.present = 1;         // Present
-    pd_entry.read_write = 1;      // Read/Write
-    pd_entry.user_supervisor = 1; //
-    pd_entry.cache_disabled = 0;  //
-    pd_entry.size = 0;            // 4KB pages
-    pd_entry.addr = ((uint32_t) kernel_page_table) >> 12;
-    page_directory[0] = pd_entry.val;
+    // Map page for video memory in kernel page table
+    map_page(page_tables[KERNEL_PID], ((void*) VIDEO), ((void*) VIDEO), ACCESS_ALL);
 
-    // 4MB - 8MB
-    pd_large_entry_t kernel_pd_entry;
-    memset(&kernel_pd_entry, 0x00, sizeof(pd_entry_t));
-    kernel_pd_entry.present = 1;         // Present
-    kernel_pd_entry.read_write = 1;      // Read/Write
-    kernel_pd_entry.user_supervisor = 1; //
-    kernel_pd_entry.write_through = 1;   //
-    kernel_pd_entry.cache_disabled = 0;  //
-    kernel_pd_entry.accessed = 0;        //
-    kernel_pd_entry.dirty = 0;           //
-    kernel_pd_entry.size = 1;            // 4MB pages
-    kernel_pd_entry.addr = 1;
-    page_directory[1] = kernel_pd_entry.val;
+    // Map large page for kernel code
+    map_large_page(page_dirs[KERNEL_PID], ((void*) FOUR_MB), ((void*) FOUR_MB),
+            ACCESS_SUPER, GLOBAL, FALSE);
+
+    // Map E1000 network card into memory
+    mmap(page_dirs[KERNEL_PID], ((void*) E1000_BASE),
+            ((void*) E1000_BASE), ACCESS_SUPER, GLOBAL);
 
     // Enable paging - from OSDev guide at http://wiki.osdev.org/Paging
     asm volatile (
-            "movl $page_directory, %%eax   /* Load paging directory */      ;"
+            "movl $page_dirs, %%eax        /* Load paging directory */      ;"
             "movl %%eax, %%cr3                                              ;"
 
             "movl %%cr4, %%eax             /* Enable PSE */                 ;"
@@ -76,83 +44,131 @@ void init_paging() {
             : : : "eax");
 }
 
-/*
- * get_physaddr
- *      DESCRIPTION: gets the physical address that corresponds to a given virtual address
- *      INPUTS: virtualaddr - pointer to the virtual address
- *      OUTPUTS: none
- *      RETURN VALUE: pointer to the physical address
- *      SIDE EFFECTS: none
+/**
  *
-void * get_physaddr(void * virtualaddr) {
-    unsigned long pdindex = (unsigned long)virtualaddr >> 22;
-    unsigned long ptindex = (unsigned long)virtualaddr >> 12 & 0x03FF;
-
-    unsigned long * pd = (unsigned long *)0xFFFFF000;
-    // Here you need to check whether the PD entry is present.
-
-    unsigned long * pt = ((unsigned long *)0xFFC00000) + (0x400 * pdindex);
-    // Here you need to check whether the PT entry is present.
-
-    return (void *)((pt[ptindex] & ~0xFFF) + ((unsigned long)virtualaddr & 0xFFF));
-}
  */
+void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access) {
+    pt_entry_t pt_entry;
+    memset(&pt_entry, 0x00, sizeof(pt_entry_t));
 
-/*
- * map_page
- *      DESCRIPTION: map a virtual address to a physical address
- *      INPUTS: physaddr - pointer to the physical address, virtualaddr - pointer to the
- *              virtual address, flags - flags
- *      OUTPUTS: none
- *      RETURN VALUE: none
- *      SIDE EFFECTS: maps the virtual address to a physical address
+    pt_entry.present = 1;        // Present
+    pt_entry.read_write = 1;     // Read/Write
+    pt_entry.user_supervisor = access;
+    pt_entry.write_through = 1;  // Write-Through caching enabled
+    pt_entry.cache_disabled = 0; // Caching not disabled
+    pt_entry.global = 0;         // Flush TLB if CR3 is reset
+    pt_entry.addr = ((uint32_t) phys) >> 12;
+
+    page_table[((uint32_t) virt) >> 12] = pt_entry.val;
+}
+
+/**
  *
-void map_page(void * physaddr, void * virtualaddr, unsigned int flags) {
-    // Make sure that both addresses are page-aligned.
-
-    unsigned long pdindex = (unsigned long)virtualaddr >> 22;
-    unsigned long ptindex = (unsigned long)virtualaddr >> 12 & 0x03FF;
-
-    unsigned long * pd = (unsigned long *)0xFFFFF000;
-    // Here you need to check whether the PD entry is present.
-    // When it is not present, you need to create a new empty PT and
-    // adjust the PDE accordingly.
-
-    unsigned long * pt = ((unsigned long *)0xFFC00000) + (0x400 * pdindex);
-    // Here you need to check whether the PT entry is present.
-    // When it is, then there is already a mapping present. What do you do now?
-
-    pt[ptindex] = ((unsigned long)physaddr) | (flags & 0xFFF) | 0x01; // Present
-
-    // Now you need to flush the entry in the TLB
-    // or you might not notice the change.
-}
  */
+void map_large_page(uint32_t* page_dir, void* phys, void* virt,
+        uint8_t access, uint8_t global, uint8_t cache_disabled) {
+    pd_large_entry_t kernel_pd_entry;
+    memset(&kernel_pd_entry, 0x00, sizeof(pd_large_entry_t));
 
-/*
- * intialize the page directory and first page table
-void init_one_page() {
-    int i;
+    kernel_pd_entry.present = 1;        // Present
+    kernel_pd_entry.read_write = 1;     // Read/Write
+    kernel_pd_entry.user_supervisor = access;
+    kernel_pd_entry.write_through = 1;  // Write-Through caching enabled
+    kernel_pd_entry.cache_disabled = cache_disabled; // Caching not disabled
+    kernel_pd_entry.size = 1;           // 4MB pages
+    kernel_pd_entry.global = global;    // If global, don't flush TLB if CR3 is reset
+    kernel_pd_entry.addr = ((uint32_t) phys) >> 22;
 
-    // initialize the page directory to empty
-    for (i = 0; i < 1024; i++) {
-        // This sets the following flags to the pages:
-        //   Supervisor: Only kernel-mode can access them
-        //   Write Enabled: It can be both read from and written to
-        //   Not Present: The page table is not present
-        page_directory[i] = 0x00000002;
-    }
-
-    // initialize the first page table
-    for(i = 0; i < 1024; i++) {
-        // As the address is page aligned, it will always leave 12 bits zeroed.
-        // Those bits are used by the attributes ;)
-        page_table[i] = (i * 0x1000) | 3; // attributes: supervisor level, read/write, present.
-    }
-
-    // add the page table to the page directory
-    // attributes: supervisor level, read/write, present
-    page_directory[0] = ((unsigned int)page_table) | 3;
+    page_dir[((uint32_t) virt) >> 22] = kernel_pd_entry.val;
 }
-*/
 
+void mmap(uint32_t* page_dir, void* phys, void* virt,
+        uint8_t access, uint8_t global) {
+    pd_large_entry_t kernel_pd_entry;
+    memset(&kernel_pd_entry, 0x00, sizeof(pd_large_entry_t));
+
+    kernel_pd_entry.present = 1;        // Present
+    kernel_pd_entry.read_write = 1;     // Read/Write
+    kernel_pd_entry.user_supervisor = access;
+    kernel_pd_entry.write_through = 0;  // Write-Through caching disabled
+    kernel_pd_entry.cache_disabled = 1; // Caching disabled
+    kernel_pd_entry.size = 1;           // 4MB pages
+    kernel_pd_entry.global = global;    // If global, don't flush TLB if CR3 is reset
+    kernel_pd_entry.addr = ((uint32_t) phys) >> 22;
+
+    page_dir[((uint32_t) virt) >> 22] = kernel_pd_entry.val;
+}
+
+
+// Translates a kernel virtual address to a physical address
+// @param virtual virtual address to translate
+// @return physical address
+uint32_t k_virt_to_phys(void* virtual) {
+
+  uint32_t page_idx = (uint32_t) virtual >> 22;
+
+  assert(page_idx < MAX_TASKS);
+
+  uint32_t offset = (uint32_t) virtual & 0x003FFFFF;
+
+  uint32_t phys_addr = (((pd_large_entry_t) page_dirs[KERNEL_PID][page_idx]).addr << 22) + offset;
+  // debug("phys_addr: 0x%x\n", phys_addr);
+  return phys_addr;
+
+}
+
+/**
+ *
+ */
+void register_page_table(uint32_t* page_dir, uint32_t index,
+        uint32_t* page_table, uint8_t access) {
+    pd_entry_t pd_entry;
+    memset(&pd_entry, 0x00, sizeof(pd_entry_t));
+
+    pd_entry.present = 1;         // Present
+    pd_entry.read_write = 1;      // Read/Write
+    pd_entry.user_supervisor = access;
+    pd_entry.cache_disabled = 0;  // Caching not disabled
+    pd_entry.size = 0;            // 4KB pages
+    pd_entry.addr = ((uint32_t) page_table) >> 12;
+
+    page_dir[index] = pd_entry.val;
+}
+
+/**
+ *
+ */
+void init_task_paging(uint32_t pid) {
+    // Register kernel page table
+    register_page_table(page_dirs[pid], 0, page_tables[KERNEL_PID], ACCESS_SUPER);
+
+    // Map large page for kernel code
+    map_large_page(page_dirs[pid], ((void*) FOUR_MB), ((void*) FOUR_MB),
+            ACCESS_SUPER, GLOBAL, FALSE);
+
+    // Map large page for loading user-level program
+    map_large_page(page_dirs[pid], ((void*) (FOUR_MB + (pid * FOUR_MB))),
+            ((void*) (128 * MB)), ACCESS_ALL, NOT_GLOBAL, FALSE);
+
+    // Change CR3 register to new paging directory
+    set_page_dir(pid);
+}
+
+/**
+ *
+ */
+void set_page_dir(uint32_t pid) {
+    // Load CR3 with address of page directory for process with pid
+    asm volatile ("movl %0, %%cr3;"::"r"(&(page_dirs[pid])));
+}
+
+/**
+ *
+ */
+void restore_parent_paging(uint32_t pid, uint32_t parent_pid) {
+    set_page_dir(parent_pid);
+
+    // Clear paging structures of old process
+    //memset(page_dirs[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
+    //memset(page_tables[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
+}

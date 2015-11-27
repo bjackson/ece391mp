@@ -9,9 +9,17 @@
 
 #define NULL 0
 
+#define FOUR_KB (4 * 1024)
+#define FOUR_MB (4 * 1024 * 1024)
+#define KB (1024)
+#define MB (1024 * 1024)
+
 #ifndef ASM
 
 /* Types defined here just like in <stdint.h> */
+typedef long long int64_t;
+typedef unsigned long long uint64_t;
+
 typedef int int32_t;
 typedef unsigned int uint32_t;
 

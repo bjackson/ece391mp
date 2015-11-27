@@ -9,6 +9,7 @@
 #include "../x86_desc.h"
 #include "../lib.h"
 #include "../devices/i8259.h"
+#include "../tasks.h"
 
 #define MAX_EXCEPTION_ISR 31
 
@@ -40,12 +41,23 @@
 #define SYSCALL_IDT       0x80
 
 // Keyboard constants
-#define KEYBOARD_PORT 0x60
-#define SCANCODE_MAX  0x80
+#define KEYBOARD_PORT     0x60
+#define SCANCODE_MAX      0x80
+
+// Keyboard special scancodes
+#define LEFT_SHIFT_PRESS        0x2A
+#define LEFT_SHIFT_RELEASE      0xAA
+#define RIGHT_SHIFT_PRESS       0x36
+#define RIGHT_SHIFT_RELEASE     0xB6
+#define CONTROL_PRESS           0x1D
+#define CONTROL_RELEASE         0x9D
+#define ALT_PRESS               0x38
+#define ALT_RELEASE             0xB8
+#define CAPS_LOCK_PRESS         0x3A
 
 // RTC constants
-#define RTC_INDEX_PORT 0x70
-#define RTC_DATA_PORT  0x71
+#define RTC_INDEX_PORT    0x70
+#define RTC_DATA_PORT     0x71
 
 typedef union seg_sel_t {
     uint16_t val;
@@ -80,6 +92,15 @@ void keyboard_isr();
 //
 void rtc_isr();
 
+// Disable interrupts. Used by RTC
+void disable_inits();
+
+// Enable interrupts. Used by RTC
+void enable_inits();
+
+// Converts a character to its upper-case form
+uint8_t upcase_char(uint8_t character);
+
 // Interrupt handler functions - in interrupts_asm.S
 extern void isr0();
 extern void isr1();
@@ -103,7 +124,7 @@ extern void isr33();
 extern void isr40();
 extern void isr128();
 
-/*
+/**
  *
  */
 static const char* const exception_desc[32] = {
@@ -140,7 +161,5 @@ static const char* const exception_desc[32] = {
     "Security Exception",
     "RESERVED"
 };
-
-
 
 #endif // INTERRUPTS_H

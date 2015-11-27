@@ -7,10 +7,13 @@
 #include "lib.h"
 #include "devices/i8259.h"
 #include "interrupts/interrupts.h"
+#include "interrupts/syscalls.h"
 #include "paging.h"
+#include "tasks.h"
 #include "devices/rtc.h"
-
 #include "devices/terminal.h"
+#include "devices/filesys.h"
+#include "devices/e1000.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -22,6 +25,7 @@
 // Check if MAGIC is valid and print the Multiboot information structure pointed by ADDR.
 void entry (unsigned long magic, unsigned long addr) {
     multiboot_info_t *mbi;
+    uint32_t fs_start_addr;
 
     /* Clear the screen. */
     clear();
@@ -56,7 +60,12 @@ void entry (unsigned long magic, unsigned long addr) {
         int mod_count = 0;
         int i;
         module_t* mod = (module_t*)mbi->mods_addr;
+
         while(mod_count < mbi->mods_count) {
+            if(mod_count == 0) {
+                fs_start_addr = mod->mod_start;
+            }
+
             printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
             printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
             printf("First few bytes of module:\n");
@@ -67,8 +76,7 @@ void entry (unsigned long magic, unsigned long addr) {
             mod_count++;
             mod++;
         }
-    }
-    /* Bits 4 and 5 are mutually exclusive! */
+    } /* Bits 4 and 5 are mutually exclusive! */
     if (CHECK_FLAG (mbi->flags, 4) && CHECK_FLAG (mbi->flags, 5))
     {
         printf ("Both bits 4 and 5 are set.\n");
@@ -158,29 +166,68 @@ void entry (unsigned long magic, unsigned long addr) {
      */
     i8259_init(); // Init PIC
     enable_irq(SLAVE_IRQ); // Enable IRQs 8-15
+    enable_irq(KEYBOARD_IRQ); // Enable keyboard interrupt
 
     init_idt(); // Initialize interrupt handlers
 
     init_paging(); // Initialize paging
 
-    enable_irq(KEYBOARD_IRQ); // Enable keyboard interrupt
-
     init_rtc(); // Initialize RTC
+
+    init_kernel_file_array(); // Init file descriptor array for the kernel
+
+    fs_init(fs_start_addr); // Initialize the file system
+
+    e1000_init(); // Initialize network card
+
+    terminal_open(NULL); // Initialize the terminal driver
 
     // Enable interrupts
     sti();
 
-    printf("\n%d\n", terminal_read(0, 0, 0));
-    printf("\n%d\n", terminal_read(0, 0, 0));
-    printf("\n%d\n", terminal_read(0, 0, 0));
-    printf("\n%d\n", terminal_read(0, 0, 0));
-    printf("\n%d\n", terminal_read(0, 0, 0));
-    printf("\n%d\n", terminal_read(0, 0, 0));
+    /**
+     * TEST CODE
+
+    fs_test(); // Test the filesystem
+
+    // Test the terminal driver
+    int32_t result;
+    uint8_t input_buffer[256];
+    memset(input_buffer, 0x00, sizeof(input_buffer));
+    while((result = terminal_read(0, input_buffer, 256)) > 0) {
+        printf("Read %d bytes\n", result);
+        printf("Read: %s", input_buffer);
+        memset(input_buffer, 0x00, sizeof(input_buffer));
+    }
 
     // Test handling of page faults (uncomment for page fault)
-    //printf("%s\n", 0xDEADBEEF);
+    printf("%s\n", 0xDEADBEEF);
+     */
 
-    /* Execute the first program (`shell') ... */
+    // int8_t e1000_test_data1[] = "ILLUSIONS, MICHAEL.";
+    // int8_t e1000_test_data2[] = "Bob Loblaw Law Blog";
+    // int8_t e1000_test_data3[] = "You're gonna get some hop-ons.";
+    // int8_t e1000_test_data4[] = "And that's why you always leave a note.";
+    int8_t arp_pkt[] = "\xff\xff\xff\xff\xff\xff\x52\x55\x0a\x00\x02\x02\x08\x06\x00\x01\x08\x00\x06\x04\x00\x01\x52\x55\x0a\x00\x02\x02\x0a\x00\x02\x02\x00\x00\x00\x00\x00\x00\x0a\x00\x02\x0f";
+
+    // int32_t i;
+    // for (i = 0; i < 70; i++) {
+    //   e1000_transmit((uint8_t *)e1000_test_data1, strlen(e1000_test_data1));
+    // }
+    e1000_transmit((uint8_t *)arp_pkt, strlen(arp_pkt));
+    // e1000_transmit((uint8_t *)e1000_test_data2, strlen(e1000_test_data2));
+    // e1000_transmit((uint8_t *)e1000_test_data3, strlen(e1000_test_data3));
+    // e1000_transmit((uint8_t *)e1000_test_data4, strlen(e1000_test_data4));
+
+
+    // Always execute a shell
+    for(;;) {
+        do_execute((uint8_t *)"shell");
+        e1000_transmit((uint8_t *)arp_pkt, strlen(arp_pkt));
+    }
+
+    // We should never reach here, other than in debugging
+    printf("Reached EOK (end-of-kernel)\n");
 
     // Spin (nicely, so we don't chew up cycles)
     asm volatile (".1hlt: hlt; jmp .1hlt;");

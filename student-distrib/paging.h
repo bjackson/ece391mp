@@ -1,13 +1,20 @@
 /**
- * paging.h - <description here>
+ * paging.h
  */
 #ifndef PAGING_H
 #define PAGING_H
 
 #include "types.h"
 #include "lib.h"
+#include "tasks.h"
+#include "devices/e1000.h"
 
 #define MAX_ENTRIES 1024
+
+#define ACCESS_ALL 1
+#define ACCESS_SUPER 0
+#define GLOBAL 1
+#define NOT_GLOBAL 0
 
 // Struct for 4KB page directory entries
 typedef union pd_entry_t {
@@ -67,10 +74,29 @@ typedef union pt_entry_t {
 // Initialize the paging structures
 void init_paging();
 
-// Return the physical address given a virtual address
-void* get_physaddr(void* virtualaddr);
+// Map a small (4KB) page
+void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access);
 
-// Return the virtual address given a physical address
-void map_page(void * physaddr, void * virtualaddr, unsigned int flags);
+// Map a large (4MB) page
+void map_large_page(uint32_t* page_dir, void* phys, void* virt,
+        uint8_t access, uint8_t global, uint8_t cache_disabled);
+
+// Register a page directory entry for a 4KB page table
+void register_page_table(uint32_t* page_dir, uint32_t index,
+        uint32_t* page_table, uint8_t access);
+
+//
+void init_task_paging(uint32_t pid);
+
+//
+void set_page_dir(uint32_t pid);
+
+//
+void restore_parent_paging(uint32_t pid, uint32_t parent_pid);
+
+uint32_t k_virt_to_phys(void* virtual);
+
+void mmap(uint32_t* page_dir, void* phys, void* virt,
+        uint8_t access, uint8_t global);
 
 #endif /* PAGING_H */

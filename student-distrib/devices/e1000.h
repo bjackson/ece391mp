@@ -84,8 +84,7 @@ typedef struct tx_desc tx_desc_t;
 
 struct rcv_desc
 {
-	uint32_t bufaddr;
-  uint32_t bufaddr_63_32;
+	uint64_t bufaddr;
 	uint16_t length;
 	uint16_t checksum;
   union {

@@ -32,27 +32,25 @@ int32_t e1000_init() {
   for (i = 0; i < E1000_DESC_SIZE; i++) {
 
     tx_descriptors[i].bufaddr  = k_virt_to_phys(tx_packets[i].buf);
-    // tx_descriptors[i].bufaddr_63_32 = 0;
-
     rcv_descriptors[i].bufaddr = k_virt_to_phys(rcv_packets[i].buf);
-    rcv_descriptors[i].bufaddr_63_32 = 0;
 
     tx_descriptors[i].dd = 1;
     tx_descriptors[i].rs = 1;
   }
 
-  debug("&tx_buff: 0x%x\n", k_virt_to_phys(tx_packets[0].buf));
 
 
   // Initialize TX descriptor registers
   e1000_mmio[E1000_TDBAL] = k_virt_to_phys(tx_descriptors);
   e1000_mmio[E1000_TDBAH] = 0x00;
 
+  debug("E1000_TDBAL: 0x%x\n", e1000_mmio[E1000_TDBAL]);
+
 
   // Set head and tail (TX)
+  e1000_mmio[E1000_TDLEN] = sizeof(tx_desc_t) * E1000_DESC_SIZE;
   e1000_mmio[E1000_TDH] = 0x00;
   e1000_mmio[E1000_TDT] = 0x00;
-  e1000_mmio[E1000_TDLEN] = sizeof(tx_desc_t) * E1000_DESC_SIZE;
 
   debug("TDLEN: %d\n", e1000_mmio[E1000_TDLEN]);
 
@@ -93,9 +91,10 @@ int32_t e1000_transmit(uint8_t* data, uint32_t length) {
     debug("tx_buff: %s\n", pkt->buf);
     debug("&desc: 0x%x\n", k_virt_to_phys(desc));
 
-    desc->status  = 0;
+    // desc->status  = 0;
     desc->dd      = 0;   // Set descriptor as in use
-    desc->rs      = 1;
+    desc->cso     = 0;
+    // desc->rs      = 1;
     desc->eop     = 1;  // End of packet
     desc->special = 0;
 

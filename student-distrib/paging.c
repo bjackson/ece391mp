@@ -23,7 +23,7 @@ void init_paging() {
 
     // Map large page for kernel code
     map_large_page(page_dirs[KERNEL_PID], ((void*) FOUR_MB), ((void*) FOUR_MB),
-            ACCESS_SUPER, GLOBAL, FALSE);
+            ACCESS_SUPER, GLOBAL, CACHE_ENABLED, WRITE_THROUGH_ENABLED);
 
     /*
     // Map E1000 network card into memory
@@ -68,14 +68,14 @@ void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access) {
  *
  */
 void map_large_page(uint32_t* page_dir, void* phys, void* virt,
-        uint8_t access, uint8_t global, uint8_t cache_disabled) {
+        uint8_t access, uint8_t global, uint8_t cache_disabled, uint8_t write_through) {
     pd_large_entry_t kernel_pd_entry;
     memset(&kernel_pd_entry, 0x00, sizeof(pd_large_entry_t));
 
     kernel_pd_entry.present = 1;        // Present
     kernel_pd_entry.read_write = 1;     // Read/Write
     kernel_pd_entry.user_supervisor = access;
-    kernel_pd_entry.write_through = 1;  // Write-Through caching enabled
+    kernel_pd_entry.write_through = write_through;  // Write-Through caching enabled
     kernel_pd_entry.cache_disabled = cache_disabled;
     kernel_pd_entry.size = 1;           // 4MB pages
     kernel_pd_entry.global = global;    // If global, don't flush TLB if CR3 is reset
@@ -99,6 +99,27 @@ uint32_t k_virt_to_phys(void* virtual) {
   uint32_t offset = (uint32_t) virtual & 0x003FFFFF;
 
   uint32_t phys_addr = (((pd_large_entry_t) page_dirs[KERNEL_PID][page_idx]).addr << 22) + offset;
+  // debug("phys_addr: 0x%x\n", phys_addr);
+  return phys_addr;
+
+}
+
+// Translates a virtual address to a physical address
+// @param virtual virtual address to translate
+// @return physical address
+uint32_t virt_to_phys(void* virtual) {
+  pcb_t *pcb = get_pcb_ptr();
+  uint32_t pid = pcb->pid;
+
+  uint32_t page_idx = (uint32_t) virtual >> 22;
+
+  assert_do(page_idx < MAX_ENTRIES, {
+    debug("virtual: 0x%x, page_idx: %d\n", page_idx, virtual);
+  });
+
+  uint32_t offset = (uint32_t) virtual & 0x003FFFFF;
+
+  uint32_t phys_addr = (((pd_large_entry_t) page_dirs[pid][page_idx]).addr << 22) + offset;
   // debug("phys_addr: 0x%x\n", phys_addr);
   return phys_addr;
 
@@ -134,11 +155,11 @@ void init_task_paging(uint32_t pid) {
 
     // Map large page for kernel code
     map_large_page(page_dirs[pid], ((void*) FOUR_MB), ((void*) FOUR_MB),
-            ACCESS_SUPER, GLOBAL, CACHE_ENABLED);
+            ACCESS_SUPER, GLOBAL, CACHE_ENABLED, WRITE_THROUGH_ENABLED);
 
     // Map large page for loading user-level program
     map_large_page(page_dirs[pid], ((void*) (FOUR_MB + (pid * FOUR_MB))),
-            ((void*) (128 * MB)), ACCESS_ALL, NOT_GLOBAL, CACHE_ENABLED);
+            ((void*) (128 * MB)), ACCESS_ALL, NOT_GLOBAL, CACHE_ENABLED, WRITE_THROUGH_ENABLED);
 
     // Change CR3 register to new paging directory
     set_page_dir(pid);
@@ -172,3 +193,8 @@ void mmap(void* phys, void* virt, uint8_t access) {
             phys, virt, access);
 }
 
+void mmap_large(void* phys, void* virt, uint8_t access, uint8_t write_through) {
+    pcb_t* pcb = get_pcb_ptr();
+    map_page(page_dirs[(pcb == NULL) ? KERNEL_PID : pcb->pid],
+            phys, virt, access);
+}

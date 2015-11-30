@@ -17,6 +17,8 @@
 #define NOT_GLOBAL 0
 #define CACHE_ENABLED 0
 #define CACHE_DISABLED 1
+#define WRITE_THROUGH_ENABLED 1
+#define WRITE_THROUGH_DISABLED 0
 
 // Struct for 4KB page directory entries
 typedef union pd_entry_t {
@@ -81,7 +83,7 @@ void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access);
 
 // Map a large (4MB) page
 void map_large_page(uint32_t* page_dir, void* phys, void* virt,
-        uint8_t access, uint8_t global, uint8_t cache_disabled);
+        uint8_t access, uint8_t global, uint8_t cache_disabled, uint8_t write_through);
 
 // Register a page directory entry for a 4KB page table
 void register_page_table(uint32_t* page_dir, uint32_t index,
@@ -101,5 +103,7 @@ uint32_t k_virt_to_phys(void* virtual);
 
 //
 void mmap(void* phys, void* virt, uint8_t access);
+
+void mmap_large(void* phys, void* virt, uint8_t access, uint8_t write_through);
 
 #endif /* PAGING_H */

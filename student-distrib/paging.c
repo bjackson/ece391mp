@@ -195,6 +195,6 @@ void mmap(void* phys, void* virt, uint8_t access) {
 
 void mmap_large(void* phys, void* virt, uint8_t access, uint8_t write_through) {
     pcb_t* pcb = get_pcb_ptr();
-    map_page(page_dirs[(pcb == NULL) ? KERNEL_PID : pcb->pid],
-            phys, virt, access);
+    map_large_page(page_dirs[(pcb == NULL) ? KERNEL_PID : pcb->pid],
+            phys, virt, access, GLOBAL, CACHE_DISABLED, write_through);
 }

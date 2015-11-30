@@ -182,7 +182,7 @@ void entry (unsigned long magic, unsigned long addr) {
 
     fs_init(fs_start_addr); // Initialize the file system
 
-    e1000_init(); // Initialize network card
+    //e1000_init(); // Initialize network card
 
     terminal_open(NULL); // Initialize the terminal driver
 
@@ -222,7 +222,6 @@ void entry (unsigned long magic, unsigned long addr) {
 
     // Test handling of page faults (uncomment for page fault)
     printf("%s\n", 0xDEADBEEF);
-     */
 
     // int8_t e1000_test_data1[] = "ILLUSIONS, MICHAEL.";
     // int8_t e1000_test_data2[] = "Bob Loblaw Law Blog";
@@ -233,11 +232,12 @@ void entry (unsigned long magic, unsigned long addr) {
     e1000_transmit((uint8_t *)arp_pkt, 42);
     e1000_transmit((uint8_t *)arp_pkt, 42);
     e1000_transmit((uint8_t *)arp_pkt, 42);
+     */
 
     // Always execute a shell
     for(;;) {
         do_execute((uint8_t *)"shell");
-        e1000_transmit((uint8_t *)arp_pkt, 42);
+        //e1000_transmit((uint8_t *)arp_pkt, 42);
     }
 
     // We should never reach here, other than in debugging

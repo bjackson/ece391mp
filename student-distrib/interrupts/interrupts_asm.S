@@ -148,14 +148,14 @@ close_asm:
 getargs_asm:
     pushl   %ecx                       # ecx: nbytes
     pushl   %ebx                       # ebx: buf
-    call    sys_getargs                # sys_getargs(NULL, 0);
+    call    sys_getargs                # sys_getargs(buf, nbytes);
     addl    $8, %esp
     movl    %eax, ret_value
     jmp     isr128_sys_done
 
 vidmap_asm:
-    pushl   $0
-    call    sys_vidmap                 # sys_vidmap(NULL);
+    pushl   %ebx                       # ebx: screen_start
+    call    sys_vidmap                 # sys_vidmap(screen_start);
     addl    $4, %esp
     movl    %eax, ret_value
 

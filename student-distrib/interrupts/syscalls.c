@@ -51,7 +51,6 @@ int32_t sys_halt(uint8_t status) {
  */
 int32_t sys_execute(const uint8_t* command) {
     // Copy command until first space as executable
-    //TODO: parse args for getargs syscall
     uint8_t executable_fname[FS_FNAME_LEN];
     memset(executable_fname, 0x00, FS_FNAME_LEN);
 
@@ -152,6 +151,9 @@ int32_t sys_execute(const uint8_t* command) {
     // Mark PID as used
     pid_use_array[new_pid] = 1;
 
+    // Put arguments in task's PCB
+    memcpy(new_pcb->args, task_args, MAX_ARGS_LENGTH);
+
     // Initiate Context Switch
 
     // Write TSS with new process's kernel stack
@@ -164,9 +166,6 @@ int32_t sys_execute(const uint8_t* command) {
     new_pcb->old_esp = esp;
     register uint32_t ebp asm ("ebp");
     new_pcb->old_ebp = ebp;
-
-    // Put arguments in task's PCB
-    memcpy(new_pcb->args, task_args, MAX_ARGS_LENGTH);
 
     // Load USER_DS into stack segment selectors
     asm volatile ("movw %w0, %%ax;"::"r"(USER_DS));
@@ -309,26 +308,21 @@ int32_t sys_close(int32_t fd) {
  *
  */
 int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
-    printf("Get Args!\n");
-
-    if (buf == NULL) {
-      printf("sys_getargs: user-supplied buffer is null\n");
-      return -1;
+    if(buf == NULL) {
+        printf("getargs: User-supplied buffer is null\n");
+        return -1;
     }
 
     pcb_t *pcb = get_pcb_ptr();
 
-    int32_t args_size = strlen((int8_t*)pcb->args);
-    if (args_size + 1 > nbytes) { // Plus one, because need to account for NULL-termination
-      printf("sys_getargs: user-supplied buffer is too small. args size: (%d), buffer size: (%d)\n", args_size, nbytes);
-      return -1;
+    uint32_t args_size = strlen((int8_t*) (pcb->args));
+    if(args_size + 1 > nbytes) { // Add one to account for NULL-termination
+        printf("getargs: user-supplied buffer is too small. args size: (%d), buffer size: (%d)\n", args_size, nbytes);
+        return -1;
     }
 
     memset(buf, 0x00, nbytes);
-    uint32_t i;
-    for (i = 0; i < MAX_ARGS_LENGTH && i < nbytes; i++) {
-      buf[i] = pcb->args[i];
-    }
+    memcpy(buf, pcb->args, (nbytes > MAX_ARGS_LENGTH) ? MAX_ARGS_LENGTH : nbytes);
 
     return 0;
 }
@@ -359,6 +353,9 @@ int32_t do_syscall(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3) {
 // Execute a command
 // @param command the command to execute
 // @return status code
+/**
+ *
+ */
 int32_t do_execute(uint8_t *command) {
   return do_syscall(SYSCALL_EXECUTE_NUM, (uint32_t) command, 0, 0);
 }

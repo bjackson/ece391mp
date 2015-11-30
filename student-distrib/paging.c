@@ -25,11 +25,11 @@ void init_paging() {
     map_large_page(page_dirs[KERNEL_PID], ((void*) FOUR_MB), ((void*) FOUR_MB),
             ACCESS_SUPER, GLOBAL, FALSE);
 
+    /*
     // Map E1000 network card into memory
     mmap(page_dirs[KERNEL_PID], ((void*) E1000_BASE),
             ((void*) E1000_BASE), ACCESS_SUPER, GLOBAL);
-
-
+    */
 
     // Enable paging - from OSDev guide at http://wiki.osdev.org/Paging
     asm volatile (
@@ -76,7 +76,7 @@ void map_large_page(uint32_t* page_dir, void* phys, void* virt,
     kernel_pd_entry.read_write = 1;     // Read/Write
     kernel_pd_entry.user_supervisor = access;
     kernel_pd_entry.write_through = 1;  // Write-Through caching enabled
-    kernel_pd_entry.cache_disabled = cache_disabled; // Caching not disabled
+    kernel_pd_entry.cache_disabled = cache_disabled;
     kernel_pd_entry.size = 1;           // 4MB pages
     kernel_pd_entry.global = global;    // If global, don't flush TLB if CR3 is reset
     kernel_pd_entry.addr = ((uint32_t) phys) >> 22;
@@ -84,6 +84,9 @@ void map_large_page(uint32_t* page_dir, void* phys, void* virt,
     page_dir[((uint32_t) virt) >> 22] = kernel_pd_entry.val;
 }
 
+/**
+ *
+ */
 void mmap(uint32_t* page_dir, void* phys, void* virt,
         uint8_t access, uint8_t global) {
     pd_large_entry_t kernel_pd_entry;
@@ -101,10 +104,12 @@ void mmap(uint32_t* page_dir, void* phys, void* virt,
     page_dir[((uint32_t) virt) >> 22] = kernel_pd_entry.val;
 }
 
-
 // Translates a kernel virtual address to a physical address
 // @param virtual virtual address to translate
 // @return physical address
+/**
+ *
+ */
 uint32_t k_virt_to_phys(void* virtual) {
 
   uint32_t page_idx = (uint32_t) virtual >> 22;
@@ -145,22 +150,15 @@ void init_task_paging(uint32_t pid) {
     register_page_table(page_dirs[pid], 0, page_tables[KERNEL_PID], ACCESS_SUPER);
 
     // Map large page for kernel code
-    assert(map_kernel_code(pid) == 0);
+    map_large_page(page_dirs[pid], ((void*) FOUR_MB), ((void*) FOUR_MB),
+            ACCESS_SUPER, GLOBAL, CACHE_ENABLED);
 
     // Map large page for loading user-level program
     map_large_page(page_dirs[pid], ((void*) (FOUR_MB + (pid * FOUR_MB))),
-            ((void*) (128 * MB)), ACCESS_ALL, NOT_GLOBAL, FALSE);
+            ((void*) (128 * MB)), ACCESS_ALL, NOT_GLOBAL, CACHE_ENABLED);
 
     // Change CR3 register to new paging directory
     set_page_dir(pid);
-}
-
-int32_t map_kernel_code(uint32_t pid) {
-  map_large_page(page_dirs[pid], ((void*) FOUR_MB), ((void*) FOUR_MB),
-          ACCESS_SUPER, GLOBAL, FALSE);
-
-
-  return 0;
 }
 
 /**

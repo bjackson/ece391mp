@@ -33,7 +33,7 @@ int32_t e1000_init() {
   uint32_t i;
   for (i = 0; i < E1000_DESC_SIZE; i++) {
 
-    tx_descriptors[i].bufaddr  = k_virt_to_phys((void *)tx_packets[i].buf);
+    tx_descriptors[i].bufaddr = k_virt_to_phys((void *)tx_packets[i].buf);
     rx_descriptors[i].bufaddr = k_virt_to_phys((void *)rx_packets[i].buf);
 
     tx_descriptors[i].dd = 1;

@@ -119,6 +119,27 @@ uint32_t k_virt_to_phys(void* virtual) {
 
 }
 
+// Translates a kernel virtual address to a physical address
+// @param virtual virtual address to translate
+// @return physical address
+uint32_t virt_to_phys(void* virtual) {
+  pcb_t *pcb = get_pcb_ptr();
+  uint32_t pid = pcb->pid;
+
+  uint32_t page_idx = (uint32_t) virtual >> 22;
+
+  assert_do(page_idx < MAX_ENTRIES, {
+    debug("virtual: 0x%x, page_idx: %d\n", page_idx, virtual);
+  });
+
+  uint32_t offset = (uint32_t) virtual & 0x003FFFFF;
+
+  uint32_t phys_addr = (((pd_large_entry_t) page_dirs[pid][page_idx]).addr << 22) + offset;
+  // debug("phys_addr: 0x%x\n", phys_addr);
+  return phys_addr;
+
+}
+
 /**
  *
  */
@@ -151,6 +172,10 @@ void init_task_paging(uint32_t pid) {
     map_large_page(page_dirs[pid], ((void*) (FOUR_MB + (pid * FOUR_MB))),
             ((void*) (128 * MB)), ACCESS_ALL, NOT_GLOBAL, FALSE);
 
+
+    // Map page for video memory in task's page table
+    map_page(page_tables[pid], ((void*) VIDEO), ((void*) VIDEO), ACCESS_ALL);
+
     // Change CR3 register to new paging directory
     set_page_dir(pid);
 }
@@ -180,4 +205,23 @@ void restore_parent_paging(uint32_t pid, uint32_t parent_pid) {
     // Clear paging structures of old process
     //memset(page_dirs[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
     //memset(page_tables[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
+}
+
+int32_t is_address_in_process(uint32_t addr) {
+  pcb_t *pcb = get_pcb_ptr();
+  uint32_t pid = pcb->pid;
+
+  addr = (uint32_t)virt_to_phys((void*)addr);
+
+  uint32_t start = (FOUR_MB + (pid * FOUR_MB));
+  uint32_t end   = (FOUR_MB + (pid * FOUR_MB) + FOUR_MB);
+
+  // debug("pid: %d, addr: 0x%x, start: 0x%x, end: 0x%x\n", pid, addr, start, end);
+
+
+  if (addr >= start && addr <= end) {
+    return 1;
+  }
+
+  return 0;
 }

@@ -337,8 +337,17 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
  *
  */
 int32_t sys_vidmap(uint8_t** screen_start) {
-    printf("Vidmap!\n");
-    return -1;
+    // debug("sys_vidmap called.\n");
+
+
+    if (!is_address_in_process((uint32_t)screen_start)) {
+      debug("sys_map: screen_start is not in process's address space.\n");
+      return -1;
+    }
+
+    *screen_start = (void *)VIDEO;
+
+    return 0;
 }
 
 /**

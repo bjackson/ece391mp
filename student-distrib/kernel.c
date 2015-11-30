@@ -228,11 +228,11 @@ void entry (unsigned long magic, unsigned long addr) {
     // int8_t e1000_test_data2[] = "Bob Loblaw Law Blog";
     // int8_t e1000_test_data3[] = "You're gonna get some hop-ons.";
     // int8_t e1000_test_data4[] = "And that's why you always leave a note.";
-    int8_t arp_pkt[42] = "\xff\xff\xff\xff\xff\xff\x52\x55\x0a\x00\x02\x02\x08\x06\x00\x01\x08\x00\x06\x04\x00\x01\x52\x55\x0a\x00\x02\x02\x0a\x00\x02\x02\x00\x00\x00\x00\x00\x00\x0a\x00\x02\x0f";
+    uint8_t arp_pkt[42] = "\xff\xff\xff\xff\xff\xff\x52\x55\x0a\x00\x02\x02\x08\x06\x00\x01\x08\x00\x06\x04\x00\x01\x52\x55\x0a\x00\x02\x02\x0a\x00\x02\x02\x00\x00\x00\x00\x00\x00\x0a\x00\x02\x0f";
 
-    e1000_transmit((uint8_t *)arp_pkt, 42);
-    e1000_transmit((uint8_t *)arp_pkt, 42);
-    e1000_transmit((uint8_t *)arp_pkt, 42);
+    e1000_transmit(arp_pkt, 42);
+    e1000_transmit(arp_pkt, 42);
+    e1000_transmit(arp_pkt, 42);
 
     // Always execute a shell
     for(;;) {

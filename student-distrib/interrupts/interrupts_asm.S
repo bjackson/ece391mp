@@ -154,7 +154,7 @@ getargs_asm:
     jmp     isr128_sys_done
 
 vidmap_asm:
-    pushl   $0
+    pushl   %ebx                       # ebx: screen_start
     call    sys_vidmap                 # sys_vidmap(NULL);
     addl    $4, %esp
     movl    %eax, ret_value

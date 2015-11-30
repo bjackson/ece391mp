@@ -101,4 +101,8 @@ void mmap(uint32_t* page_dir, void* phys, void* virt,
 
 int32_t map_kernel_code(uint32_t pid);
 
+int32_t is_address_in_process(uint32_t addr);
+
+uint32_t virt_to_phys(void* virtual);
+
 #endif /* PAGING_H */

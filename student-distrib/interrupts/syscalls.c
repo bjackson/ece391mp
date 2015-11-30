@@ -197,7 +197,17 @@ int32_t sys_execute(const uint8_t* command) {
  *
  */
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
+    if(fd < 0 || fd >= FILE_ARRAY_SIZE) {
+        printf("read: fd out of range\n");
+        return -1;
+    }
+
     file_desc_t file = get_file_array()[fd];
+    if(!(file.flags & 0x1)) {
+        printf("read: Invalid file descriptor\n");
+        return -1;
+    }
+
     sti(); // Enable further interrupts
     return file.read(fd, buf, nbytes);
 }
@@ -206,7 +216,17 @@ int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
  *
  */
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
+    if(fd < 0 || fd >= FILE_ARRAY_SIZE) {
+        printf("write: fd out of range\n");
+        return -1;
+    }
+
     file_desc_t file = get_file_array()[fd];
+    if(!(file.flags & 0x1)) {
+        printf("write: Invalid file descriptor\n");
+        return -1;
+    }
+
     return file.write(fd, buf, nbytes);
 }
 
@@ -282,6 +302,11 @@ int32_t sys_open(const uint8_t* filename) {
  *
  */
 int32_t sys_close(int32_t fd) {
+    if(fd < 0 || fd >= FILE_ARRAY_SIZE) {
+        printf("close: fd out of range\n");
+        return -1;
+    }
+
     if(fd == STDIN_FD || fd == STDOUT_FD) {
         printf("close: Can't close stdin/stdout\n");
         return -1;

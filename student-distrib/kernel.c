@@ -19,9 +19,6 @@
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
-#define RTC_REGA 0x8A
-#define RTC_REGB 0x8B
-
 // Check if MAGIC is valid and print the Multiboot information structure pointed by ADDR.
 void entry (unsigned long magic, unsigned long addr) {
     multiboot_info_t *mbi;
@@ -176,7 +173,7 @@ void entry (unsigned long magic, unsigned long addr) {
 
     init_paging(); // Initialize paging
 
-    init_rtc(); // Initialize RTC
+    rtc_init(); // Initialize RTC
 
     init_kernel_file_array(); // Init file descriptor array for the kernel
 

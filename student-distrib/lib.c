@@ -634,3 +634,15 @@ test_interrupts(void)
 		video_mem[i<<1]++;
 	}
 }
+
+/**
+ *
+ */
+int32_t log2_of_pwr2(int32_t pwr2) {
+	int32_t result = 0;
+	while(pwr2 >>= 1) {
+		result++;
+	}
+	return result;
+}
+

@@ -331,8 +331,27 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
  *
  */
 int32_t sys_vidmap(uint8_t** screen_start) {
-    printf("Vidmap!\n");
-    return -1;
+    if(screen_start == NULL) {
+        printf("vidmap: NULL screen_start addr\n");
+        return -1;
+    }
+
+    if(((uint32_t) screen_start) < (128 * MB) ||
+            ((uint32_t) screen_start) >= (132 * MB)) {
+        printf("vidmap: screen_start addr out of range\n");
+        return -1;
+    }
+
+    // Check to see if vidmap was called from the kernel
+    if(get_pcb_ptr() == NULL) {
+        *screen_start = (void*) VIDEO;
+        return 0;
+    }
+
+    // Map phys addr VIDEO to virt addr 1GB
+    mmap(((void*) VIDEO), ((void*) GB), ACCESS_ALL);
+    *screen_start = (void*) GB;
+    return 0;
 }
 
 /**

@@ -61,7 +61,7 @@ void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access) {
     pt_entry.global = 0;         // Flush TLB if CR3 is reset
     pt_entry.addr = ((uint32_t) phys) >> 12;
 
-    page_table[((uint32_t) virt) >> 12] = pt_entry.val;
+    page_table[(((uint32_t) virt) >> 12) & 0x3FF] = pt_entry.val;
 }
 
 /**
@@ -77,26 +77,6 @@ void map_large_page(uint32_t* page_dir, void* phys, void* virt,
     kernel_pd_entry.user_supervisor = access;
     kernel_pd_entry.write_through = 1;  // Write-Through caching enabled
     kernel_pd_entry.cache_disabled = cache_disabled;
-    kernel_pd_entry.size = 1;           // 4MB pages
-    kernel_pd_entry.global = global;    // If global, don't flush TLB if CR3 is reset
-    kernel_pd_entry.addr = ((uint32_t) phys) >> 22;
-
-    page_dir[((uint32_t) virt) >> 22] = kernel_pd_entry.val;
-}
-
-/**
- *
- */
-void mmap(uint32_t* page_dir, void* phys, void* virt,
-        uint8_t access, uint8_t global) {
-    pd_large_entry_t kernel_pd_entry;
-    memset(&kernel_pd_entry, 0x00, sizeof(pd_large_entry_t));
-
-    kernel_pd_entry.present = 1;        // Present
-    kernel_pd_entry.read_write = 1;     // Read/Write
-    kernel_pd_entry.user_supervisor = access;
-    kernel_pd_entry.write_through = 0;  // Write-Through caching disabled
-    kernel_pd_entry.cache_disabled = 1; // Caching disabled
     kernel_pd_entry.size = 1;           // 4MB pages
     kernel_pd_entry.global = global;    // If global, don't flush TLB if CR3 is reset
     kernel_pd_entry.addr = ((uint32_t) phys) >> 22;
@@ -149,6 +129,9 @@ void init_task_paging(uint32_t pid) {
     // Register kernel page table
     register_page_table(page_dirs[pid], 0, page_tables[KERNEL_PID], ACCESS_SUPER);
 
+    // Register user page table
+    register_page_table(page_dirs[pid], 256, page_tables[pid], ACCESS_ALL);
+
     // Map large page for kernel code
     map_large_page(page_dirs[pid], ((void*) FOUR_MB), ((void*) FOUR_MB),
             ACCESS_SUPER, GLOBAL, CACHE_ENABLED);
@@ -179,3 +162,13 @@ void restore_parent_paging(uint32_t pid, uint32_t parent_pid) {
     //memset(page_dirs[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
     //memset(page_tables[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
 }
+
+/**
+ *
+ */
+void mmap(void* phys, void* virt, uint8_t access) {
+    pcb_t* pcb = get_pcb_ptr();
+    map_page(page_tables[(pcb == NULL) ? KERNEL_PID : pcb->pid],
+            phys, virt, access);
+}
+

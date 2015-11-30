@@ -56,6 +56,12 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes);
 int32_t sys_vidmap(uint8_t** screen_start);
 
 //
+int32_t sys_set_handler(int32_t signum, void* handler_address);
+
+//
+int32_t sys_sigreturn(void);
+
+//
 int32_t do_syscall(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3);
 
 int32_t do_execute(uint8_t *command);

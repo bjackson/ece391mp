@@ -354,6 +354,15 @@ int32_t sys_vidmap(uint8_t** screen_start) {
     return 0;
 }
 
+int32_t sys_set_handler(int32_t signum, void* handler_address) {
+  return -1;
+}
+
+
+int32_t sys_sigreturn(void) {
+  return -1;
+}
+
 /**
  *
  */

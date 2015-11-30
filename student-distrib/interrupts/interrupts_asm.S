@@ -5,7 +5,7 @@
 .data
 
 # Jump table for system call ISR
-syscall_jump: .long halt_asm, execute_asm, read_asm, write_asm, open_asm, close_asm, getargs_asm, vidmap_asm
+syscall_jump: .long halt_asm, execute_asm, read_asm, write_asm, open_asm, close_asm, getargs_asm, vidmap_asm, set_handler_asm, sigreturn_asm
 ret_value: .long 0
 
 .text
@@ -85,7 +85,7 @@ isr128:
 
     addl    $-1, %eax                  # syscal_num -= 1 (start counting at 0)
 
-    cmpl    $7, %eax                   # if (syscall_num <= 7)
+    cmpl    $9, %eax                   # if (syscall_num <= 9)
     jbe     isr128_valid_num
 
     addl    $4, %esp                   # Remove stack marker
@@ -158,6 +158,20 @@ vidmap_asm:
     call    sys_vidmap                 # sys_vidmap(screen_start);
     addl    $4, %esp
     movl    %eax, ret_value
+    jmp     isr128_sys_done
+
+set_handler_asm:
+    pushl   %ecx                       # ecx: handler_address
+    pushl   %ebx                       # ebx: signum
+    call    sys_set_handler
+    addl    $8, %esp
+    movl    %eax, ret_value
+    jmp     isr128_sys_done
+
+sigreturn_asm:
+    call    sys_sigreturn
+    movl    %eax, ret_value
+    jmp     isr128_sys_done
 
 isr128_sys_done:
     leave                              # Restore old stack frame

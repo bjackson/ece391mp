@@ -84,13 +84,13 @@ void set_sys_entry(uint8_t idx, uint32_t handler);
 void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl);
 
 //
-extern void isr_handler(uint32_t isr_index, uint32_t error_code);
+extern void isr_handler(task_registers_t task_registers);//uint32_t isr_index, uint32_t error_code);
 
 //
 void keyboard_isr();
 
 //
-void rtc_isr();
+void rtc_isr(task_registers_t task_registers);
 
 // Disable interrupts. Used by RTC
 void disable_inits();

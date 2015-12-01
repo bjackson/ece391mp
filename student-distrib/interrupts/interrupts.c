@@ -8,6 +8,7 @@
 #include "../types.h"
 #include "../devices/terminal.h"
 #include "../devices/rtc.h"
+#include "../scheduler.h"
 
 // Indicates whether these keys were pressed
 uint8_t ctrl_pressed  = 0;
@@ -101,7 +102,10 @@ void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl) {
 /**
  *
  */
-extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
+extern void isr_handler(task_registers_t task_registers) {//(uint32_t isr_index, uint32_t error_code) {
+    uint32_t isr_index = task_registers.irq;
+    uint32_t error_code = task_registers.error_code;
+
     // Handle exceptions differently
     if(isr_index <= MAX_EXCEPTION_ISR) {
         clear(); // Clear video memory
@@ -133,7 +137,7 @@ extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
     } else if(isr_index == KEYBOARD_IDT) {
         keyboard_isr();
     } else if(isr_index == RTC_IDT) {
-        rtc_isr();
+        rtc_isr(task_registers);
     } else {
         printf("Exception/Interrupt not yet handled!");
         haltOnException();
@@ -223,12 +227,14 @@ void keyboard_isr() {
 /**
  *
  */
-void rtc_isr() {
+void rtc_isr(task_registers_t task_registers) {
     // test_interrupts();
 
     // Select register C and throw away contents
     outb(0x0C, RTC_INDEX_PORT);
     inb(RTC_DATA_PORT);
+
+    run_next_task(task_registers);
 
     // increment tick counter
     tick_counter++;

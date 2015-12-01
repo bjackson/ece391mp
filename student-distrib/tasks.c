@@ -100,6 +100,31 @@ pcb_t* get_pcb_ptr() {
     return NULL;
 }
 
+pcb_t* get_pcb_ptr_for_pid(int32_t pid) {
+  assert_do(pid < MAX_TASKS + 1, {
+    return NULL;
+  });
+
+  assert_do(pid_use_array[pid] != 0, {
+    return NULL;
+  });
+
+  pcb_t *start_addr = (pcb_t *)(((4 * MB) * (1 + pid)) & 0xFFFFE000);
+  return start_addr;
+}
+
+int32_t get_number_of_running_tasks(void) {
+  int number_of_running_tasks = 0;
+  int i;
+  for (i = 1; i < MAX_TASKS + 1; i++) {
+    if (pid_use_array[i] != 0) {
+      number_of_running_tasks++;
+    }
+  }
+
+  return number_of_running_tasks;
+}
+
 /**
  *
  */

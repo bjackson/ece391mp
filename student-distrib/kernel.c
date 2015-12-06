@@ -230,13 +230,12 @@ void entry (unsigned long magic, unsigned long addr) {
     e1000_transmit((uint8_t *)arp_pkt, 42);
     e1000_transmit((uint8_t *)arp_pkt, 42);
     e1000_transmit((uint8_t *)arp_pkt, 42);
+
+    e1000_transmit((uint8_t *)arp_pkt, 42);
      */
 
-    // Always execute a shell
-    for(;;) {
-        do_execute((uint8_t *)"shell");
-        //e1000_transmit((uint8_t *)arp_pkt, 42);
-    }
+    // Execute the first shell!
+    do_execute((uint8_t *)"shell");
 
     // We should never reach here, other than in debugging
     log(ERROR, "Reached EOK (end-of-kernel)", "entry");

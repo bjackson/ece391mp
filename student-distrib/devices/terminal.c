@@ -21,6 +21,12 @@ static uint32_t keyboard_buffer_indices[NUM_TERMINALS];
 // Indicates whether the read_buffer is ready to be read from
 static volatile uint8_t read_ready_flags[NUM_TERMINALS];
 
+// Stores the pid for the main shell started when each terminal was first switched to
+volatile uint32_t shell_pids[NUM_TERMINALS];
+
+// Stores the index of the current terminal
+volatile uint32_t current_terminal = 0;
+
 /**
  *
  */
@@ -31,7 +37,8 @@ int32_t terminal_open(const uint8_t* filename) {
     int i;
     for(i = 0; i < NUM_TERMINALS; i++) {
         keyboard_buffer_indices[i] = 0;
-        read_ready_flags[0] = 0;
+        read_ready_flags[i] = 0;
+        shell_pids[i] = 0;
     }
 
     return 0;
@@ -178,3 +185,4 @@ void terminal_clear() {
 
     set_cursor(0, 0);
 }
+

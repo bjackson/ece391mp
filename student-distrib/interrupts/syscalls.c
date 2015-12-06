@@ -9,6 +9,10 @@
 extern file_desc_t kernel_file_array[FILE_ARRAY_SIZE];
 extern uint32_t pid_use_array[MAX_TASKS + 1];
 
+// Declared in terminal.c
+extern volatile uint32_t shell_pids[NUM_TERMINALS];
+extern volatile uint32_t current_terminal;
+
 /**
  *
  */
@@ -25,6 +29,16 @@ int32_t sys_halt(uint8_t status) {
 
     // Free up PID for future use
     pid_use_array[pcb.pid] = 0;
+
+    // Check to see if we are halting the base shell for a terminal. If so, execute another
+    int i;
+    for(i = 0; i < NUM_TERMINALS; i++) {
+        if(shell_pids[i] == pcb.pid) {
+            log(DEBUG, "Exiting base terminal. Executing another", "halt");
+            shell_pids[i] = 0;
+            do_execute((uint8_t*) "shell");
+        }
+    }
 
     // Write TSS with parent process's kernel stack
     tss.ss0 = KERNEL_DS;
@@ -123,6 +137,13 @@ int32_t sys_execute(const uint8_t* command) {
         return -1;
     }
 
+    // Check if we are executing a new base shell for a terminal
+    if(strncmp(executable_fname, "shell", 5) == 0) {
+        if(shell_pids[current_terminal] == 0) {
+            shell_pids[current_terminal] = new_pid;
+        }
+    }
+
     // Set up paging structures for new process
     init_task_paging(new_pid);
 
@@ -147,6 +168,7 @@ int32_t sys_execute(const uint8_t* command) {
 
     // Set up process control block
     pcb_t* new_pcb = init_pcb(new_pid);
+    new_pcb->terminal_index = current_terminal;
 
     // Mark PID as used
     pid_use_array[new_pid] = 1;

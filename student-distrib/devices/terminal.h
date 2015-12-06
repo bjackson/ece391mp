@@ -12,6 +12,12 @@
 
 #define NUM_TERMINALS 3
 
+// Stores the pid for the main shell started when each terminal was first switched to
+extern volatile uint32_t shell_pids[NUM_TERMINALS];
+
+// Stores the index of the current terminal
+extern volatile uint32_t current_terminal;
+
 //
 int32_t terminal_open(const uint8_t* filename);
 

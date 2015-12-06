@@ -56,7 +56,7 @@ int32_t fs_read(int32_t fd, void* buf, int32_t nbytes) {
     file_desc_t* file = &(get_file_array()[fd]);
 
     if((file->flags & 0x1) == 0) {
-        printf("fs_read: Specified file is closed\n");
+        log(WARN, "Specified file is closed", "fs_read");
         return -1;
     }
 
@@ -72,7 +72,7 @@ int32_t fs_dir_read(int32_t fd, void* buf, int32_t nbytes) {
     file_desc_t* file = &(get_file_array()[fd]);
 
     if((file->flags & 0x1) == 0) {
-        printf("fs_dir_read: Specified file is closed\n");
+        log(WARN, "Specified file is closed", "fs_dir_read");
         return -1;
     }
 
@@ -104,7 +104,7 @@ int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes) {
  */
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
     if(dentry == NULL) {
-        printf("read_dentry_by_name: NULL dentry pointer\n");
+        log(WARN, "NULL dentry pointer", "read_dentry_by_name");
         return -1;
     }
 
@@ -120,7 +120,7 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
         }
     }
 
-    printf("read_dentry_by_name: Not found\n");
+    log(WARN, "Not found", "read_dentry_by_name");
     return -1;
 }
 
@@ -129,7 +129,7 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
  */
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
     if(index >= fs_stats->num_dentries) {
-        printf("read_dentry_by_index: Index invalid\n");
+        log(WARN, "Index invalid", "read_dentry_by_index");
         return -1;
     }
 
@@ -171,7 +171,7 @@ int32_t fs_len(int32_t fd) {
     file_desc_t* file = &(get_file_array()[fd]);
 
     if((file->flags & 0x1) == 0) {
-        printf("fs_len: Specified file is closed\n");
+        log(WARN, "Specified file is closed", "fs_len");
         return -1;
     }
 
@@ -186,7 +186,7 @@ int32_t fs_seek(int32_t fd, uint32_t pos) {
     file_desc_t* file = &(get_file_array()[fd]);
 
     if((file->flags & 0x1) == 0) {
-        printf("fs_seek: Specified file is closed\n");
+        log(WARN, "Specified file is closed", "fs_seek");
         return -1;
     }
 

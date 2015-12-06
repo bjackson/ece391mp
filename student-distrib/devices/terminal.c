@@ -39,7 +39,7 @@ int32_t terminal_open(const uint8_t* filename) {
  */
 int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
     if(fd != STDIN_FD) {
-        printf("terminal_read: Invalid file descriptor\n");
+        log(WARN, "Invalid file descriptor", "terminal_read");
         return -1;
     }
 
@@ -79,7 +79,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
  */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
     if(fd != STDOUT_FD) {
-        printf("terminal_write: Invalid file descriptor\n");
+        log(WARN, "Invalid file descriptor", "terminal_write");
         return -1;
     }
 

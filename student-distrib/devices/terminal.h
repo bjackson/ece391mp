@@ -6,6 +6,7 @@
 #define _TERMINAL_H
 
 #include "../types.h"
+#include "../log.h"
 
 #define KEYBOARD_BUFFER_SIZE 128
 

@@ -14,6 +14,7 @@
 #include "devices/terminal.h"
 #include "devices/filesys.h"
 #include "devices/e1000.h"
+#include "log.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -238,7 +239,7 @@ void entry (unsigned long magic, unsigned long addr) {
     }
 
     // We should never reach here, other than in debugging
-    printf("Reached EOK (end-of-kernel)\n");
+    log(ERROR, "Reached EOK (end-of-kernel)", "entry");
 
     // Spin (nicely, so we don't chew up cycles)
     asm volatile (".1hlt: hlt; jmp .1hlt;");

@@ -15,7 +15,7 @@ extern uint32_t pid_use_array[MAX_TASKS + 1];
 int32_t sys_halt(uint8_t status) {
     pcb_t* pcb_ptr = get_pcb_ptr();
     if(pcb_ptr == NULL) {
-        printf("halt: Can't halt the kernel!\n");
+        log(WARN, "Can't halt the kernel!", "halt");
         return -1;
     }
     pcb_t pcb = *pcb_ptr;
@@ -78,7 +78,7 @@ int32_t sys_execute(const uint8_t* command) {
     // Open the executable file
     int fd = sys_open(executable_fname);
     if(fd == -1) {
-        printf("execute: Filename invalid\n");
+        log(WARN, "Filename invalid", "execute");
         return -1;
     }
 
@@ -86,21 +86,21 @@ int32_t sys_execute(const uint8_t* command) {
     uint8_t header[EXE_HEADER_LEN];
     memset(header, 0x00, EXE_HEADER_LEN);
     if(sys_read(fd, header, EXE_HEADER_LEN) == -1) {
-        printf("execute: Can't read executable header\n");
+        log(WARN, "Can't read executable header", "execute");
         sys_close(fd);
         return -1;
     }
 
     // Seek to beginning of executable for program loader
     if(fs_seek(fd, 0) == -1) {
-        printf("execute: Couldn't seek to beginning of executable\n");
+        log(WARN, "Couldn't seek to beginning of executable", "execute");
         sys_close(fd);
         return -1;
     }
 
     // Check for presence of magic number in header
     if(((uint32_t*) header)[EXE_HEADER_MAGICNUM_IDX] != EXE_HEADER_MAGIC) {
-        printf("execute: Magic number not present\n");
+        log(WARN, "Magic number not present", "execute");
         sys_close(fd);
         return -1;
     }
@@ -118,7 +118,7 @@ int32_t sys_execute(const uint8_t* command) {
         }
     }
     if(new_pid == MAX_TASKS + 1) {
-        printf("execute: Reached maximum number of tasks\n");
+        log(WARN, "Reached maximum number of tasks", "execute");
         sys_close(fd);
         return -1;
     }
@@ -132,7 +132,7 @@ int32_t sys_execute(const uint8_t* command) {
     // Load program image into memory from the file system
     void* program_image_mem = (void*) 0x08048000;
     if(sys_read(fd, program_image_mem, fs_len(fd)) == -1) {
-        printf("execute: Program loader read failed\n");
+        log(WARN, "Program loader read failed", "execute");
         sys_close(fd);
         restore_parent_paging(new_pid, (old_pcb == NULL) ? KERNEL_PID : old_pcb->pid);
         return -1;
@@ -140,7 +140,7 @@ int32_t sys_execute(const uint8_t* command) {
 
     // Close executable file, as it is now in memory
     if(sys_close(fd) == -1) {
-        printf("execute: Couldn't close executable file\n");
+        log(WARN, "Couldn't close executable file", "execute");
         restore_parent_paging(new_pid, (old_pcb == NULL) ? KERNEL_PID : old_pcb->pid);
         return -1;
     }
@@ -198,13 +198,13 @@ int32_t sys_execute(const uint8_t* command) {
  */
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
     if(fd < 0 || fd >= FILE_ARRAY_SIZE) {
-        printf("read: fd out of range\n");
+        log(WARN, "fd out of range", "read");
         return -1;
     }
 
     file_desc_t file = get_file_array()[fd];
     if(!(file.flags & 0x1)) {
-        printf("read: Invalid file descriptor\n");
+        log(WARN, "Invalid file descriptor", "read");
         return -1;
     }
 
@@ -217,13 +217,13 @@ int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
  */
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
     if(fd < 0 || fd >= FILE_ARRAY_SIZE) {
-        printf("write: fd out of range\n");
+        log(WARN, "fd out of range", "write");
         return -1;
     }
 
     file_desc_t file = get_file_array()[fd];
     if(!(file.flags & 0x1)) {
-        printf("write: Invalid file descriptor\n");
+        log(WARN, "Invalid file descriptor", "write");
         return -1;
     }
 
@@ -235,13 +235,13 @@ int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
  */
 int32_t sys_open(const uint8_t* filename) {
     if(filename == NULL) {
-        printf("open: NULL filename\n");
+        log(WARN, "NULL filename", "open");
         return -1;
     }
 
     dentry_t dentry;
     if(read_dentry_by_name(filename, &dentry) == -1) {
-        printf("open: Named file does not exist\n");
+        log(WARN, "Named file does not exist", "open");
         return -1;
     }
 
@@ -277,7 +277,7 @@ int32_t sys_open(const uint8_t* filename) {
             } else {
                 memset(&file, 0x00, sizeof(file_desc_t));
                 file_array[i] = file;
-                printf("open: Invalid dentry type\n");
+                log(ERROR, "Invalid dentry type", "open");
                 return -1;
             }
 
@@ -285,7 +285,7 @@ int32_t sys_open(const uint8_t* filename) {
 
             // Pass-through to specific open() function
             if(file.open(filename) == -1) {
-                printf("open: specific open() function failed\n");
+                log(WARN, "specific open() function failed", "open");
                 return -1;
             }
 
@@ -294,7 +294,7 @@ int32_t sys_open(const uint8_t* filename) {
         }
     }
 
-    printf("open: No remaining file descriptors\n");
+    log(WARN, "No remaining file descriptors", "open");
     return -1;
 }
 
@@ -303,12 +303,12 @@ int32_t sys_open(const uint8_t* filename) {
  */
 int32_t sys_close(int32_t fd) {
     if(fd < 0 || fd >= FILE_ARRAY_SIZE) {
-        printf("close: fd out of range\n");
+        log(WARN, "fd out of range", "close");
         return -1;
     }
 
     if(fd == STDIN_FD || fd == STDOUT_FD) {
-        printf("close: Can't close stdin/stdout\n");
+        log(WARN, "Can't close stdin/stdout", "close");
         return -1;
     }
 
@@ -324,7 +324,7 @@ int32_t sys_close(int32_t fd) {
         // Pass-through to specific close() function
         return file.close(fd);
     } else {
-        printf("close: Invalid file descriptor\n");
+        log(WARN, "Invalid file descriptor", "close");
         return -1;
     }
 }
@@ -334,7 +334,7 @@ int32_t sys_close(int32_t fd) {
  */
 int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
     if(buf == NULL) {
-        printf("getargs: User-supplied buffer is null\n");
+        log(WARN, "User-supplied buffer is null", "getargs");
         return -1;
     }
 
@@ -342,7 +342,7 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
 
     uint32_t args_size = strlen((int8_t*) (pcb->args));
     if(args_size + 1 > nbytes) { // Add one to account for NULL-termination
-        printf("getargs: user-supplied buffer is too small. args size: (%d), buffer size: (%d)\n", args_size, nbytes);
+        log(WARN, "user-supplied buffer is too small", "getargs");
         return -1;
     }
 
@@ -357,13 +357,13 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
  */
 int32_t sys_vidmap(uint8_t** screen_start) {
     if(screen_start == NULL) {
-        printf("vidmap: NULL screen_start addr\n");
+        log(WARN, "NULL screen_start addr", "vidmap");
         return -1;
     }
 
     if(((uint32_t) screen_start) < (128 * MB) ||
             ((uint32_t) screen_start) >= (132 * MB)) {
-        printf("vidmap: screen_start addr out of range\n");
+        log(WARN, "screen_start addr out of range", "vidmap");
         return -1;
     }
 

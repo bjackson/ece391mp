@@ -9,6 +9,8 @@
 #include "types.h"
 #include "lib.h"
 #include "devices/terminal.h"
+#include "x86_desc.h"
+#include "paging.h"
 
 #define STDIN_FD  0
 #define STDOUT_FD 1
@@ -36,8 +38,8 @@ typedef struct {
     uint32_t pid;
     file_desc_t file_array[FILE_ARRAY_SIZE];
     uint32_t parent_pid;
-    uint32_t old_esp;
-    uint32_t old_ebp;
+    uint32_t parent_esp;
+    uint32_t parent_ebp;
     uint8_t args[MAX_ARGS_LENGTH];
     uint32_t terminal_index;
 } pcb_t;
@@ -59,5 +61,8 @@ pcb_t* get_pcb_ptr();
 
 //
 file_desc_t* get_file_array();
+
+//
+void task_switch(uint32_t new_pid);
 
 #endif // TASKS_H

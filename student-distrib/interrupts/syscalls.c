@@ -45,15 +45,15 @@ int32_t sys_halt(uint8_t status) {
     tss.esp0 = ((8 * MB) - ((pcb.parent_pid) * (8 * KB)) - 4);
 
     // Save old ESP and EBP in registers
-    register uint32_t old_esp = pcb.old_esp;
-    register uint32_t old_ebp = pcb.old_ebp;
+    register uint32_t parent_esp = pcb.parent_esp;
+    register uint32_t parent_ebp = pcb.parent_ebp;
 
     // Restore parent's paging
     restore_parent_paging(pcb.pid, pcb.parent_pid);
 
     // Restore parent's ESP/EBP
-    asm volatile ("movl %0, %%esp;"::"r"(old_esp));
-    asm volatile ("movl %0, %%ebp;"::"r"(old_ebp));
+    asm volatile ("movl %0, %%esp;"::"r"(parent_esp));
+    asm volatile ("movl %0, %%ebp;"::"r"(parent_ebp));
     asm volatile ("jmp halt_ret_lbl;");
 
     // This function should never return to the caller
@@ -182,12 +182,18 @@ int32_t sys_execute(const uint8_t* command) {
     tss.ss0 = KERNEL_DS;
     tss.esp0 = ((8 * MB) - ((new_pid) * (8 * KB)) - 4);
 
-    // Save esp/ebp and the parent PID in the PCB
-    new_pcb->parent_pid = (old_pcb == NULL) ? KERNEL_PID : old_pcb->pid;
+    // Save parent PID in the PCB. Should be KERNEL_PID for new base shells
+    if(shell_pids[current_terminal] == new_pid) {
+        new_pcb->parent_pid = KERNEL_PID;
+    } else {
+        new_pcb->parent_pid = (old_pcb == NULL) ? KERNEL_PID : old_pcb->pid;
+    }
+
+    // Save esp/ebp in the PCB
     register uint32_t esp asm ("esp");
-    new_pcb->old_esp = esp;
+    new_pcb->parent_esp = esp;
     register uint32_t ebp asm ("ebp");
-    new_pcb->old_ebp = ebp;
+    new_pcb->parent_ebp = ebp;
 
     // Load USER_DS into stack segment selectors
     asm volatile ("movw %w0, %%ax;"::"r"(USER_DS));

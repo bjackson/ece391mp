@@ -15,6 +15,9 @@ uint8_t alt_pressed   = 0;
 uint8_t caps_lock     = 0;
 uint8_t shift_bitmask = 0; // Bit 1 for left, Bit 0 for right
 
+// Declared in terminal.c
+extern volatile uint32_t shell_pids[NUM_TERMINALS];
+
 /**
  *
  */
@@ -198,15 +201,15 @@ void keyboard_isr() {
         break;
     }
 
-    // On CTRL-L, clear the screen
+    // On CTRL-l, clear the screen
     if (ctrl_pressed == 1 && key == 'l') {
         terminal_clear();
         send_eoi(KEYBOARD_IRQ);
         return;
     }
 
-    // On CTRL-C, halt the current task
-    //TODO: CTRL-C for programs, CTRL-D for shells
+    // On CTRL-c, halt the current task
+    //TODO: CTRL-c for programs, CTRL-d for shells
     //TODO: Actually use signals lol jk
     if(ctrl_pressed == 1 && key == 'c') {
         send_eoi(KEYBOARD_IRQ);
@@ -214,18 +217,66 @@ void keyboard_isr() {
         return;
     }
 
+    // On CTRL-p, print the current running pid
+    if(ctrl_pressed == 1 && key == 'p') {
+        pcb_t* pcb = get_pcb_ptr();
+        printf("Current PID: %d\n", (pcb == NULL) ? KERNEL_PID : pcb->pid);
+        printf("Parent PID: %d\n", (pcb == NULL) ? KERNEL_PID : pcb->parent_pid);
+        send_eoi(KEYBOARD_IRQ);
+        return;
+    }
+
     // Support switching between terminals with ALT-F{1,2,3}
     if(alt_pressed == 1 && scan_code == F1) {
         log(DEBUG, "Switch to first terminal!", "isr");
+        current_terminal = 0;
         send_eoi(KEYBOARD_IRQ);
+
+        if(shell_pids[0] > 0) {
+            // A shell has already been started for this terminal
+            log(DEBUG, "Shell already exists for terminal 0!", "isr");
+
+            // Switch to base shell of terminal 0
+            task_switch(shell_pids[0]);
+        } else {
+            // Need to start a new shell for this terminal
+            do_execute((uint8_t *)"shell");
+        }
+
         return;
     } else if(alt_pressed == 1 && scan_code == F2) {
         log(DEBUG, "Switch to second terminal!", "isr");
+        current_terminal = 1;
         send_eoi(KEYBOARD_IRQ);
+
+        if(shell_pids[1] > 0) {
+            // A shell has already been started for this terminal
+            log(DEBUG, "Shell already exists for terminal 1!", "isr");
+
+            // Switch to base shell of terminal 1
+            task_switch(shell_pids[1]);
+        } else {
+            // Need to start a new shell for this terminal
+            do_execute((uint8_t *)"shell");
+        }
+
         return;
     } else if(alt_pressed == 1 && scan_code == F3) {
         log(DEBUG, "Switch to third terminal!", "isr");
+        current_terminal = 2;
         send_eoi(KEYBOARD_IRQ);
+
+        if(shell_pids[2] > 0) {
+            // A shell has already been started for this terminal
+            log(DEBUG, "Shell already exists for terminal 2!", "isr");
+
+            // Switch to base shell of terminal 2
+            task_switch(shell_pids[2]);
+        } else {
+            // Need to start a new shell for this terminal
+            do_execute((uint8_t *)"shell");
+        }
+
         return;
     }
 

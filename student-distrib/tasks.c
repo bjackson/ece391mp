@@ -109,3 +109,56 @@ file_desc_t* get_file_array() {
     pcb_t* pcb = get_pcb_ptr();
     return (pcb == NULL) ? kernel_file_array : pcb->file_array;
 }
+
+/**
+ *
+ */
+void task_switch(uint32_t new_pid) {
+    log(DEBUG, "Switching to new task!", "task_switch");
+
+    if(new_pid == 0) {
+        log(ERROR, "Can't switch to kernel", "task_switch");
+        return;
+    }
+
+    pcb_t* old_pcb = get_pcb_ptr();
+    if(old_pcb == NULL) {
+        log(ERROR, "Can't switch away from the kernel!", "task_switch");
+        return;
+    }
+
+    if(old_pcb->pid == new_pid) {
+        log(WARN, "Can't switch to the current active task", "task_switch");
+        return;
+    }
+
+    // Write TSS with new process's kernel stack
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = ((8 * MB) - ((new_pid) * (8 * KB)) - 4);
+
+    // new_pcb is stored at the top of the new process's stack
+    //pcb_t* new_pcb = (void*) tss.esp0;
+
+    // Save esp/ebp in the PCB
+    /*
+    register uint32_t esp asm ("esp");
+    old_pcb->old_esp = esp;
+    register uint32_t ebp asm ("ebp");
+    old_pcb->old_ebp = ebp;
+    */
+
+    // Save old ESP and EBP in registers
+    //register uint32_t old_esp = new_pcb->old_esp;
+    //register uint32_t old_ebp = new_pcb->old_ebp;
+
+    // Restore new process's paging?
+    restore_parent_paging(old_pcb->pid, new_pid);
+
+    // Do some video memory bullshit
+
+    // Put new process's shit in ESP/EBP
+    //asm volatile ("movl %0, %%esp;"::"r"(old_esp));
+    //asm volatile ("movl %0, %%ebp;"::"r"(old_ebp));
+
+    return;
+}

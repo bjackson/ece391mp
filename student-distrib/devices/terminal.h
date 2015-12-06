@@ -10,6 +10,8 @@
 
 #define KEYBOARD_BUFFER_SIZE 128
 
+#define NUM_TERMINALS 3
+
 //
 int32_t terminal_open(const uint8_t* filename);
 

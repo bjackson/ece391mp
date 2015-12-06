@@ -10,26 +10,29 @@
 #define NUM_ROWS 25
 
 // Holds the current line of input
-static uint8_t keyboard_buffer[KEYBOARD_BUFFER_SIZE];
+static uint8_t keyboard_buffers[NUM_TERMINALS][KEYBOARD_BUFFER_SIZE];
 
 // Holds a copy of the previous line of input (after hitting enter)
-static uint8_t read_buffer[KEYBOARD_BUFFER_SIZE];
+static uint8_t read_buffers[NUM_TERMINALS][KEYBOARD_BUFFER_SIZE];
 
 // Tracks the index of the next character to be inserted
-static uint32_t keyboard_buffer_index;
+static uint32_t keyboard_buffer_indices[NUM_TERMINALS];
 
 // Indicates whether the read_buffer is ready to be read from
-static volatile uint8_t read_ready;
+static volatile uint8_t read_ready_flags[NUM_TERMINALS];
 
 /**
  *
  */
 int32_t terminal_open(const uint8_t* filename) {
-    memset(keyboard_buffer, 0x00, sizeof(keyboard_buffer));
-    memset(read_buffer, 0x00, sizeof(read_buffer));
+    memset(keyboard_buffers, 0x00, sizeof(keyboard_buffers));
+    memset(read_buffers, 0x00, sizeof(read_buffers));
 
-    keyboard_buffer_index = 0;
-    read_ready = 0;
+    int i;
+    for(i = 0; i < NUM_TERMINALS; i++) {
+        keyboard_buffer_indices[i] = 0;
+        read_ready_flags[0] = 0;
+    }
 
     return 0;
 }
@@ -43,11 +46,18 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
         return -1;
     }
 
-    memset(read_buffer, 0x00, sizeof(read_buffer));
+    pcb_t* pcb = get_pcb_ptr();
+    if(pcb == NULL) {
+        log(ERROR, "Can't call terminal functions before starting shell", "terminal_read");
+        return -1;
+    }
+    uint32_t t_idx = pcb->terminal_index;
+
+    memset(read_buffers[t_idx], 0x00, sizeof(read_buffers[t_idx]));
 
     // Wait for read_ready to be set
     uint32_t spin = 0;
-    while (!read_ready) {
+    while (!read_ready_flags[t_idx]) {
         spin++;
     }
 
@@ -57,18 +67,18 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
     cli();
     int i;
     for(i = 0; i < bytes_to_read; i++) {
-        uint8_t next = read_buffer[i];
+        uint8_t next = read_buffers[t_idx][i];
         ((uint8_t*) buf)[i] = next;
 
         // Stop returning bytes after encountering a newline
         if(next == '\n') {
-            read_ready = 0;
+            read_ready_flags[t_idx] = 0;
             sti();
             return i + 1;
         }
     }
 
-    read_ready = 0;
+    read_ready_flags[t_idx] = 0;
     sti();
 
     return bytes_to_read;
@@ -104,16 +114,22 @@ int32_t terminal_close(int32_t fd) {
  *
  */
 int32_t terminal_write_key(uint8_t key) {
+    pcb_t* pcb = get_pcb_ptr();
+    if(pcb == NULL) {
+        log(ERROR, "Can't call terminal functions before starting shell", "terminal_write_key");
+        return -1;
+    }
+    uint32_t t_idx = pcb->terminal_index;
 
     // Handle backspace
     if(key == '\b') {
         cli();
-        if(keyboard_buffer_index > 0) {
+        if(keyboard_buffer_indices[t_idx] > 0) {
             putc('\b');
         }
-        keyboard_buffer_index = (keyboard_buffer_index == 0) ? 0 :
-            keyboard_buffer_index - 1;
-        keyboard_buffer[keyboard_buffer_index] = 0x00;
+        keyboard_buffer_indices[t_idx] = (keyboard_buffer_indices[t_idx] == 0) ? 0 :
+            keyboard_buffer_indices[t_idx] - 1;
+        keyboard_buffers[t_idx][keyboard_buffer_indices[t_idx]] = 0x00;
         sti();
         return 0;
     }
@@ -121,22 +137,22 @@ int32_t terminal_write_key(uint8_t key) {
     // Handle enter
     if(key == '\n') {
         cli();
-        keyboard_buffer[keyboard_buffer_index] = '\n';
-        memcpy(read_buffer, keyboard_buffer, sizeof(keyboard_buffer));
-        memset(keyboard_buffer, 0x00, KEYBOARD_BUFFER_SIZE);
-        keyboard_buffer_index = 0;
+        keyboard_buffers[t_idx][keyboard_buffer_indices[t_idx]] = '\n';
+        memcpy(read_buffers[t_idx], keyboard_buffers[t_idx], sizeof(keyboard_buffers[t_idx]));
+        memset(keyboard_buffers[t_idx], 0x00, KEYBOARD_BUFFER_SIZE);
+        keyboard_buffer_indices[t_idx] = 0;
         putc('\n');
-        read_ready = 1;
+        read_ready_flags[t_idx] = 1;
         sti();
         return 0;
     }
 
     // Save at least one character for the line feed
-    if(keyboard_buffer_index == KEYBOARD_BUFFER_SIZE - 1) {
+    if(keyboard_buffer_indices[t_idx] == KEYBOARD_BUFFER_SIZE - 1) {
         return -1;
     }
 
-    keyboard_buffer[keyboard_buffer_index++] = key;
+    keyboard_buffers[t_idx][keyboard_buffer_indices[t_idx]++] = key;
     putc(key);
     return 0;
 }
@@ -145,12 +161,20 @@ int32_t terminal_write_key(uint8_t key) {
  *
  */
 void terminal_clear() {
+    pcb_t* pcb = get_pcb_ptr();
+    if(pcb == NULL) {
+        log(ERROR, "Can't call terminal functions before starting shell", "terminal_clear");
+        return;
+    }
+    uint32_t t_idx = pcb->terminal_index;
+
+    // Will only clear the correct terminal due to video memory mapping
     clear();
 
-    memset(keyboard_buffer, 0x00, sizeof(keyboard_buffer));
-    memset(read_buffer, 0x00, sizeof(read_buffer));
+    memset(keyboard_buffers[t_idx], 0x00, sizeof(keyboard_buffers[t_idx]));
+    memset(read_buffers[t_idx], 0x00, sizeof(read_buffers[t_idx]));
+    keyboard_buffer_indices[t_idx] = 0;
+    read_ready_flags[t_idx] = 0;
 
-    keyboard_buffer_index = 0;
-    read_ready = 0;
     set_cursor(0, 0);
 }

@@ -73,6 +73,8 @@ pcb_t* init_pcb(uint32_t pid) {
     stdout.flags = 1; // In-use
     pcb.file_array[STDOUT_FD] = stdout;
 
+    pcb.terminal_index = 0; //TODO: Actual index
+
     // Place into memory
     void* pcb_mem_location = (void*) ((8 * MB) - ((pid + 1) * (8 * KB)));
     memcpy(pcb_mem_location, &pcb, sizeof(pcb_t));

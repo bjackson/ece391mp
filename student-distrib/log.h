@@ -12,8 +12,6 @@
 
 typedef enum {DEBUG,INFO,WARN,ERROR} LogLevel;
 
-const static char* log_level_string[4] = {"DEBUG", "INFO", "WARN", "ERROR"};
-
 void log(LogLevel level, const char*  msg, const char* func_name);
 
 #endif

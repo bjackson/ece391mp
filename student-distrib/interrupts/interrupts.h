@@ -10,6 +10,7 @@
 #include "../lib.h"
 #include "../devices/i8259.h"
 #include "../tasks.h"
+#include "syscalls.h"
 
 #define MAX_EXCEPTION_ISR 31
 
@@ -54,6 +55,9 @@
 #define ALT_PRESS               0x38
 #define ALT_RELEASE             0xB8
 #define CAPS_LOCK_PRESS         0x3A
+#define F1                      0x3B
+#define F2                      0x3C
+#define F3                      0x3D
 
 // RTC constants
 #define RTC_INDEX_PORT    0x70

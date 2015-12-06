@@ -166,6 +166,7 @@ void keyboard_isr() {
     };
 
     uint8_t scan_code = inb(KEYBOARD_PORT);
+    uint8_t key = scancodes[scan_code];
 
     switch (scan_code) {
       case RIGHT_SHIFT_PRESS:
@@ -197,11 +198,33 @@ void keyboard_isr() {
         break;
     }
 
-    uint8_t key = scancodes[scan_code];
-
     // On CTRL-L, clear the screen
     if (ctrl_pressed == 1 && key == 'l') {
         terminal_clear();
+        send_eoi(KEYBOARD_IRQ);
+        return;
+    }
+
+    // On CTRL-C, halt the current task
+    //TODO: CTRL-C for programs, CTRL-D for shells
+    //TODO: Actually use signals lol jk
+    if(ctrl_pressed == 1 && key == 'c') {
+        send_eoi(KEYBOARD_IRQ);
+        do_syscall(SYSCALL_HALT_NUM, 0, 0, 0);
+        return;
+    }
+
+    // Support switching between terminals with ALT-F{1,2,3}
+    if(alt_pressed == 1 && scan_code == F1) {
+        log(DEBUG, "Switch to first terminal!", "isr");
+        send_eoi(KEYBOARD_IRQ);
+        return;
+    } else if(alt_pressed == 1 && scan_code == F2) {
+        log(DEBUG, "Switch to second terminal!", "isr");
+        send_eoi(KEYBOARD_IRQ);
+        return;
+    } else if(alt_pressed == 1 && scan_code == F3) {
+        log(DEBUG, "Switch to third terminal!", "isr");
         send_eoi(KEYBOARD_IRQ);
         return;
     }

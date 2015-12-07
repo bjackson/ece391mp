@@ -12,6 +12,7 @@
 
 typedef enum {DEBUG,INFO,WARN,ERROR} LogLevel;
 
+// log errors
 void log(LogLevel level, const char*  msg, const char* func_name);
 
 #endif

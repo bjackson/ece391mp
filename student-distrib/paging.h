@@ -7,7 +7,6 @@
 #include "types.h"
 #include "lib.h"
 #include "tasks.h"
-#include "devices/e1000.h"
 #include "devices/terminal.h"
 
 #define MAX_ENTRIES 1024
@@ -111,9 +110,6 @@ void restore_parent_paging(uint32_t pid, uint32_t parent_pid);
 
 //
 void remap_video_memory(uint32_t old_pid, uint32_t new_pid);
-
-//
-uint32_t k_virt_to_phys(void* virtual);
 
 //
 void mmap(void* phys, void* virt, uint8_t access);

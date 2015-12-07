@@ -13,7 +13,6 @@
 #include "devices/rtc.h"
 #include "devices/terminal.h"
 #include "devices/filesys.h"
-#include "devices/e1000.h"
 #include "log.h"
 
 /* Macros. */
@@ -180,8 +179,6 @@ void entry (unsigned long magic, unsigned long addr) {
 
     fs_init(fs_start_addr); // Initialize the file system
 
-    //e1000_init(); // Initialize network card
-
     terminal_open(NULL); // Initialize the terminal driver
 
     // Enable interrupts
@@ -220,18 +217,6 @@ void entry (unsigned long magic, unsigned long addr) {
 
     // Test handling of page faults (uncomment for page fault)
     printf("%s\n", 0xDEADBEEF);
-
-    // int8_t e1000_test_data1[] = "ILLUSIONS, MICHAEL.";
-    // int8_t e1000_test_data2[] = "Bob Loblaw Law Blog";
-    // int8_t e1000_test_data3[] = "You're gonna get some hop-ons.";
-    // int8_t e1000_test_data4[] = "And that's why you always leave a note.";
-    int8_t arp_pkt[42] = "\xff\xff\xff\xff\xff\xff\x52\x55\x0a\x00\x02\x02\x08\x06\x00\x01\x08\x00\x06\x04\x00\x01\x52\x55\x0a\x00\x02\x02\x0a\x00\x02\x02\x00\x00\x00\x00\x00\x00\x0a\x00\x02\x0f";
-
-    e1000_transmit((uint8_t *)arp_pkt, 42);
-    e1000_transmit((uint8_t *)arp_pkt, 42);
-    e1000_transmit((uint8_t *)arp_pkt, 42);
-
-    e1000_transmit((uint8_t *)arp_pkt, 42);
      */
 
     // Execute the first shell!

@@ -640,8 +640,11 @@ test_interrupts(void)
 	}
 }
 
-/**
- *
+/*
+ * log2_of_pwr2(int32_t pwr2)
+ * Description: create pwr of 2 values
+ * Input: pwr2 - exponent
+ * Output: 2 raised to pwr2
  */
 int32_t log2_of_pwr2(int32_t pwr2) {
 	int32_t result = 0;
@@ -651,8 +654,11 @@ int32_t log2_of_pwr2(int32_t pwr2) {
 	return result;
 }
 
-/**
- *
+/*
+ * reset_screen_pos()
+ * Description: reset the screen positioning
+ * Input: none
+ * Output: none
  */
 void reset_screen_pos() {
 	screen_x = switch_screen_pos_x[current_terminal];
@@ -660,15 +666,21 @@ void reset_screen_pos() {
 	set_cursor(screen_y, screen_x);
 }
 
-/**
- *
+/*
+ * get_screen_x()
+ * Description: get x coordinate
+ * Input: none
+ * Output: x coordinate
  */
 int get_screen_x() {
 	return screen_x;
 }
 
-/**
- *
+/*
+ * get_screen_y()
+ * Description: get y coordinate
+ * Input: none
+ * Output: y coordinate
  */
 int get_screen_y() {
 	return screen_y;

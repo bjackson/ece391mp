@@ -242,8 +242,9 @@ void keyboard_isr() {
     // On CTRL-p, print the current running pid
     if(ctrl_pressed == 1 && key == 'p') {
         pcb_t* pcb = get_pcb_ptr();
-        printf("Current PID: %d\n", (pcb == NULL) ? KERNEL_PID : pcb->pid);
+        printf("Current PID: %d, ", (pcb == NULL) ? KERNEL_PID : pcb->pid);
         printf("Parent PID: %d\n", (pcb == NULL) ? KERNEL_PID : pcb->parent_pid);
+
         send_eoi(KEYBOARD_IRQ);
         return;
     }
@@ -253,8 +254,6 @@ void keyboard_isr() {
         log(DEBUG, "Switch to first terminal!", "isr");
         current_terminal = 0;
         send_eoi(KEYBOARD_IRQ);
-
-        //TODO: Need to switch to the active task of each terminal, not the base shell
 
         if(shell_pids[0] > 0) {
             // A shell has already been started for this terminal

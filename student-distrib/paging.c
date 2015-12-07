@@ -5,8 +5,8 @@
  */
 #include "paging.h"
 
-uint32_t page_dirs[MAX_TASKS][MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
-uint32_t page_tables[MAX_TASKS][NUM_PAGE_TABLES][MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
+uint32_t page_dirs[MAX_TASKS + 1][MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
+uint32_t page_tables[MAX_TASKS + 1][NUM_PAGE_TABLES][MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
 
 // Declared in terminal.c
 extern volatile uint32_t active_pids[NUM_TERMINALS];
@@ -18,8 +18,8 @@ extern volatile uint32_t active_pids[NUM_TERMINALS];
  *   Function: begins the whole paging process
  */
 void init_paging() {
-    memset(page_dirs, 0x00, sizeof(uint32_t) * MAX_ENTRIES * MAX_TASKS);
-    memset(page_tables, 0x00, sizeof(uint32_t) * MAX_ENTRIES * NUM_PAGE_TABLES * MAX_TASKS);
+    memset(page_dirs, 0x00, sizeof(uint32_t) * MAX_ENTRIES * (MAX_TASKS + 1));
+    memset(page_tables, 0x00, sizeof(uint32_t) * MAX_ENTRIES * NUM_PAGE_TABLES * (MAX_TASKS + 1));
 
     // Kernel page table
     register_page_table(page_dirs[KERNEL_PID], 0, page_tables[KERNEL_PID][0], ACCESS_SUPER);
@@ -29,7 +29,7 @@ void init_paging() {
 
     // Map large page for kernel code
     map_large_page(page_dirs[KERNEL_PID], ((void*) FOUR_MB), ((void*) FOUR_MB),
-            ACCESS_SUPER, GLOBAL, CACHE_ENABLED, WRITE_THROUGH_ENABLED);
+            ACCESS_SUPER, NOT_GLOBAL, CACHE_DISABLED, WRITE_THROUGH_ENABLED);
 
     // Enable paging - from OSDev guide at http://wiki.osdev.org/Paging
     asm volatile (
@@ -156,7 +156,7 @@ void init_task_paging(uint32_t pid) {
 
     // Map large page for kernel code
     map_large_page(page_dirs[pid], ((void*) FOUR_MB), ((void*) FOUR_MB),
-            ACCESS_SUPER, GLOBAL, CACHE_ENABLED, WRITE_THROUGH_ENABLED);
+            ACCESS_SUPER, NOT_GLOBAL, CACHE_DISABLED, WRITE_THROUGH_ENABLED);
 
     // Map large page for loading user-level program
     map_large_page(page_dirs[pid], ((void*) (FOUR_MB + (pid * FOUR_MB))),
@@ -175,7 +175,7 @@ void init_task_paging(uint32_t pid) {
 */
 void set_page_dir(uint32_t pid) {
     // Load CR3 with address of page directory for process with pid
-    asm volatile ("movl %0, %%cr3;"::"r"(&(page_dirs[pid])));
+    asm volatile ("movl %0, %%cr3;"::"g"(page_dirs[pid]));
 }
 
 /*
@@ -196,25 +196,33 @@ void restore_parent_paging(uint32_t pid, uint32_t parent_pid) {
 void remap_video_memory(uint32_t old_pid, uint32_t new_pid) {
     cli(); // Begin critical section
 
-    if(active_pids[current_terminal] == new_pid) {
-        log(DEBUG, "Mapping VIDEO to VIDEO", "remap_video_memory");
+    pcb_t* old_pcb = get_pcb_ptr_pid(old_pid);
+    pcb_t* new_pcb = get_pcb_ptr_pid(new_pid);
 
+    if(new_pcb->terminal_index == current_terminal) {
         // Map VIDEO to VIDEO for new task
+        //log(DEBUG, "new: Mapping VIDEO to VIDEO", "remap_video_memory");
         map_page(page_tables[new_pid][0], ((void*) VIDEO), ((void*) VIDEO), ACCESS_SUPER);
     } else {
-        log(DEBUG, "Mapping VIDEO to new_backing", "remap_video_memory");
-
         // Map VIDEO to backing store for new task
+        //log(DEBUG, "new: Mapping VIDEO to new_backing", "remap_video_memory");
         uint32_t new_terminal = get_pcb_ptr_pid(new_pid)->terminal_index;
         void* new_backing = (void*) (VIDEO + (FOUR_KB * (new_terminal + 1)));
         map_page(page_tables[new_pid][0], new_backing, ((void*) VIDEO), ACCESS_SUPER);
     }
 
-    // Remap VIDEO to backing store for old task if it's not the kernel
     if(old_pid > KERNEL_PID) {
-        uint32_t old_terminal = get_pcb_ptr_pid(old_pid)->terminal_index;
-        void* old_backing = (void*) (VIDEO + (FOUR_KB * (old_terminal + 1)));
-        map_page(page_tables[old_pid][0], old_backing, ((void*) VIDEO), ACCESS_SUPER);
+        if(old_pcb->terminal_index == current_terminal) {
+            // Map VIDEO to VIDEO for old task
+            //log(DEBUG, "old: Mapping VIDEO to VIDEO", "remap_video_memory");
+            map_page(page_tables[old_pid][0], ((void*) VIDEO), ((void*) VIDEO), ACCESS_SUPER);
+        } else {
+            // Remap VIDEO to backing store for old task
+            //log(DEBUG, "old: Mapping VIDEO to old_backing", "remap_video_memory");
+            uint32_t old_terminal = get_pcb_ptr_pid(old_pid)->terminal_index;
+            void* old_backing = (void*) (VIDEO + (FOUR_KB * (old_terminal + 1)));
+            map_page(page_tables[old_pid][0], old_backing, ((void*) VIDEO), ACCESS_SUPER);
+        }
     }
 
     // Flush TLB
@@ -233,6 +241,14 @@ void remap_video_memory(uint32_t old_pid, uint32_t new_pid) {
 *   Function: wrapper function for mapping page
 */
 void mmap(void* phys, void* virt, uint8_t access) {
+    pcb_t* pcb = get_pcb_ptr();
+    mmap_pid((pcb == NULL) ? KERNEL_PID : pcb->pid, phys, virt, access);
+}
+
+/**
+ *
+ */
+void mmap_pid(uint32_t pid, void* phys, void* virt, uint8_t access) {
     uint32_t raw_virt = (uint32_t) virt;
 
     uint32_t page_table_idx;
@@ -245,18 +261,25 @@ void mmap(void* phys, void* virt, uint8_t access) {
         return;
     }
 
-    pcb_t* pcb = get_pcb_ptr();
-    map_page(page_tables[(pcb == NULL) ? KERNEL_PID : pcb->pid][page_table_idx],
-            phys, virt, access);
+    map_page(page_tables[pid][page_table_idx], phys, virt, access);
 
     // Flush TLB
-    set_page_dir((pcb == NULL) ? KERNEL_PID : pcb->pid);
+    asm volatile("movl %%cr3, %%eax;"::);
+    asm volatile("movl %%eax, %%cr3;"::);
 }
 
 /**
  *
  */
 void munmap(void* virt) {
+    pcb_t* pcb = get_pcb_ptr();
+    munmap_pid((pcb == NULL) ? KERNEL_PID : pcb->pid, virt);
+}
+
+/**
+ *
+ */
+void munmap_pid(uint32_t pid, void* virt) {
     uint32_t raw_virt = (uint32_t) virt;
 
     uint32_t page_table_idx;
@@ -269,11 +292,11 @@ void munmap(void* virt) {
         return;
     }
 
-    pcb_t* pcb = get_pcb_ptr();
-    unmap_page(page_tables[(pcb == NULL) ? KERNEL_PID : pcb->pid][page_table_idx], virt);
+    unmap_page(page_tables[pid][page_table_idx], virt);
 
     // Flush TLB
-    set_page_dir((pcb == NULL) ? KERNEL_PID : pcb->pid);
+    asm volatile("movl %%cr3, %%eax;"::);
+    asm volatile("movl %%eax, %%cr3;"::);
 }
 
 /*
@@ -293,5 +316,6 @@ void mmap_large(void* phys, void* virt, uint8_t access, uint8_t write_through) {
             phys, virt, access, GLOBAL, CACHE_DISABLED, write_through);
 
     // Flush TLB
-    set_page_dir((pcb == NULL) ? KERNEL_PID : pcb->pid);
+    asm volatile("movl %%cr3, %%eax;"::);
+    asm volatile("movl %%eax, %%cr3;"::);
 }

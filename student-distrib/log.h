@@ -8,7 +8,7 @@
 
 #include "lib.h"
 
-#define LOG_LEVEL DEBUG
+#define LOG_LEVEL ERROR
 
 typedef enum {DEBUG,INFO,WARN,ERROR} LogLevel;
 

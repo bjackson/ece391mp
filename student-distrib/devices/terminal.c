@@ -238,8 +238,8 @@ void switch_active_terminal_screen(uint32_t old_pid, uint32_t new_pid) {
     void* new_backing = (void*) (VIDEO + (FOUR_KB * (new_terminal + 1)));
 
     // Identity map pages for video memory backing stores
-    mmap(old_backing, old_backing, ACCESS_SUPER);
-    mmap(new_backing, new_backing, ACCESS_SUPER);
+    mmap_pid(new_pid, old_backing, old_backing, ACCESS_SUPER);
+    mmap_pid(new_pid, new_backing, new_backing, ACCESS_SUPER);
 
     // Copy video mem from VIDEO to backing for old_pid
     memcpy(old_backing, ((void*) VIDEO), FOUR_KB);
@@ -255,7 +255,7 @@ void switch_active_terminal_screen(uint32_t old_pid, uint32_t new_pid) {
     reset_screen_pos();
 
     // Unmap identity maped pages for video memory backing stores
-    munmap(old_backing);
-    munmap(new_backing);
+    munmap_pid(new_pid, old_backing);
+    munmap_pid(new_pid, new_backing);
 }
 

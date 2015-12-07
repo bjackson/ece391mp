@@ -115,7 +115,13 @@ void remap_video_memory(uint32_t old_pid, uint32_t new_pid);
 void mmap(void* phys, void* virt, uint8_t access);
 
 //
+void mmap_pid(uint32_t pid, void* phys, void* virt, uint8_t access);
+
+//
 void munmap(void* virt);
+
+//
+void munmap_pid(uint32_t pid, void* virt);
 
 void mmap_large(void* phys, void* virt, uint8_t access, uint8_t write_through);
 

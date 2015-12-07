@@ -102,7 +102,7 @@ pcb_t* init_pcb(uint32_t pid) {
 pcb_t* get_pcb_ptr() {
 
     /*
-     * We only want to return the pcb pointer if are running a process. If
+     * We only want to return the pcb pointer if we are running a process. If
      * this function is called by the kernel before starting the shell, it will
      * return NULL
      */
@@ -188,7 +188,7 @@ void task_switch(uint32_t new_pid) {
     remap_video_memory(old_pcb->pid, new_pid);
 
     // Ensure the screen displays properly based on the active task
-    //switch_active_terminal_screen((old_pcb == NULL) ? KERNEL_PID : old_pcb->pid, new_pid);
+    switch_active_terminal_screen((old_pcb == NULL) ? KERNEL_PID : old_pcb->pid, new_pid);
 
     /*
      * If this kernel stack didn't leave off at task_switch code, we need to head

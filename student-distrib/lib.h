@@ -37,6 +37,7 @@ int32_t log2_of_pwr2(int32_t pwr2);
 void reset_screen_pos();
 int get_screen_x();
 int get_screen_y();
+void test_interrupts(void);
 
 void* memset(void* s, int32_t c, uint32_t n);
 void* memset_word(void* s, int32_t c, uint32_t n);

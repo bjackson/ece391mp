@@ -40,13 +40,13 @@ int32_t sys_halt(uint8_t status) {
     // Free up PID for future use
     pid_use_array[pcb.pid] = 0;
 
-    // Check to see if we are halting the base shell for a terminal. If so, execute another
     int i;
     for(i = 0; i < NUM_TERMINALS; i++) {
         if(active_pids[i] == pcb.pid) {
             active_pids[i] = pcb.parent_pid;
         }
 
+        // Check to see if we are halting the base shell for a terminal. If so, execute another
         if(shell_pids[i] == pcb.pid) {
             log(DEBUG, "Exiting base terminal. Executing another", "halt");
             shell_pids[i] = 0;
@@ -173,7 +173,7 @@ int32_t sys_execute(const uint8_t* command) {
      * Remap old tasks's VIDEO memory to backing store and new tasks's video
      * memory to physical VIDEO addr
      */
-    remap_video_memory((old_pcb == NULL) ? KERNEL_PID : old_pcb->pid, new_pid);
+    //remap_video_memory((old_pcb == NULL) ? KERNEL_PID : old_pcb->pid, new_pid);
 
     // Check if we are executing a new base shell for a terminal
     if(strncmp(((int8_t*) executable_fname), "shell", 5) == 0) {

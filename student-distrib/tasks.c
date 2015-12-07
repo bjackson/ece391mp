@@ -226,7 +226,7 @@ void task_switch(uint32_t new_pid, uint32_t switch_screen) {
 *   Function: schedule a task
 */
 void task_sched_next() {
-    return; // Comment this out to break everything
+    return; // Comment this out to break everything :'(
 
     cli(); // Begin critical section
     disable_irq(PIT_IRQ);

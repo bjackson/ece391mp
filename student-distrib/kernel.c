@@ -13,6 +13,7 @@
 #include "devices/rtc.h"
 #include "devices/terminal.h"
 #include "devices/filesys.h"
+#include "devices/pit.h"
 #include "log.h"
 
 /* Macros. */
@@ -181,6 +182,8 @@ void entry (unsigned long magic, unsigned long addr) {
     fs_init(fs_start_addr); // Initialize the file system
 
     terminal_open(NULL); // Initialize the terminal driver
+
+    set_pit_frequency(TASK_SWITCH_FREQ); // Initialize the frequency of the task_switch interrupts
 
     // Enable interrupts
     sti();

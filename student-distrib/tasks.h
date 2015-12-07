@@ -27,6 +27,8 @@
 #define SWITCH_SCREEN 1
 #define NO_SWITCH_SCREEN 0
 
+#define TASK_SWITCH_FREQ 10
+
 // Struct for file descriptor array entry
 typedef struct {
     int32_t (*read)(int32_t fd, void* buf, int32_t nbytes);

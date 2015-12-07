@@ -7,19 +7,19 @@ Checkpoint 1
 
 Bug: IDT error
 Description: The IDT is not being properly initialized
-Fix: Changed the memory used in the intialization
+Fix: Changed the memory pointer used in the intialization
 Fix Time: 3 hours
 
 
 Bug: IDT offset
 Description: The offset to the IDT is incorrect
-Fix: Recaulcuated the offsets
+Fix: Recalculated the offsets
 Fix Time: 15 minutes
 
 
 Bug: Page Tables
 Description: Page tables are incorrectly sizing
-Fix: Changed the size of the page tables
+Fix: Recalculated, and changed the size of the page tables
 Fix Time: 2 hours
 
 
@@ -31,19 +31,21 @@ Fix Time: 15 min
 
 Bug: QEMU
 Description: QEMU not booting
-Fix: Reinstalling QEMU
+Fix: Reinstalling QEMU and played around with command-line params
 Fix Time: 4 hours
 
 
 Bug: Remote file syncing
 Description: Sharing files between local machine and QEMU
-Fix: Copying files from git to svn and doing an svn commit
+Fix: Copying files from git to svn and doing an svn commit, and then playing
+around with command-line params for QEMU
 Fix Time: 2 hours
 
 
 Bug: PIC Initialization
 Description: PIC isn’t getting initialized
-Fix: Calling the initialization from the correct location now
+Fix: Calling the initialization from the correct location now. Also sending the
+commands in the correct sequence.
 Fix Time: 2 hours
 
 
@@ -53,19 +55,13 @@ Fix: Reinstalling QEMU
 Fix Time: 1 hour
 
 
-Bug: Paging compilation
-Description: Undefined constants
-Fix: Defined constants at the beginning of the file
-Fix Time: 20 min
-
-
 Checkpoint 2
 ------------
 
 
 Bug: Line buffer
 Description: the line buffer is an incorrect size
-Fix: fixed the math calculating buffer size
+Fix: Re-read the documentation and piazza, then corrected it in code
 Fix Time: 20 min
 
 
@@ -89,7 +85,7 @@ Fix Time: 3 hours
 
 Bug: RTC test code
 Description: Test code for the RTC is in the wrong location for the demo
-Fix: Move test code to kernel file
+Fix: Move test code to kernel.c file
 Fix Time: 20 min
 
 
@@ -107,7 +103,7 @@ Fix Time: 4 hours
 
 Bug: Pagefault
 Description: fs_open pagefaults when run
-Fix: Fixed the meory locations
+Fix: Fixed the memory locations for stats and whatnot
 Fix Time: 3 hours
 
 
@@ -117,25 +113,19 @@ Checkpoint 3
 
 Bug: nbytes
 Description: nbytes isn’t being used properly
-Fix: Fixed the formula that uses nbytes
+Fix: Fixed the checks that uses nbytes
 Fix Time: 2 hours
-
-
-Bug: Paging compilation
-Description: Undefined constants
-Fix: Defined the constants in the begining of the file
-Fix Time: 20 min
 
 
 Bug: Execute
 Description: Execute crashing sporadically
-Fix: Protected against invalid input
-Fix Time: 5 hours
+Fix: Handle the stack parameters, IRET context, and esp/ebp properly.
+Fix Time: 2 hours
 
 
 Bug: Save/Restore
 Description: Stack isn’t set up well before the iret
-Fix: Researched how the stack should be set up
+Fix: Researched how the stack should be set up, and implemented that
 Fix Time: 4 hours
 
 
@@ -151,7 +141,7 @@ Checkpoint 4
 
 Bug: Vidmap pagefault
 Description: Vidmap keeps pagefaulting
-Fix: Changed the memory locations
+Fix: Changed the memory locations and tweaked some page table params
 Fix Time: 1 hour
 
 
@@ -162,14 +152,14 @@ Fix Time: 20 min
 
 
 Bug: Halt pagefault
-Description: Halt keeps pagefaulting when the shell exists
-Fix: Pointed to paren instead of grandparent for the pcb
+Description: Halt keeps pagefaulting when the shell exits
+Fix: Pointed to the correct parent esp/ebp values
 Fix Time: 4 hours
 
 
 Bug: Fish not moving
 Description: Fish is animating really slowly
-Fix: fixed the RTC clock frequency
+Fix: fixed the RTC clock frequency function
 Fix Time: 1 hour
 
 
@@ -192,5 +182,6 @@ Fix Time: 1 hour
 Bug: Video memory paging
 Description: When setting up new page mapping for the backing stores and video memory,
 the screen is not being displayed correctly.
-Fix: Moved video memory to it's own page
+Fix: Moved video memory to it's own page table and did the memory copying in a specified
+pid's page dir rather than whatever it happened to be.
 Fix Time: 5 hours

@@ -42,6 +42,7 @@ typedef struct {
     uint32_t parent_ebp;
     uint8_t args[MAX_ARGS_LENGTH];
     uint32_t terminal_index;
+    uint32_t from_task_switch;
 } pcb_t;
 
 // File descriptor table used by the kernel (will probably be moved later)

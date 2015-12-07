@@ -11,6 +11,9 @@ file_desc_t kernel_file_array[FILE_ARRAY_SIZE];
 // If PID in use, pid_use_array[pid] = 1, 0 otherwise
 uint32_t pid_use_array[MAX_TASKS + 1] = {0};
 
+// Declared in syscalls.c
+extern void* halt_ret_lbl asm("halt_ret_lbl");
+
 /**
  *
  */
@@ -73,8 +76,6 @@ pcb_t* init_pcb(uint32_t pid) {
     stdout.flags = 1; // In-use
     pcb.file_array[STDOUT_FD] = stdout;
 
-    pcb.terminal_index = 0; //TODO: Actual index
-
     // Place into memory
     void* pcb_mem_location = (void*) ((8 * MB) - ((pid + 1) * (8 * KB)));
     memcpy(pcb_mem_location, &pcb, sizeof(pcb_t));
@@ -136,29 +137,44 @@ void task_switch(uint32_t new_pid) {
     tss.ss0 = KERNEL_DS;
     tss.esp0 = ((8 * MB) - ((new_pid) * (8 * KB)) - 4);
 
-    // new_pcb is stored at the top of the new process's stack
-    //pcb_t* new_pcb = (void*) tss.esp0;
+    // Get the PCB for the new task
+    pcb_t* new_pcb = (pcb_t*) ((8 * MB) - ((new_pid + 1) * (8 * KB)));
 
-    // Save esp/ebp in the PCB
-    /*
+    // Save old parent esp/esb
+    uint32_t old_parent_esp = old_pcb->parent_esp;
+    uint32_t old_parent_ebp = old_pcb->parent_ebp;
+
+    // Save esp/ebp in the PCB, and mark that we came from this function
     register uint32_t esp asm ("esp");
-    old_pcb->old_esp = esp;
+    old_pcb->parent_esp = esp;
     register uint32_t ebp asm ("ebp");
-    old_pcb->old_ebp = ebp;
-    */
+    old_pcb->parent_ebp = ebp;
+    old_pcb->from_task_switch = 1;
 
-    // Save old ESP and EBP in registers
-    //register uint32_t old_esp = new_pcb->old_esp;
-    //register uint32_t old_ebp = new_pcb->old_ebp;
-
-    // Restore new process's paging?
+    // Restore new process's paging
     restore_parent_paging(old_pcb->pid, new_pid);
 
-    // Do some video memory bullshit
+    //TODO: Do some video memory bullshit
+    //TODO: Clear the screen and reset the cursor and other asst. bullshit
+    //TODO: Other bullshit I'm forgetting
 
-    // Put new process's shit in ESP/EBP
-    //asm volatile ("movl %0, %%esp;"::"r"(old_esp));
-    //asm volatile ("movl %0, %%ebp;"::"r"(old_ebp));
+    /*
+     * If this kernel stack didn't leave off at task_switch code, we need to head
+     * back to sys_execute as that's where it left off. It should only have to return
+     * there once. This ensures the stack is dealt with properly.
+     */
+    if(!new_pcb->from_task_switch) { // Stack for parent process was stored in the old pcb
+        // Restore the stack of the parent process
+        asm volatile ("movl %0, %%esp;"::"r"(old_parent_esp));
+        asm volatile ("movl %0, %%ebp;"::"r"(old_parent_ebp));
+        asm volatile ("jmp halt_ret_lbl;");
+    }
+
+    log(DEBUG, "Returning from task_switch normally", "task_switch");
+
+    // Restore the stack of the new process
+    asm volatile ("movl %0, %%esp;"::"r"(new_pcb->parent_esp));
+    asm volatile ("movl %0, %%ebp;"::"r"(new_pcb->parent_ebp));
 
     return;
 }

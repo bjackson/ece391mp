@@ -232,6 +232,8 @@ void keyboard_isr() {
         current_terminal = 0;
         send_eoi(KEYBOARD_IRQ);
 
+        //TODO: Need to switch to the active task of each terminal, not the base shell
+
         if(shell_pids[0] > 0) {
             // A shell has already been started for this terminal
             log(DEBUG, "Shell already exists for terminal 0!", "isr");

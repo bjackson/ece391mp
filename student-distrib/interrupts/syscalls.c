@@ -5,6 +5,12 @@
  */
 #include "syscalls.h"
 
+/*
+ * This label needs to be global so that we can jump to it from other files,
+ * namely from task_switch in tasks.c
+ */
+asm(".globl halt_ret_lbl");
+
 // Declared in tasks.c
 extern file_desc_t kernel_file_array[FILE_ARRAY_SIZE];
 extern uint32_t pid_use_array[MAX_TASKS + 1];

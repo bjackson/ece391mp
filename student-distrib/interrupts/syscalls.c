@@ -481,8 +481,8 @@ int32_t sys_sigreturn(void) {
 
 /*
  * do_syscall(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3)
- * Decsription: sigreturn
- * Inputs: void - ignored
+ * Decsription: assembly for doing the call
+ * Inputs: number - call, arg1 - argument, arg2 - argument, arg3 - argument
  * Outputs: contents of eax
  */
 int32_t do_syscall(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3) {

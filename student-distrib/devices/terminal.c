@@ -219,7 +219,7 @@ void terminal_clear() {
  */
 void switch_active_terminal_screen(uint32_t old_pid, uint32_t new_pid) {
     if(old_pid == KERNEL_PID || new_pid == KERNEL_PID) {
-        log(ERROR, "Can't switch terminal while in pre-shell kernel!", "switch_active_terminal_screen");
+        log(WARN, "Can't switch terminal while in pre-shell kernel!", "switch_active_terminal_screen");
         return;
     }
 
@@ -240,6 +240,7 @@ void switch_active_terminal_screen(uint32_t old_pid, uint32_t new_pid) {
     // Identity map pages for video memory backing stores
     mmap_pid(new_pid, old_backing, old_backing, ACCESS_SUPER);
     mmap_pid(new_pid, new_backing, new_backing, ACCESS_SUPER);
+    mmap_pid(new_pid, ((void*) VIDEO), ((void*) VIDEO), ACCESS_SUPER);
 
     // Copy video mem from VIDEO to backing for old_pid
     memcpy(old_backing, ((void*) VIDEO), FOUR_KB);

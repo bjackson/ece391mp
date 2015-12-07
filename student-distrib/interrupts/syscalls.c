@@ -65,12 +65,6 @@ int32_t sys_halt(uint8_t status) {
     // Restore parent's paging
     restore_parent_paging(pcb.pid, pcb.parent_pid);
 
-    /*
-     * Remap old tasks's VIDEO memory to backing store and new tasks's video
-     * memory to physical VIDEO addr
-     */
-    remap_video_memory(pcb.pid, pcb.parent_pid);
-
     // Restore parent's ESP/EBP
     asm volatile ("movl %0, %%esp;"::"r"(parent_esp));
     asm volatile ("movl %0, %%ebp;"::"r"(parent_ebp));
@@ -169,17 +163,10 @@ int32_t sys_execute(const uint8_t* command) {
     // Set up paging structures for new process
     init_task_paging(new_pid);
 
-    /*
-     * Remap old tasks's VIDEO memory to backing store and new tasks's video
-     * memory to physical VIDEO addr
-     */
-    //remap_video_memory((old_pcb == NULL) ? KERNEL_PID : old_pcb->pid, new_pid);
-
     // Check if we are executing a new base shell for a terminal
     if(strncmp(((int8_t*) executable_fname), "shell", 5) == 0) {
         if(shell_pids[current_terminal] == 0) {
             shell_pids[current_terminal] = new_pid;
-            clear();
         }
     }
 
@@ -208,6 +195,16 @@ int32_t sys_execute(const uint8_t* command) {
 
     // Put arguments in task's PCB
     memcpy(new_pcb->args, task_args, MAX_ARGS_LENGTH);
+
+
+    /*
+     * First, save the video memory from the current terminal to the backing
+     * store, as well as the cursor position. Then, remap the old tasks's
+     * VIDEO memory to the backing store and map new tasks's video memory to
+     * physical VIDEO addr
+     */
+    switch_active_terminal_screen((old_pcb == NULL) ? KERNEL_PID : old_pcb->pid, new_pid);
+    remap_video_memory((old_pcb == NULL) ? KERNEL_PID : old_pcb->pid, new_pid);
 
     // Initiate Context Switch
 

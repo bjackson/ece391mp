@@ -182,13 +182,13 @@ void task_switch(uint32_t new_pid) {
     restore_parent_paging(old_pcb->pid, new_pid);
 
     /*
-     * Remap old tasks's VIDEO memory to backing store and new tasks's video
-     * memory to physical VIDEO addr
+     * First, save the video memory from the current terminal to the backing
+     * store, as well as the cursor position. Then, remap the old tasks's
+     * VIDEO memory to the backing store and map new tasks's video memory to
+     * physical VIDEO addr
      */
-    remap_video_memory(old_pcb->pid, new_pid);
-
-    // Ensure the screen displays properly based on the active task
     switch_active_terminal_screen((old_pcb == NULL) ? KERNEL_PID : old_pcb->pid, new_pid);
+    remap_video_memory(old_pcb->pid, new_pid);
 
     /*
      * If this kernel stack didn't leave off at task_switch code, we need to head

@@ -38,6 +38,13 @@ void i8259_init(void) {
     // Mask all interrupts (again)
     outb(0xff, MASTER_DATA);
     outb(0xff, SLAVE_DATA);
+
+    /*
+    // Initialize the PIT to the correct frequency
+    outb(0x43, 0x34);
+    outb(0x40, (500 & 0xFF));
+    outb(0x40, (500 >> 8));
+    */
 }
 
 // enable_irq

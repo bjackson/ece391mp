@@ -77,6 +77,5 @@ void task_switch(uint32_t new_pid, uint32_t switch_screen);
 
 //
 void task_sched_next();
->>>>>>> Try to get scheduling working... It doesn't now.
 
 #endif // TASKS_H

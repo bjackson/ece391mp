@@ -27,8 +27,11 @@ volatile uint32_t shell_pids[NUM_TERMINALS];
 // Stores the index of the current terminal
 volatile uint32_t current_terminal = 0;
 
-/**
- *
+/*
+ * int32_t terminal_open(const uint8_t* filename)
+ * Decsription: Opens a terminal
+ * Inputs: filename - ignored
+ * Outputs: 0 on success
  */
 int32_t terminal_open(const uint8_t* filename) {
     memset(keyboard_buffers, 0x00, sizeof(keyboard_buffers));
@@ -44,8 +47,11 @@ int32_t terminal_open(const uint8_t* filename) {
     return 0;
 }
 
-/**
- *
+/*
+ * int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes)
+ * Decsription: Reads data into the terminal
+ * Inputs: fd - file descriptor, buf - buffer, nbytes - max bytes to read
+ * Outputs: -1 on failure, number of bytes read on success
  */
 int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
     if(fd != STDIN_FD) {
@@ -91,8 +97,11 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
     return bytes_to_read;
 }
 
-/**
- *
+/*
+ * int32_t terminal_write(int32_t fd, void* buf, int32_t nbytes)
+ * Decsription: Write bytes ton the terminal
+ * Inputs: fd - file descriptor, buf - buffer, nbytes - max bytes to read
+ * Outputs: -1 on failure, number of bytes read on success
  */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
     if(fd != STDOUT_FD) {
@@ -109,16 +118,22 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes) {
     return nbytes;
 }
 
-/**
- *
+/*
+ * int32_t terminal_close(int32_t fd)
+ * Decsription: Closes the terminal
+ * Inputs: fd - file descriptor
+ * Outputs: -1 on failure always
  */
 int32_t terminal_close(int32_t fd) {
   // Terminal should not be allowed to be closed.
   return -1;
 }
 
-/**
- *
+/*
+ * int32_t terminal_write_key(uint8_t key)
+ * Decsription: Write data to the terminal buffer
+ * Inputs: key - keyboard entry
+ * Outputs: -1 on failure, 0 on success
  */
 int32_t terminal_write_key(uint8_t key) {
     pcb_t* pcb = get_pcb_ptr();
@@ -164,8 +179,11 @@ int32_t terminal_write_key(uint8_t key) {
     return 0;
 }
 
-/**
- *
+/*
+ * int32_t terminal_clear()
+ * Decsription: Clears the terminal
+ * Inputs: none
+ * Outputs: none
  */
 void terminal_clear() {
     pcb_t* pcb = get_pcb_ptr();

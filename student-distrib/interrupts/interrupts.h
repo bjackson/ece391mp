@@ -36,6 +36,7 @@
 #define SIMDFLTPTEX_IDT   0x13
 
 // Interrupt IDT entries
+#define PIT_IDT           0x20
 #define KEYBOARD_IDT      0x21
 #define RTC_IDT           0x28
 
@@ -96,6 +97,9 @@ void keyboard_isr();
 // isr for the rtc
 void rtc_isr();
 
+// ISR for the PIT
+void pit_isr();
+
 // Disable interrupts. Used by RTC
 void disable_inits();
 
@@ -124,6 +128,7 @@ extern void isr16();
 extern void isr17();
 extern void isr18();
 extern void isr19();
+extern void isr32();
 extern void isr33();
 extern void isr40();
 extern void isr128();

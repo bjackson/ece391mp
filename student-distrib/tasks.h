@@ -11,6 +11,7 @@
 #include "devices/terminal.h"
 #include "x86_desc.h"
 #include "paging.h"
+#include "devices/i8259.h"
 
 #define STDIN_FD  0
 #define STDOUT_FD 1
@@ -22,6 +23,9 @@
 #define KERNEL_PID 0
 
 #define MAX_ARGS_LENGTH 128
+
+#define SWITCH_SCREEN 1
+#define NO_SWITCH_SCREEN 0
 
 // Struct for file descriptor array entry
 typedef struct {
@@ -69,6 +73,10 @@ pcb_t* get_pcb_ptr_pid(uint32_t pid);
 file_desc_t* get_file_array();
 
 // switch tasks
-void task_switch(uint32_t new_pid);
+void task_switch(uint32_t new_pid, uint32_t switch_screen);
+
+//
+void task_sched_next();
+>>>>>>> Try to get scheduling working... It doesn't now.
 
 #endif // TASKS_H

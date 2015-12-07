@@ -232,8 +232,6 @@ void remap_video_memory(uint32_t old_pid, uint32_t new_pid) {
 
     // Flush TLB
     set_page_dir(new_pid);
-
-    sti(); // End critical section
 }
 
 /*

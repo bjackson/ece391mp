@@ -50,6 +50,7 @@ void init_idt() {
     set_trap_entry(SIMDFLTPTEX_IDT, (uint32_t) isr19);
 
     // User defined interrupts
+    set_int_entry(PIT_IDT, (uint32_t) isr32);
     set_int_entry(KEYBOARD_IDT, (uint32_t) isr33);
     set_int_entry(RTC_IDT, (uint32_t) isr40);
     set_sys_entry(SYSCALL_IDT, (uint32_t) isr128);
@@ -126,6 +127,7 @@ void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl) {
 extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
     // Handle exceptions differently
     if(isr_index <= MAX_EXCEPTION_ISR) {
+        //TODO: Squash and go back to shell rather than halting
         clear(); // Clear video memory
         printf("An exception has occurred. You're Fired!\n");
         printf("ISR: %d\n", isr_index);
@@ -156,8 +158,10 @@ extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
         keyboard_isr();
     } else if(isr_index == RTC_IDT) {
         rtc_isr();
+    } else if(isr_index == PIT_IDT) {
+        pit_isr();
     } else {
-        printf("Exception/Interrupt not yet handled!");
+        printf("Exception/Interrupt not yet handled!\n");
         haltOnException();
     }
 }
@@ -260,7 +264,7 @@ void keyboard_isr() {
             log(DEBUG, "Shell already exists for terminal 0!", "isr");
 
             // Switch to base shell of terminal 0
-            task_switch(active_pids[0]);
+            task_switch(active_pids[0], SWITCH_SCREEN);
         } else {
             // Need to start a new shell for this terminal
             do_execute((uint8_t *)"shell");
@@ -277,7 +281,7 @@ void keyboard_isr() {
             log(DEBUG, "Shell already exists for terminal 1!", "isr");
 
             // Switch to base shell of terminal 1
-            task_switch(active_pids[1]);
+            task_switch(active_pids[1], SWITCH_SCREEN);
         } else {
             // Need to start a new shell for this terminal
             do_execute((uint8_t *)"shell");
@@ -294,7 +298,7 @@ void keyboard_isr() {
             log(DEBUG, "Shell already exists for terminal 2!", "isr");
 
             // Switch to base shell of terminal 2
-            task_switch(active_pids[2]);
+            task_switch(active_pids[2], SWITCH_SCREEN);
         } else {
             // Need to start a new shell for this terminal
             do_execute((uint8_t *)"shell");
@@ -334,6 +338,17 @@ void rtc_isr() {
     tick_counter++;
 
     send_eoi(RTC_IRQ);
+}
+
+/**
+ * pit_isr()
+ * Description: isr handler for the PIT
+ * Inputs: none
+ * Outputs: none
+ */
+void pit_isr() {
+    send_eoi(PIT_IRQ);
+    task_sched_next();
 }
 
 /*

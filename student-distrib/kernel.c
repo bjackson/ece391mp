@@ -168,6 +168,7 @@ void entry (unsigned long magic, unsigned long addr) {
     i8259_init(); // Init PIC
     enable_irq(SLAVE_IRQ); // Enable IRQs 8-15
     enable_irq(KEYBOARD_IRQ); // Enable keyboard interrupt
+    enable_irq(PIT_IRQ); // Enable PIT
 
     init_idt(); // Initialize interrupt handlers
 

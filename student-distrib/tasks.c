@@ -144,7 +144,7 @@ file_desc_t* get_file_array() {
 *   Return Value: None
 *   Function: handles the bulk of the task switching
 */
-void task_switch(uint32_t new_pid) {
+void task_switch(uint32_t new_pid, uint32_t switch_screen) {
     cli(); // Begin critical section
     log(DEBUG, "Switching to new task!", "task_switch");
 
@@ -184,14 +184,16 @@ void task_switch(uint32_t new_pid) {
     // Restore new process's paging
     restore_parent_paging(old_pcb->pid, new_pid);
 
-    /*
-     * First, save the video memory from the current terminal to the backing
-     * store, as well as the cursor position. Then, remap the old tasks's
-     * VIDEO memory to the backing store and map new tasks's video memory to
-     * physical VIDEO addr
-     */
-    switch_active_terminal_screen((old_pcb == NULL) ? KERNEL_PID : old_pcb->pid, new_pid);
-    remap_video_memory(old_pcb->pid, new_pid);
+    if(switch_screen) {
+        /*
+         * First, save the video memory from the current terminal to the backing
+         * store, as well as the cursor position. Then, remap the old tasks's
+         * VIDEO memory to the backing store and map new tasks's video memory to
+         * physical VIDEO addr
+         */
+        switch_active_terminal_screen((old_pcb == NULL) ? KERNEL_PID : old_pcb->pid, new_pid);
+        remap_video_memory(old_pcb->pid, new_pid);
+    }
 
     /*
      * If this kernel stack didn't leave off at task_switch code, we need to head
@@ -213,4 +215,40 @@ void task_switch(uint32_t new_pid) {
 
     sti(); // End critical section
     return;
+}
+
+/**
+ *
+ */
+void task_sched_next() {
+    return; // Comment this out to break everything
+    cli(); // Begin critical section
+    //disable_irq(PIT_IRQ);
+
+    pcb_t* pcb = get_pcb_ptr();
+    if(pcb == NULL) {
+        log(WARN, "Can't schedule in pre-shell kernel", "task_sched_next");
+        return;
+    }
+
+    uint32_t next_terminal = pcb->terminal_index + 1;
+    next_terminal %= 3;
+
+    while(active_pids[next_terminal] == 0) {
+        // Increment next_terminal and loop around from 3 to 0
+        next_terminal++;
+        next_terminal %= 3;
+
+        if(next_terminal == pcb->terminal_index) {
+            // Looped through all the terminals and none were valid, so return
+            log(WARN, "No valid terminals found to switch to", "task_sched_next");
+            return;
+        }
+
+    }
+
+    // Found a valid terminal, now switch to it!
+    task_switch(active_pids[next_terminal], NO_SWITCH_SCREEN);
+
+    //sti(); // End critical section
 }

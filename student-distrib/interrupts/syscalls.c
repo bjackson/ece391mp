@@ -34,13 +34,18 @@ int32_t sys_halt(uint8_t status) {
     }
     pcb_t pcb = *pcb_ptr;
 
+    // close() all opened files
+    int i;
+    for(i = 0; i < FILE_ARRAY_SIZE; i++) {
+        sys_close(i);
+    }
+
     // Clear pcb structure
     memset(get_pcb_ptr(), 0x00, sizeof(pcb_t));
 
     // Free up PID for future use
     pid_use_array[pcb.pid] = 0;
 
-    int i;
     for(i = 0; i < NUM_TERMINALS; i++) {
         if(active_pids[i] == pcb.pid) {
             active_pids[i] = pcb.parent_pid;
@@ -149,7 +154,7 @@ int32_t sys_execute(const uint8_t* command) {
         }
     }
     if(new_pid == MAX_TASKS + 1) {
-        log(WARN, "Reached maximum number of tasks", "execute");
+        log(ERROR, "Reached maximum number of tasks", "execute");
         sys_close(fd);
         return -1;
     }

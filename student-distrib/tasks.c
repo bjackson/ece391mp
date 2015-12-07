@@ -146,6 +146,7 @@ file_desc_t* get_file_array() {
 */
 void task_switch(uint32_t new_pid, uint32_t switch_screen) {
     cli(); // Begin critical section
+    disable_irq(PIT_IRQ);
     log(DEBUG, "Switching to new task!", "task_switch");
 
     if(new_pid == 0) {
@@ -213,6 +214,7 @@ void task_switch(uint32_t new_pid, uint32_t switch_screen) {
     asm volatile ("movl %0, %%esp;"::"r"(new_pcb->switch_esp));
     asm volatile ("movl %0, %%ebp;"::"r"(new_pcb->switch_ebp));
 
+    enable_irq(PIT_IRQ);
     sti(); // End critical section
     return;
 }
@@ -225,12 +227,15 @@ void task_switch(uint32_t new_pid, uint32_t switch_screen) {
 */
 void task_sched_next() {
     return; // Comment this out to break everything
+
     cli(); // Begin critical section
-    //disable_irq(PIT_IRQ);
+    disable_irq(PIT_IRQ);
 
     pcb_t* pcb = get_pcb_ptr();
     if(pcb == NULL) {
         log(WARN, "Can't schedule in pre-shell kernel", "task_sched_next");
+        enable_irq(PIT_IRQ);
+        sti(); // End critical section
         return;
     }
 
@@ -245,6 +250,8 @@ void task_sched_next() {
         if(next_terminal == pcb->terminal_index) {
             // Looped through all the terminals and none were valid, so return
             log(WARN, "No valid terminals found to switch to", "task_sched_next");
+            enable_irq(PIT_IRQ);
+            sti(); // End critical section
             return;
         }
 
@@ -253,5 +260,6 @@ void task_sched_next() {
     // Found a valid terminal, now switch to it!
     task_switch(active_pids[next_terminal], NO_SWITCH_SCREEN);
 
-    //sti(); // End critical section
+    enable_irq(PIT_IRQ);
+    sti(); // End critical section
 }

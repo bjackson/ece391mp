@@ -16,22 +16,22 @@
 
 volatile uint32_t tick_counter;
 
-//
+// initializes the RTC
 int32_t rtc_init();
 
-//
+// resets the frequency to the default
 int32_t rtc_set_frequency(int32_t freq);
 
-//
+// dodes nothing
 int32_t rtc_open(const uint8_t* filename);
 
-//
+// 
 int32_t rtc_close(int32_t fd);
 
-//
+// read the frequency
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes);
 
-//
+// write the new frequency
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes);
 
 #endif

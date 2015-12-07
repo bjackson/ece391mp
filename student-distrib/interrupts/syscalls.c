@@ -20,8 +20,11 @@ extern volatile uint32_t shell_pids[NUM_TERMINALS];
 extern volatile uint32_t active_pids[NUM_TERMINALS];
 extern volatile uint32_t current_terminal;
 
-/**
- *
+/*
+ * sys_halt(uint8_t status)
+ * Decsription: Halt the system shells
+ * Inputs: status - ignored
+ * Outputs: -1 on failure, DEADBEEF on success
  */
 int32_t sys_halt(uint8_t status) {
     pcb_t* pcb_ptr = get_pcb_ptr();
@@ -77,8 +80,11 @@ int32_t sys_halt(uint8_t status) {
     return 0xDEADBEEF;
 }
 
-/**
- *
+/*
+ * sys_execute(const uint8_t* command)
+ * Decsription: execute commands
+ * Inputs: command - the command to execute
+ * Outputs: -1 on failure, 0 on success
  */
 int32_t sys_execute(const uint8_t* command) {
     // Copy command until first space as executable
@@ -248,8 +254,11 @@ int32_t sys_execute(const uint8_t* command) {
     return 0; //TODO: status
 }
 
-/**
- *
+/*
+ * sys_read(int32_t fd, void* buf, int32_t nbytes)
+ * Decsription: system read
+ * Inputs: fd - file descriptor, buf - buffer, nbytes - max size to read
+ * Outputs: -1 on failure, number of read bytes on success
  */
 int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
     if(fd < 0 || fd >= FILE_ARRAY_SIZE) {
@@ -267,8 +276,11 @@ int32_t sys_read(int32_t fd, void* buf, int32_t nbytes) {
     return file.read(fd, buf, nbytes);
 }
 
-/**
- *
+/*
+ * sys_write(int32_t fd, void* buf, int32_t nbytes)
+ * Decsription: system write
+ * Inputs: fd - file descriptor, buf - buffer, nbytes - max size to read
+ * Outputs: -1 on failure, written file
  */
 int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
     if(fd < 0 || fd >= FILE_ARRAY_SIZE) {
@@ -285,8 +297,11 @@ int32_t sys_write(int32_t fd, const void* buf, int32_t nbytes) {
     return file.write(fd, buf, nbytes);
 }
 
-/**
- *
+/*
+ * sys_open(const uint8_t* filename)
+ * Decsription: system open
+ * Inputs: filename - file to open
+ * Outputs: -1 on failure, 1 on success
  */
 int32_t sys_open(const uint8_t* filename) {
     if(filename == NULL) {
@@ -353,8 +368,11 @@ int32_t sys_open(const uint8_t* filename) {
     return -1;
 }
 
-/**
- *
+/*
+ * sys_close(int32_t fd)
+ * Decsription: system open
+ * Inputs: fd - file descriptor
+ * Outputs: -1 on failure, file close
  */
 int32_t sys_close(int32_t fd) {
     if(fd < 0 || fd >= FILE_ARRAY_SIZE) {
@@ -384,8 +402,11 @@ int32_t sys_close(int32_t fd) {
     }
 }
 
-/**
- *
+/*
+ * sys_getargs(uint8_t* buf, int32_t nbytes)
+ * Decsription: get argumants from buffer
+ * Inputs: buf - buffer, nbytes - max size to read
+ * Outputs: -1 on failure, 0 on success
  */
 int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
     if(buf == NULL) {
@@ -407,8 +428,11 @@ int32_t sys_getargs(uint8_t* buf, int32_t nbytes) {
     return 0;
 }
 
-/**
- *
+/*
+ * sys_vidmap(uint8_t** screen_start)
+ * Decsription: map video memory
+ * Inputs: screen_start - starting address of the screen
+ * Outputs: -1 on failure, 0 on success
  */
 int32_t sys_vidmap(uint8_t** screen_start) {
     if(screen_start == NULL) {
@@ -434,17 +458,32 @@ int32_t sys_vidmap(uint8_t** screen_start) {
     return 0;
 }
 
+/*
+ * sys_set_handler(int32_t signum, void* handler_address)
+ * Decsription: set handler
+ * Inputs: signum - ignored, handler_address - ignored
+ * Outputs: -1 always
+ */
 int32_t sys_set_handler(int32_t signum, void* handler_address) {
   return -1;
 }
 
 
+/*
+ * sys_sigreturn(void)
+ * Decsription: sigreturn
+ * Inputs: void - ignored
+ * Outputs: -1 always
+ */
 int32_t sys_sigreturn(void) {
   return -1;
 }
 
-/**
- *
+/*
+ * do_syscall(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3)
+ * Decsription: sigreturn
+ * Inputs: void - ignored
+ * Outputs: contents of eax
  */
 int32_t do_syscall(int32_t number, int32_t arg1, int32_t arg2, int32_t arg3) {
     asm volatile ("pushl %%ebx;\

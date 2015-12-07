@@ -46,40 +46,40 @@ typedef struct {
     dentry_t entries[63];
 } boot_block_t;
 
-//
+// initialize the file system
 void fs_init(uint32_t fs_start_addr);
 
-//
+// open
 int32_t fs_open(const uint8_t* fname);
 
-//
+// close
 int32_t fs_close(int32_t fd);
 
-//
+// read
 int32_t fs_read(int32_t fd, void* buf, int32_t nbytes);
 
-//
+// directory read
 int32_t fs_dir_read(int32_t fd, void* buf, int32_t nbytes);
 
-//
+// write
 int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes);
 
-//
+// read dentry
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry);
 
-//
+// read dentry using the index
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry);
 
-//
+// read data
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 
-//
+// length
 int32_t fs_len(int32_t fd);
 
-//
+// seek
 int32_t fs_seek(int32_t fd, uint32_t pos);
 
-//
+// test file system
 void fs_test();
 
 #endif /* _FILESYS_H */

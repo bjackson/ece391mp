@@ -14,8 +14,11 @@ static fs_stats_t* fs_stats;
 // Declared in tasks.c
 extern file_desc_t kernel_file_array[FILE_ARRAY_SIZE];
 
-/**
- *
+/*
+ * fs_init (uint32_t fs_start_addr_p)
+ * Decsription: Initializes the filesystem
+ * Inputs: fs_start_addr_p - starting address for the file system
+ * Outputs: none
  */
 void fs_init(uint32_t fs_start_addr_p) {
     fs_start_addr = fs_start_addr_p;
@@ -27,8 +30,11 @@ void fs_init(uint32_t fs_start_addr_p) {
     fs_data_start_addr = fs_inode_start_addr + (fs_stats->num_inodes * FS_BLOCK_SIZE);
 }
 
-/**
- *
+/*
+ * fs_open (uint8_t* fname)
+ * Decsription: File descriptors are set up in the open system call so this function does nothing
+ * Inputs: fname - ignored
+ * Outputs: 0 - ignored
  */
 int32_t fs_open(const uint8_t* fname) {
     /**
@@ -38,8 +44,11 @@ int32_t fs_open(const uint8_t* fname) {
     return 0;
 }
 
-/**
- *
+/*
+ * fs_close (uint32_t fd)
+ * Decsription: File descriptors are torn down in the open system call so this function does nothing
+ * Inputs: fd - ignored
+ * Outputs: 0 - ignored
  */
 int32_t fs_close(int32_t fd) {
     /**
@@ -49,8 +58,11 @@ int32_t fs_close(int32_t fd) {
     return 0;
 }
 
-/**
- *
+/*
+ * fs_read (int32_t fd, void* buf, int32_t nbytes)
+ * Decsription: File system reads
+ * Inputs: fd - file decriptor, buf - buffer starting location, nbytes - max bytes to read
+ * Outputs: -1 on error, number of bytes read on success
  */
 int32_t fs_read(int32_t fd, void* buf, int32_t nbytes) {
     file_desc_t* file = &(get_file_array()[fd]);
@@ -65,8 +77,11 @@ int32_t fs_read(int32_t fd, void* buf, int32_t nbytes) {
     return bytes_read;
 }
 
-/**
- *
+/*
+ * fs_dir_read (int32_t fd, void* buf, int32_t nbytes)
+ * Decsription: File system directory reads
+ * Inputs: fd - file decriptor, buf - buffer starting location, nbytes - max bytes to read
+ * Outputs: -1 on error, number of bytes read on success, 0 if all directory entries are read
  */
 int32_t fs_dir_read(int32_t fd, void* buf, int32_t nbytes) {
     file_desc_t* file = &(get_file_array()[fd]);
@@ -91,16 +106,22 @@ int32_t fs_dir_read(int32_t fd, void* buf, int32_t nbytes) {
     return bytes_to_copy;
 }
 
-/**
- *
+/*
+ * fs_write (int32_t fd, void* buf, int32_t nbytes)
+ * Decsription: File system write but we have a read only file system
+ * Inputs: fd - file decriptor, buf - buffer starting location, nbytes - max bytes to read
+ * Outputs: -1 always
  */
 int32_t fs_write(int32_t fd, const void* buf, int32_t nbytes) {
     // Read-only filesystem
     return -1;
 }
 
-/**
- *
+/*
+ * read_dentry_by_name (const uint*_t* fname, dentry_t* dentry)
+ * Decsription: Read dentry by name
+ * Inputs: fname - file name, dentry - dentry to copy the daata to
+ * Outputs: -1 on error, 0 on success
  */
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
     if(dentry == NULL) {
@@ -124,8 +145,11 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
     return -1;
 }
 
-/**
- *
+/*
+ * read_dentry_by_index (uint32_t index, dentry_t* dentry)
+ * Decsription: Read dentry by index
+ * Inputs: index - the index to read, dentry - dentry to copy the data to
+ * Outputs: -1 on error, 0 on success
  */
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
     if(index >= fs_stats->num_dentries) {
@@ -138,8 +162,11 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
     return 0;
 }
 
-/**
- *
+/*
+ * read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length)
+ * Decsription: Read data from from the file with inode index
+ * Inputs: inode - inode index, offset - offset, buf - buffer to copy data into, length, number of bytes to read
+ * Outputs: -1 on error, number of bytes read on success
  */
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
     inode_t* node = (inode_t*) (fs_inode_start_addr + inode * FS_BLOCK_SIZE);
@@ -164,8 +191,11 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     return bytes_read;
 }
 
-/**
- *
+/*
+ * fs_len(int32_t fd)
+ * Decsription: Get file length
+ * Inputs: fd - file descriptor
+ * Outputs: -1 on error, length on success
  */
 int32_t fs_len(int32_t fd) {
     file_desc_t* file = &(get_file_array()[fd]);
@@ -179,8 +209,11 @@ int32_t fs_len(int32_t fd) {
     return node->length;
 }
 
-/**
- *
+/*
+ * fs_seek(int32_t fd, uint32_t pos)
+ * Decsription: Seek
+ * Inputs: fd - file descriptor, pos - position
+ * Outputs: -1 on error, 0 on success
  */
 int32_t fs_seek(int32_t fd, uint32_t pos) {
     file_desc_t* file = &(get_file_array()[fd]);
@@ -194,6 +227,12 @@ int32_t fs_seek(int32_t fd, uint32_t pos) {
     return 0;
 }
 
+/*
+ * fs_test()
+ * Decsription: Test the filesystem
+ * Inputs: none
+ * Outputs: none
+ */
 void fs_test() {
     uint8_t buffer[40];
     memset(buffer, 0x00, sizeof(buffer));

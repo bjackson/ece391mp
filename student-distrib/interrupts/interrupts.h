@@ -72,28 +72,28 @@ typedef union seg_sel_t {
     } __attribute__((packed));
 } seg_sel_t;
 
-//
+// initialize the idt
 void init_idt();
 
-//
+// set trap entries
 void set_trap_entry(uint8_t idx, uint32_t handler);
 
-//
+// set int entries
 void set_int_entry(uint8_t idx, uint32_t handler);
 
-//
+// set sys entries
 void set_sys_entry(uint8_t idx, uint32_t handler);
 
-//
+// set idt entries
 void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl);
 
-//
+// isr handler
 extern void isr_handler(uint32_t isr_index, uint32_t error_code);
 
-//
+// isr for the keyboard
 void keyboard_isr();
 
-//
+// isr for the rtc
 void rtc_isr();
 
 // Disable interrupts. Used by RTC
@@ -129,7 +129,7 @@ extern void isr40();
 extern void isr128();
 
 /**
- *
+ * Exception descriptions for the interrupts
  */
 static const char* const exception_desc[32] = {
     "Divide By Zero",

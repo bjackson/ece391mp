@@ -18,8 +18,11 @@ uint8_t shift_bitmask = 0; // Bit 1 for left, Bit 0 for right
 // Declared in terminal.c
 extern volatile uint32_t shell_pids[NUM_TERMINALS];
 
-/**
- *
+/*
+ * init_idt()
+ * Decsription: Initialize the IDT
+ * Inputs: none
+ * Outputs: none
  */
 void init_idt() {
     memset(idt, 0x00, sizeof(idt_desc_t) * NUM_VEC);
@@ -51,22 +54,31 @@ void init_idt() {
     set_sys_entry(SYSCALL_IDT, (uint32_t) isr128);
 }
 
-/**
- *
+/*
+ * set_trap_entry(uint8_t idx, uint32_t handler)
+ * Decsription: sets trap entries
+ * Inputs: idx - idx, handler - the handler
+ * Outputs: none
  */
 void set_trap_entry(uint8_t idx, uint32_t handler) {
     set_idt_entry(idx, handler, 0xF, 0);
 }
 
-/**
- *
+/*
+ * set_int_entry(uint8_t idx, uint32_t handler)
+ * Decsription: sets int entries
+ * Inputs: idx - idx, handler - the handler
+ * Outputs: none
  */
 void set_int_entry(uint8_t idx, uint32_t handler) {
     set_idt_entry(idx, handler, 0xE, 0);
 }
 
-/**
- *
+/*
+ * set_sys_entry(uint8_t idx, uint32_t handler)
+ * Decsription: sets system entries
+ * Inputs: idx - idx, handler - the handler
+ * Outputs: none
  */
 void set_sys_entry(uint8_t idx, uint32_t handler) {
     set_idt_entry(idx, handler, 0xF, 3);
@@ -81,8 +93,11 @@ void haltOnException() {
   asm volatile(".1hltex: hlt; jmp .1hltex;");
 }
 
-/**
- *
+/*
+ * set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl)
+ * Decsription: sets idt entries
+ * Inputs: idx - idx, handler - the handler, type - idt type, dpl - descriptor priviledge level
+ * Outputs: none
  */
 void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl) {
     seg_sel_t selector;
@@ -101,8 +116,11 @@ void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl) {
     idt[idx] = entry;
 }
 
-/**
- *
+/*
+ * isr_handler(uint32_t isr_index, uint32_t error_code)
+ * Decsription: Handler for ISR
+ * Inputs: isr_index - index, error_code - error that occured
+ * Outputs: none
  */
 extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
     // Handle exceptions differently
@@ -143,8 +161,11 @@ extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
     }
 }
 
-/**
- *
+/*
+ * keyboard_isr()
+ * Decsription: keyboard handling for the ISR
+ * Inputs: none
+ * Outputs: none
  */
 void keyboard_isr() {
     // Lookup table for conversion from keyboard scan code to ASCII character
@@ -296,8 +317,11 @@ void keyboard_isr() {
 }
 
 
-/**
- *
+/*
+ * rtc_isr()
+ * Decsription: isr handler for the rtc
+ * Inputs: none
+ * Outputs: none
  */
 void rtc_isr() {
     // test_interrupts();
@@ -312,8 +336,11 @@ void rtc_isr() {
     send_eoi(RTC_IRQ);
 }
 
-/**
- * Disable interrupts. Used by RTC
+/*
+ * disable_inits()
+ * Decsription: disable interrupts. used by rtc
+ * Inputs: none
+ * Outputs: none
  */
 void disable_inits() {
     cli();
@@ -323,8 +350,11 @@ void disable_inits() {
     outb(previous | 0x80, 0x70);
 }
 
-/**
- * Reenable interrupts. Used by RTC
+/*
+ * enable_inits()
+ * Decsription: enable interrupts. used by rtc
+ * Inputs: none
+ * Outputs: none
  */
 void enable_inits() {
     sti();
@@ -334,8 +364,11 @@ void enable_inits() {
     outb(previous & 0x7F, 0x70);
 }
 
-/**
- *
+/*
+ * upcase_char(uint8_t character)
+ * Decsription: handles upper case characters
+ * Inputs: character - character to return the shift value off of
+ * Outputs: the upper case version of the character
  */
 uint8_t upcase_char(uint8_t character) {
     // Upcase alphas mathematically

@@ -38,6 +38,7 @@ typedef struct {
     uint32_t flags;
 } file_desc_t;
 
+//struct for process ID
 typedef struct {
     uint32_t pid;
     file_desc_t file_array[FILE_ARRAY_SIZE];
@@ -75,7 +76,7 @@ file_desc_t* get_file_array();
 // switch tasks
 void task_switch(uint32_t new_pid, uint32_t switch_screen);
 
-//
+//schedule next task
 void task_sched_next();
 
 #endif // TASKS_H

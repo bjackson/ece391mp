@@ -1,0 +1,214 @@
+﻿Bug Log
+
+
+Checkpoint 1
+Bug: IDT error
+Description: The IDT is not being properly initialized
+Fix Time: 3 hours
+
+
+Bug: IDT offset
+Description: The offset to the IDT is incorrect
+Fix Time: 15 minutes
+
+
+Bug: GDB issues
+Description: GDB isn’t loading properly
+Fix Time: 1 hour
+
+
+Bug: Interrupts
+Description: Interrupts only fire some of the time
+Fix Time: 6 hours
+
+
+Bug:IDT Handler
+Description: Handler works but IDT does not
+Fix Time: 3 hours
+
+
+Bug: Page Tables
+Description: Page tables are incorrectly sizing
+Fix Time: 2 hours
+
+
+Bug: Interrupt Firing
+Description: Interrupts are constantly triggered for as many 0s as are in the address for the bad instruction
+Fix Time: 1 hour
+
+
+Bug: Page Table Offset
+Description: Page table is using the wrong offset 
+Fix Time: 15 min
+
+
+Bug: QEMU
+Description: QEMU not booting
+Fix Time: 4 hours
+
+
+Bug: Remote file syncing
+Description: Sharing files between local machine and QEMU
+Fix Time: 12 hours
+Bug: VGA Memory
+Description: Wrong VGA memory address is being used
+Fix Time: 1 hour
+
+
+Bug: PIC Initialization
+Description: PIC isn’t getting initialized
+Fix Time: 2 hours
+
+
+Bug: Lib includes
+Description: lib isn’t being included correctly
+Fix Time: 10 minutes
+
+
+Bug: fstab errors
+Description: Fstab file getting randomly cleared out
+Fix Time: 1 hour
+
+
+Bug: Paging compilation
+Description: Undefined constants
+Fix Time: 20 min
+
+
+Checkpoint 2
+Bug: Line buffer
+Description: the line buffer is an incorrect size
+Fix Time: 20 min
+
+
+Bug: Backspace
+Description: Backspace isn’t removing characters from the line buffer
+Fix Time: 4 hours
+
+
+Bug: Read system call
+Description: System call isn’t getting called correctly
+Fix Time: 1 hour
+
+
+Bug: Terminal Read
+Description: Terminal read appears to randomly return every now and then
+Fix Time: 3 hours
+
+
+Bug: Backspace
+Description: Terminal backspace still isn’t deleting characters
+Fix Time: 1 hour
+
+
+Bug: RTC init
+Description: RTC is initializing abnormally
+Fix Time: 3 hours
+
+
+Bug: RTC test code
+Description: Test code for the RTC is in the wrong location for the demo
+Fix Time: 20 min
+
+
+Bug: File system memory
+Description: The file system is starting in the wrong place in memory
+Fix Time: 2 hours
+
+
+Bug: RTC wrong values
+Description: RTC will accept invalid numbers for clock
+Fix Time: 40 min
+
+
+Bug: Directory read
+Description: Can’t read from the dictionary
+Fix Time: 4 hours
+
+
+Bug: RTC merge
+Description: New RTC code being merged into the new code is causing issues
+Fix Time: 8 hours
+
+
+Bug: Pagefault
+Description: fs_open pagefaults when run 
+Fix Time: 3 hours
+
+
+Checkpoint 3
+Bug: nbytes
+Description: nbytes isn’t being used properly
+Fix Time: 6 hours
+
+
+Bug: Read/write
+Description: Read/write methods do nothing
+Fix Time: 8 hours
+
+
+Bug: Paging compilation
+Description: Undefined constants
+Fix Time: 20 min
+
+
+Bug: Execute
+Description: Execute crashing sporadically
+Fix Time: 3 hours
+
+
+Bug: Save/Restore
+Description: Stack isn’t set up well before the iret
+Fix Time: 2 hours
+
+
+Bug: Cursor
+Description: Cursor isn’t loading in the right position
+Fix Time: 20 min
+
+
+Checkpoint 4
+Bug: Page memory
+Description: page is taking up memory where the filesystem is mapped
+Fix Time: 2 hours
+
+
+Bug: Vidmap pagefault
+Description: Vidmap keeps pagefaulting
+Fix Time: 1 hour
+
+
+Bug: System call too long
+Description: Read/write is not one line
+Fix Time: 20 min
+
+
+Bug: Halt pagefault
+Description: Halt keeps pagefaulting when the shell exists
+Fix Time: 4 hours
+
+
+Bug: Fish not moving
+Description: Fish is animating really slowly
+Fix Time: 3 hours
+
+
+Bug: Shell freezing
+Description: Shell freezes when entering an invalid command
+Fix Time: 1 hour
+
+
+Checkpoint 5
+Bug: Network controller
+Description: Network controller is outputting 0s for all packet values
+Fix Time: 18 hours
+
+
+Bug: Terminal switching
+Description: Changing to another terminal stops the current one
+Fix Time: 2 hours
+
+
+Bug: Video gap
+Description: similar to previous bug, switching out of terminal creates a gap in video
+Fix Time: 1 hour

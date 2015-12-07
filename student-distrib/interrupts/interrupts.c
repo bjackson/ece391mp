@@ -127,9 +127,7 @@ void set_idt_entry(uint8_t idx, uint32_t handler, uint8_t type, uint8_t dpl) {
 extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
     // Handle exceptions differently
     if(isr_index <= MAX_EXCEPTION_ISR) {
-        //TODO: Squash and go back to shell rather than halting
-        clear(); // Clear video memory
-        printf("An exception has occurred. You're Fired!\n");
+        printf("\nAn exception has occurred. You're Fired!\n");
         printf("ISR: %d\n", isr_index);
         if(error_code != 0xDEADBEEF) {
             printf("Error: 0x%x\n", error_code);
@@ -153,7 +151,8 @@ extern void isr_handler(uint32_t isr_index, uint32_t error_code) {
             }
         }
 
-        haltOnException();
+        // Squash the program and return control to the shell
+        sys_halt(0);
     } else if(isr_index == KEYBOARD_IDT) {
         keyboard_isr();
     } else if(isr_index == RTC_IDT) {

@@ -11,9 +11,12 @@ uint32_t page_tables[MAX_TASKS][NUM_PAGE_TABLES][MAX_ENTRIES] __attribute__((ali
 // Declared in terminal.c
 extern volatile uint32_t active_pids[NUM_TERMINALS];
 
-/**
- *
- */
+/*
+*void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access)
+*   Inputs: 
+*   Return Value: none
+*   Function: begins the whole paging process
+*/
 void init_paging() {
     memset(page_dirs, 0x00, sizeof(uint32_t) * MAX_ENTRIES * MAX_TASKS);
     memset(page_tables, 0x00, sizeof(uint32_t) * MAX_ENTRIES * NUM_PAGE_TABLES * MAX_TASKS);
@@ -43,9 +46,16 @@ void init_paging() {
             : : : "eax");
 }
 
-/**
- *
- */
+/*
+*void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access)
+*   Inputs: 
+    -page_table = page table address
+    -phys = physical address
+    -virt = virtual address
+    -access = access level
+*   Return Value: none
+*   Function: does the actual mapping of the large page from mmap()
+*/
 void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access) {
     pt_entry_t pt_entry;
     memset(&pt_entry, 0x00, sizeof(pt_entry_t));
@@ -61,6 +71,22 @@ void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access) {
     page_table[(((uint32_t) virt) >> 12) & 0x3FF] = pt_entry.val;
 }
 
+<<<<<<< HEAD
+/*
+* void map_large_page(uint32_t* page_dir, void* phys, void* virt,
+        uint8_t access, uint8_t global, uint8_t cache_disabled, uint8_t write_through)
+*   Inputs: 
+    -page_dir = page directory
+    -phys = physical address
+    -virt = virtual address
+    -access = access level
+    -global = whether or not to flush TLB when CR3 is reset
+    -cache_disabled = cache enabled/disabled flag
+    -write_through = write-through flag
+*   Return Value: none
+*   Function: does the actual mapping of the large page from mmap_large()
+*/
+=======
 /**
  *
  */
@@ -73,6 +99,7 @@ void unmap_page(uint32_t* page_table, void* virt) {
 /**
  *
  */
+>>>>>>> origin/master
 void map_large_page(uint32_t* page_dir, void* phys, void* virt,
         uint8_t access, uint8_t global, uint8_t cache_disabled, uint8_t write_through) {
     pd_large_entry_t kernel_pd_entry;
@@ -90,9 +117,64 @@ void map_large_page(uint32_t* page_dir, void* phys, void* virt,
     page_dir[((uint32_t) virt) >> 22] = kernel_pd_entry.val;
 }
 
+<<<<<<< HEAD
+// Translates a kernel virtual address to a physical address
+// @param virtual virtual address to translate
+// @return physical address
 /**
  *
  */
+uint32_t k_virt_to_phys(void* virtual) {
+
+  uint32_t page_idx = (uint32_t) virtual >> 22;
+
+  assert(page_idx < MAX_TASKS);
+
+  uint32_t offset = (uint32_t) virtual & 0x003FFFFF;
+
+  uint32_t phys_addr = (((pd_large_entry_t) page_dirs[KERNEL_PID][page_idx]).addr << 22) + offset;
+  // debug("phys_addr: 0x%x\n", phys_addr);
+  return phys_addr;
+
+}
+
+// Translates a virtual address to a physical address
+// @param virtual virtual address to translate
+// @return physical address
+uint32_t virt_to_phys(void* virtual) {
+  pcb_t *pcb = get_pcb_ptr();
+  uint32_t pid = pcb->pid;
+
+  uint32_t page_idx = (uint32_t) virtual >> 22;
+
+  assert_do(page_idx < MAX_ENTRIES, {
+    debug("virtual: 0x%x, page_idx: %d\n", page_idx, virtual);
+  });
+
+  uint32_t offset = (uint32_t) virtual & 0x003FFFFF;
+
+  uint32_t phys_addr = (((pd_large_entry_t) page_dirs[pid][page_idx]).addr << 22) + offset;
+  // debug("phys_addr: 0x%x\n", phys_addr);
+  return phys_addr;
+
+}
+
+/*
+* void register_page_table(uint32_t* page_dir, uint32_t index,
+        uint32_t* page_table, uint8_t access)
+*   Inputs: 
+    -page_dir = page directory
+    -index = index in page directory
+    -page_table = page table address
+    -access = level of access required (user or supervisor)
+*   Return Value: none
+*   Function: register a page table in the given page directory with access level access
+*/
+=======
+/**
+ *
+ */
+>>>>>>> origin/master
 void register_page_table(uint32_t* page_dir, uint32_t index,
         uint32_t* page_table, uint8_t access) {
     pd_entry_t pd_entry;
@@ -108,9 +190,13 @@ void register_page_table(uint32_t* page_dir, uint32_t index,
     page_dir[index] = pd_entry.val;
 }
 
-/**
- *
- */
+/*
+* void init_task_paging(uint32_t pid)
+*   Inputs: 
+    -pid = Process ID
+*   Return Value: none
+*   Function: initializes paging for task with pid
+*/
 void init_task_paging(uint32_t pid) {
     // Register first user page table [0GB, 4MB)
     register_page_table(page_dirs[pid], 0, page_tables[pid][0], ACCESS_SUPER);
@@ -133,17 +219,26 @@ void init_task_paging(uint32_t pid) {
     set_page_dir(pid);
 }
 
-/**
- *
- */
+/*
+* void set_page_dir(uint32_t pid) 
+*   Inputs: 
+    -pid = Process ID
+*   Return Value: none
+*   Function: loads address of page directory into CR3
+*/
 void set_page_dir(uint32_t pid) {
     // Load CR3 with address of page directory for process with pid
     asm volatile ("movl %0, %%cr3;"::"r"(&(page_dirs[pid])));
 }
 
-/**
- *
- */
+/*
+* void restore_parent_paging(uint32_t pid, uint32_t parent_pid) 
+*   Inputs: 
+    -pid = Process ID
+    -parent_pid = parent process ID 
+*   Return Value: none
+*   Function: Wrapper function for set_page_dir
+*/
 void restore_parent_paging(uint32_t pid, uint32_t parent_pid) {
     set_page_dir(parent_pid);
 }
@@ -181,9 +276,15 @@ void remap_video_memory(uint32_t old_pid, uint32_t new_pid) {
     sti(); // End critical section
 }
 
-/**
- *
- */
+/*
+* void mmap(void* phys, void* virt, uint8_t access) 
+*   Inputs: 
+    -phys = physical address
+    -virt = virtual address
+    -access = access level of page
+*   Return Value: none
+*   Function: wrapper function for mapping page
+*/
 void mmap(void* phys, void* virt, uint8_t access) {
     uint32_t raw_virt = (uint32_t) virt;
 
@@ -227,6 +328,17 @@ void munmap(void* virt) {
     // Flush TLB
     set_page_dir((pcb == NULL) ? KERNEL_PID : pcb->pid);
 }
+
+/*
+* void mmap_large(void* phys, void* virt, uint8_t access, uint8_t write_through)
+*   Inputs: 
+    -phys = physical address
+    -virt = virtual address
+    -access = access level of page
+    -write_through = write-through flag
+*   Return Value: none
+*   Function: wrapper function for mapping large page
+*/
 
 void mmap_large(void* phys, void* virt, uint8_t access, uint8_t write_through) {
     pcb_t* pcb = get_pcb_ptr();

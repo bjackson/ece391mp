@@ -14,12 +14,21 @@ uint32_t pid_use_array[MAX_TASKS + 1] = {0};
 // Declared in syscalls.c
 extern void* halt_ret_lbl asm("halt_ret_lbl");
 
+<<<<<<< HEAD
+/*
+* void init_kernel_file_array()
+*   Inputs: 
+*   Return Value: none
+*   Function: begins filesystem processing by the kernel
+*/
+=======
 // Declared in terminal.c
 extern volatile uint32_t active_pids[NUM_TERMINALS];
 
 /**
  *
  */
+>>>>>>> origin/master
 void init_kernel_file_array() {
     // Initialize kernel stdin file desctriptor
     file_desc_t stdin_kernel;
@@ -46,9 +55,13 @@ void init_kernel_file_array() {
     kernel_file_array[STDOUT_FD] = stdout_kernel;
 }
 
-/**
- *
- */
+/*
+* pcb_t* init_pcb(uint32_t pid)
+*   Inputs: 
+    -pid = process id
+*   Return Value: pointer to PCB data sctructure
+*   Function: initializes PCB for the given process ID
+*/
 pcb_t* init_pcb(uint32_t pid) {
     pcb_t pcb;
     memset(&pcb, 0x00, sizeof(pcb_t));
@@ -86,9 +99,12 @@ pcb_t* init_pcb(uint32_t pid) {
     return (pcb_t*) pcb_mem_location;
 }
 
-/**
- *
- */
+/*
+* pcb_t* get_pcb_ptr()
+*   Inputs: 
+*   Return Value: pointer to the PCB if a process is running
+*   Function: grabs PCB
+*/
 pcb_t* get_pcb_ptr() {
 
     /*
@@ -106,6 +122,14 @@ pcb_t* get_pcb_ptr() {
     return NULL;
 }
 
+<<<<<<< HEAD
+/*
+* file_desc_t* get_file_array()
+*   Inputs: 
+*   Return Value: file descriptor array pointer
+*   Function: grabs the value of the file array for the given PCB
+*/
+=======
 /**
  *
  */
@@ -116,14 +140,19 @@ pcb_t* get_pcb_ptr_pid(uint32_t pid) {
 /**
  *
  */
+>>>>>>> origin/master
 file_desc_t* get_file_array() {
     pcb_t* pcb = get_pcb_ptr();
     return (pcb == NULL) ? kernel_file_array : pcb->file_array;
 }
 
-/**
- *
- */
+/*
+* void task_switch(uint32_t new_pid)
+*   Inputs: 
+    -new_pid = process ID to switch to
+*   Return Value: None
+*   Function: handles the bulk of the task switching
+*/
 void task_switch(uint32_t new_pid) {
     cli(); // Begin critical section
     log(DEBUG, "Switching to new task!", "task_switch");

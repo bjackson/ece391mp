@@ -3,8 +3,6 @@
  * vim:ts=4 expandtab
  */
 #include "terminal.h"
-#include "../lib.h"
-#include "../tasks.h"
 
 #define NUM_COLS 80
 #define NUM_ROWS 25
@@ -21,11 +19,18 @@ static uint32_t keyboard_buffer_indices[NUM_TERMINALS];
 // Indicates whether the read_buffer is ready to be read from
 static volatile uint8_t read_ready_flags[NUM_TERMINALS];
 
-// Stores the pid for the main shell started when each terminal was first switched to
+// Stores the pids for the main shell started when each terminal was first switched to
 volatile uint32_t shell_pids[NUM_TERMINALS];
+
+// Stores the pids for the active task of each terminal
+volatile uint32_t active_pids[NUM_TERMINALS];
 
 // Stores the index of the current terminal
 volatile uint32_t current_terminal = 0;
+
+// Stores the screen position for each terminal between task switches
+volatile int switch_screen_pos_x[NUM_TERMINALS];
+volatile int switch_screen_pos_y[NUM_TERMINALS];
 
 /*
  * int32_t terminal_open(const uint8_t* filename)
@@ -42,6 +47,9 @@ int32_t terminal_open(const uint8_t* filename) {
         keyboard_buffer_indices[i] = 0;
         read_ready_flags[i] = 0;
         shell_pids[i] = 0;
+        active_pids[i] = 0;
+        switch_screen_pos_x[i] = 0;
+        switch_screen_pos_y[i] = 0;
     }
 
     return 0;
@@ -200,7 +208,54 @@ void terminal_clear() {
     memset(read_buffers[t_idx], 0x00, sizeof(read_buffers[t_idx]));
     keyboard_buffer_indices[t_idx] = 0;
     read_ready_flags[t_idx] = 0;
+    switch_screen_pos_x[t_idx] = 0;
+    switch_screen_pos_y[t_idx] = 0;
 
     set_cursor(0, 0);
+}
+
+/**
+ *
+ */
+void switch_active_terminal_screen(uint32_t old_pid, uint32_t new_pid) {
+    if(old_pid == KERNEL_PID || new_pid == KERNEL_PID) {
+        log(ERROR, "Can't switch terminal while in pre-shell kernel!", "switch_active_terminal_screen");
+        return;
+    }
+
+    pcb_t* old_pcb = get_pcb_ptr_pid(old_pid);
+    pcb_t* new_pcb = get_pcb_ptr_pid(new_pid);
+
+    uint32_t old_terminal = old_pcb->terminal_index;
+    uint32_t new_terminal = new_pcb->terminal_index;
+
+    if(old_terminal == new_terminal) {
+        log(DEBUG, "No use switching to the same terminal screen", "switch_active_terminal_screen");
+        return;
+    }
+
+    void* old_backing = (void*) (VIDEO + (FOUR_KB * (old_terminal + 1)));
+    void* new_backing = (void*) (VIDEO + (FOUR_KB * (new_terminal + 1)));
+
+    // Identity map pages for video memory backing stores
+    mmap(old_backing, old_backing, ACCESS_SUPER);
+    mmap(new_backing, new_backing, ACCESS_SUPER);
+
+    // Copy video mem from VIDEO to backing for old_pid
+    memcpy(old_backing, ((void*) VIDEO), FOUR_KB);
+
+    // Save screen position
+    switch_screen_pos_x[old_terminal] = get_screen_x();
+    switch_screen_pos_y[old_terminal] = get_screen_y();
+
+    // Copy video mem from backing for new_pid to VIDEO
+    memcpy(((void*) VIDEO), new_backing, FOUR_KB);
+
+    // Reset the location of the cursor
+    reset_screen_pos();
+
+    // Unmap identity maped pages for video memory backing stores
+    munmap(old_backing);
+    munmap(new_backing);
 }
 

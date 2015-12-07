@@ -8,8 +8,16 @@
 #include "lib.h"
 #include "tasks.h"
 #include "devices/e1000.h"
+#include "devices/terminal.h"
 
 #define MAX_ENTRIES 1024
+
+/*
+ * We only need to allocate two page tables for each task. One will be for
+ * memory addresses in the range [0GB,4MB) and the other for memory addresses
+ * in the range [1GB, 1GB + 4MB)
+ */
+#define NUM_PAGE_TABLES 2
 
 #define ACCESS_ALL 1
 #define ACCESS_SUPER 0
@@ -81,6 +89,9 @@ void init_paging();
 // Map a small (4KB) page
 void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access);
 
+// Unmap a small (4KB) page
+void unmap_page(uint32_t* page_table, void* virt);
+
 // Map a large (4MB) page
 void map_large_page(uint32_t* page_dir, void* phys, void* virt,
         uint8_t access, uint8_t global, uint8_t cache_disabled, uint8_t write_through);
@@ -99,10 +110,16 @@ void set_page_dir(uint32_t pid);
 void restore_parent_paging(uint32_t pid, uint32_t parent_pid);
 
 //
+void remap_video_memory(uint32_t old_pid, uint32_t new_pid);
+
+//
 uint32_t k_virt_to_phys(void* virtual);
 
 //
 void mmap(void* phys, void* virt, uint8_t access);
+
+//
+void munmap(void* virt);
 
 void mmap_large(void* phys, void* virt, uint8_t access, uint8_t write_through);
 

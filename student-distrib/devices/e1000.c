@@ -8,7 +8,12 @@ volatile tx_pkt_t tx_packets[E1000_DESC_SIZE];
 volatile rx_desc_t rx_descriptors[E1000_DESC_SIZE] __attribute__ ((aligned (16)));
 volatile rx_pkt_t rx_packets[E1000_DESC_SIZE];
 
-
+/*
+ * int32_t e1000_init()
+ * Description: initializes the e1000 networking controller
+ * Inputs: none
+ * Outputs: 0 on success
+ */
 int32_t e1000_init() {
   // *tx_packets = (tx_pkt_t *)E1000_PKT_LOC;
   // *rx_packets = (rx_pkt_t *)(E1000_PKT_LOC + (sizeof(tx_pkt_t) * E1000_DESC_SIZE));
@@ -69,6 +74,12 @@ int32_t e1000_init() {
   return 0;
 }
 
+/* 
+ * int32_t e1000_transmit(uint8_t data, uint32_t length)
+ * Decsription: Transmits e1000 packets
+ * Inputs: data - the data to be transmitted, length - the length of the transmission
+ * Outputs: -1 on failure, length on success
+ */
 int32_t e1000_transmit(uint8_t* data, uint32_t length) {
   assert_do(length < E1000_TX_PKT_SIZE, {
     return -1;
@@ -112,6 +123,12 @@ int32_t e1000_transmit(uint8_t* data, uint32_t length) {
   return length;
 }
 
+/*
+ * int32_t e1000_recieve(uint8_t data, uint32_t length)
+ * Decsription: Recieves e1000 packets
+ * Inputs: data - the data to be transmitted, length - the length of the transmission
+ * Outputs: -1 on failure, length on success
+ */
 int32_t e1000_receive(uint8_t* data, uint32_t length) {
   assert_do(length != 0, {
     return -1;
@@ -142,6 +159,12 @@ int32_t e1000_receive(uint8_t* data, uint32_t length) {
   return 0;
 }
 
+/*
+ * int32_t e1000_init_tipg()
+ * Decsription: Initializes the e1000 tpig
+ * Input: none
+ * Outputs: 0 on success
+ */
 int32_t e1000_init_tipg() {
   uint32_t tipg = 0x00;
   tipg  =  0x00;        // Reserved
@@ -154,6 +177,12 @@ int32_t e1000_init_tipg() {
   return 0;
 }
 
+/*
+ * int32_t e1000_init_txctl()
+ * Decsription: Initializes the e1000 tctl
+ * Inputs: none
+ * Outputs: 0 on success
+ */
 int32_t e1000_init_txctl() {
   // uint32_t tctl = 0;
   // tctl |= E1000_TCTL_EN;
@@ -174,6 +203,12 @@ int32_t e1000_init_txctl() {
   return 0;
 }
 
+/*
+ * int32_t e1000_init_rx()
+ * Decsription: Initializes the e1000 rx descriptors
+ * Inputs: none
+ * Outputs: 0 on success
+ */
 int32_t e1000_init_rx() {
 
   initialize_MAC_address();
@@ -196,6 +231,12 @@ int32_t e1000_init_rx() {
   return 0;
 }
 
+/*
+ * int32_t e1000_init_rxctl()
+ * Decsription: Initializes the e1000 rctl
+ * Inputs: none
+ * Outputs: 0 on success
+ */
 int32_t e1000_init_rxctl() {
   // For the time being, disable RX.
   rctl_reg_t rctl;
@@ -214,6 +255,12 @@ int32_t e1000_init_rxctl() {
   return 0;
 }
 
+/*
+ * int32_t e1000_read_from_eeprom(unit32_t read_register)
+ * Decsription: Reads eeprom
+ * Inputs: read_register - register to read from
+ * Outputs: 16 highest bits of data
+ */
 uint16_t e1000_read_from_eeprom(uint32_t read_register) {
   //  31-16  15-8  7-5   4   3-1    0
   //  Data Address RSV. DONE RSV. START
@@ -226,6 +273,12 @@ uint16_t e1000_read_from_eeprom(uint32_t read_register) {
   return (uint16_t)(e1000_mmio[E1000_EERD] >> 16); // Data is in high 16 bits
 }
 
+/*
+ * int32_t initialize_MAC_address()
+ * Decsription: Initializes the MAC address
+ * Inputs: none
+ * Outputs: 0 on success
+ */
 int32_t initialize_MAC_address() {
   // Initialize MAC Address
   uint32_t ral = 0;

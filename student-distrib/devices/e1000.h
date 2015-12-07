@@ -188,24 +188,26 @@ typedef struct rctl_reg rctl_reg_t;
 
 
 // Public Functions
+// init e1000
 int32_t e1000_init();
-
+// transmit data
 int32_t e1000_transmit(uint8_t* data, uint32_t length);
-
+// recieve data
 int32_t e1000_receive(uint8_t* data, uint32_t length);
 
 
 // Internal Functions
+// read from eeprom
 uint16_t e1000_read_from_eeprom(uint32_t read_register);
-
+// initialize mac address
 int32_t initialize_MAC_address();
-
+// init tctl
 int32_t e1000_init_txctl();
-
+//init tipg
 int32_t e1000_init_tipg();
-
+// init rx
 int32_t e1000_init_rx();
-
+// init rctl
 int32_t e1000_init_rxctl();
 
 #endif

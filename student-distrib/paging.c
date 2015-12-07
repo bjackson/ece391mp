@@ -28,12 +28,6 @@ void init_paging() {
     map_large_page(page_dirs[KERNEL_PID], ((void*) FOUR_MB), ((void*) FOUR_MB),
             ACCESS_SUPER, GLOBAL, CACHE_ENABLED, WRITE_THROUGH_ENABLED);
 
-    /*
-    // Map E1000 network card into memory
-    mmap(page_dirs[KERNEL_PID], ((void*) E1000_BASE),
-            ((void*) E1000_BASE), ACCESS_SUPER, GLOBAL);
-    */
-
     // Enable paging - from OSDev guide at http://wiki.osdev.org/Paging
     asm volatile (
             "movl $page_dirs, %%eax        /* Load paging directory */      ;"
@@ -94,47 +88,6 @@ void map_large_page(uint32_t* page_dir, void* phys, void* virt,
     kernel_pd_entry.addr = ((uint32_t) phys) >> 22;
 
     page_dir[((uint32_t) virt) >> 22] = kernel_pd_entry.val;
-}
-
-// Translates a kernel virtual address to a physical address
-// @param virtual virtual address to translate
-// @return physical address
-/**
- *
- */
-uint32_t k_virt_to_phys(void* virtual) {
-
-  uint32_t page_idx = (uint32_t) virtual >> 22;
-
-  assert(page_idx < MAX_TASKS);
-
-  uint32_t offset = (uint32_t) virtual & 0x003FFFFF;
-
-  uint32_t phys_addr = (((pd_large_entry_t) page_dirs[KERNEL_PID][page_idx]).addr << 22) + offset;
-  // debug("phys_addr: 0x%x\n", phys_addr);
-  return phys_addr;
-
-}
-
-// Translates a virtual address to a physical address
-// @param virtual virtual address to translate
-// @return physical address
-uint32_t virt_to_phys(void* virtual) {
-  pcb_t *pcb = get_pcb_ptr();
-  uint32_t pid = pcb->pid;
-
-  uint32_t page_idx = (uint32_t) virtual >> 22;
-
-  assert_do(page_idx < MAX_ENTRIES, {
-    debug("virtual: 0x%x, page_idx: %d\n", page_idx, virtual);
-  });
-
-  uint32_t offset = (uint32_t) virtual & 0x003FFFFF;
-
-  uint32_t phys_addr = (((pd_large_entry_t) page_dirs[pid][page_idx]).addr << 22) + offset;
-  // debug("phys_addr: 0x%x\n", phys_addr);
-  return phys_addr;
-
 }
 
 /**

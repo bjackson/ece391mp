@@ -13,7 +13,6 @@
 #include "../devices/rtc.h"
 #include "../paging.h"
 #include "../x86_desc.h"
-#include "../devices/e1000.h"
 #include "../log.h"
 
 #define EXE_HEADER_LEN            40

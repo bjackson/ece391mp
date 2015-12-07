@@ -117,7 +117,10 @@ pcb_t* get_pcb_ptr() {
 }
 
 /**
- *
+ * get_pcb_ptr_pid(uint32_t pid)
+ * Decription: Gets the pcb pointer to the pid
+ * Input:pid - the pid
+ * Output: returns pcb pointer
  */
 pcb_t* get_pcb_ptr_pid(uint32_t pid) {
     return (pcb_t*) ((8 * MB) - ((pid + 1) * (8 * KB)));

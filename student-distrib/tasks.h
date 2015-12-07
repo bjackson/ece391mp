@@ -53,22 +53,22 @@ extern file_desc_t kernel_file_array[FILE_ARRAY_SIZE];
 // Table used to track which PIDs are in use
 extern uint32_t pid_use_array[MAX_TASKS + 1];
 
-//
+// initialize the kernel file array
 void init_kernel_file_array();
 
-//
+// initiliaze the pbc
 pcb_t* init_pcb(uint32_t pid);
 
-//
+// get the pcb pointer
 pcb_t* get_pcb_ptr();
 
-//
+// the the pcb pointer to the pid
 pcb_t* get_pcb_ptr_pid(uint32_t pid);
 
-//
+// get file array
 file_desc_t* get_file_array();
 
-//
+// switch tasks
 void task_switch(uint32_t new_pid);
 
 #endif // TASKS_H

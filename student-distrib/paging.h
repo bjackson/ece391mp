@@ -99,30 +99,31 @@ void map_large_page(uint32_t* page_dir, void* phys, void* virt,
 void register_page_table(uint32_t* page_dir, uint32_t index,
         uint32_t* page_table, uint8_t access);
 
-//
+// initialize paging
 void init_task_paging(uint32_t pid);
 
-//
+// set the page directory
 void set_page_dir(uint32_t pid);
 
-//
+// restore paging
 void restore_parent_paging(uint32_t pid, uint32_t parent_pid);
 
-//
+// remap the video memory
 void remap_video_memory(uint32_t old_pid, uint32_t new_pid);
 
-//
+// wrapper for mapping page
 void mmap(void* phys, void* virt, uint8_t access);
 
-//
+// map pid
 void mmap_pid(uint32_t pid, void* phys, void* virt, uint8_t access);
 
-//
+// map pbc to pid
 void munmap(void* virt);
 
-//
+// map pid
 void munmap_pid(uint32_t pid, void* virt);
 
+// wrapper function for mapping a large page
 void mmap_large(void* phys, void* virt, uint8_t access, uint8_t write_through);
 
 #endif /* PAGING_H */

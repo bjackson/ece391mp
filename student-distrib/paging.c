@@ -72,7 +72,10 @@ void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access) {
 }
 
 /**
- *
+ * unmap_page(uint32_t* page_table, void* virt)
+ * Description: unmap a page
+ * Inputs: page_table - the page table, virt - ignored
+ * Outputs: none
  */
 void unmap_page(uint32_t* page_table, void* virt) {
     pt_entry_t pt_entry;
@@ -191,7 +194,9 @@ void restore_parent_paging(uint32_t pid, uint32_t parent_pid) {
 }
 
 /**
- *
+ * remap_video_memory(uint32_t old_pid, uint32_t new_pid)
+ * Description: remap the video memory
+ * Inputs: old_pid - old terminal, new_pid - new terminal
  */
 void remap_video_memory(uint32_t old_pid, uint32_t new_pid) {
     cli(); // Begin critical section
@@ -246,7 +251,10 @@ void mmap(void* phys, void* virt, uint8_t access) {
 }
 
 /**
- *
+ * mmap_pid(uint32_t pid, void* phys, void* virt, uint8_t access)
+ * Description: Maps the pid to memory
+ * Inputs: pid - the pid, virt - virtual address, access - sets access
+ * Outputs: none
  */
 void mmap_pid(uint32_t pid, void* phys, void* virt, uint8_t access) {
     uint32_t raw_virt = (uint32_t) virt;
@@ -269,7 +277,10 @@ void mmap_pid(uint32_t pid, void* phys, void* virt, uint8_t access) {
 }
 
 /**
- *
+ * munmap(void* virt)
+ * Description: maps pcb to pid
+ * Inputs: virt - virtual address
+ * Outputs: none
  */
 void munmap(void* virt) {
     pcb_t* pcb = get_pcb_ptr();
@@ -277,7 +288,9 @@ void munmap(void* virt) {
 }
 
 /**
- *
+ * munmap_pid(uint32_t pid, void* virt)
+ * Inputs: pid - pid, virt - virtual address
+ * Outputs: none
  */
 void munmap_pid(uint32_t pid, void* virt) {
     uint32_t raw_virt = (uint32_t) virt;

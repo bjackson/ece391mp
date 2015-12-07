@@ -31,7 +31,7 @@ int32_t terminal_write_key(uint8_t key);
 // clear the terminal
 void terminal_clear();
 
-//
+// switch the active terminal
 void switch_active_terminal_screen(uint32_t old_pid, uint32_t new_pid);
 
 #endif /* TERMINAL_H */

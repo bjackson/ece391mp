@@ -215,7 +215,10 @@ void terminal_clear() {
 }
 
 /**
- *
+ * switch_active_terminal_screen(uint32_t old_pid, uint32_t new_pid)
+ * Description: switches the active terminal
+ * Inputs: old_pid - old terminal, new_pid - new terminal
+ * Outputs: none
  */
 void switch_active_terminal_screen(uint32_t old_pid, uint32_t new_pid) {
     if(old_pid == KERNEL_PID || new_pid == KERNEL_PID) {

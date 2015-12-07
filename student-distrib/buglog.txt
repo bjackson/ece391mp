@@ -1,7 +1,10 @@
 ﻿Bug Log
-
+=======
 
 Checkpoint 1
+------------
+
+
 Bug: IDT error
 Description: The IDT is not being properly initialized
 Fix Time: 3 hours
@@ -19,12 +22,7 @@ Fix Time: 1 hour
 
 Bug: Interrupts
 Description: Interrupts only fire some of the time
-Fix Time: 6 hours
-
-
-Bug:IDT Handler
-Description: Handler works but IDT does not
-Fix Time: 3 hours
+Fix Time: 1 hour
 
 
 Bug: Page Tables
@@ -32,13 +30,8 @@ Description: Page tables are incorrectly sizing
 Fix Time: 2 hours
 
 
-Bug: Interrupt Firing
-Description: Interrupts are constantly triggered for as many 0s as are in the address for the bad instruction
-Fix Time: 1 hour
-
-
 Bug: Page Table Offset
-Description: Page table is using the wrong offset 
+Description: Page table is using the wrong offset
 Fix Time: 15 min
 
 
@@ -49,20 +42,12 @@ Fix Time: 4 hours
 
 Bug: Remote file syncing
 Description: Sharing files between local machine and QEMU
-Fix Time: 12 hours
-Bug: VGA Memory
-Description: Wrong VGA memory address is being used
-Fix Time: 1 hour
+Fix Time: 2 hours
 
 
 Bug: PIC Initialization
 Description: PIC isn’t getting initialized
 Fix Time: 2 hours
-
-
-Bug: Lib includes
-Description: lib isn’t being included correctly
-Fix Time: 10 minutes
 
 
 Bug: fstab errors
@@ -76,6 +61,9 @@ Fix Time: 20 min
 
 
 Checkpoint 2
+------------
+
+
 Bug: Line buffer
 Description: the line buffer is an incorrect size
 Fix Time: 20 min
@@ -83,22 +71,12 @@ Fix Time: 20 min
 
 Bug: Backspace
 Description: Backspace isn’t removing characters from the line buffer
-Fix Time: 4 hours
-
-
-Bug: Read system call
-Description: System call isn’t getting called correctly
-Fix Time: 1 hour
+Fix Time: 2 hours
 
 
 Bug: Terminal Read
 Description: Terminal read appears to randomly return every now and then
 Fix Time: 3 hours
-
-
-Bug: Backspace
-Description: Terminal backspace still isn’t deleting characters
-Fix Time: 1 hour
 
 
 Bug: RTC init
@@ -111,40 +89,33 @@ Description: Test code for the RTC is in the wrong location for the demo
 Fix Time: 20 min
 
 
-Bug: File system memory
-Description: The file system is starting in the wrong place in memory
-Fix Time: 2 hours
-
-
 Bug: RTC wrong values
 Description: RTC will accept invalid numbers for clock
 Fix Time: 40 min
 
 
 Bug: Directory read
-Description: Can’t read from the dictionary
+Description: Can’t read from the directory
 Fix Time: 4 hours
 
 
 Bug: RTC merge
 Description: New RTC code being merged into the new code is causing issues
-Fix Time: 8 hours
+Fix Time: 4 hours
 
 
 Bug: Pagefault
-Description: fs_open pagefaults when run 
+Description: fs_open pagefaults when run
 Fix Time: 3 hours
 
 
 Checkpoint 3
+------------
+
+
 Bug: nbytes
 Description: nbytes isn’t being used properly
-Fix Time: 6 hours
-
-
-Bug: Read/write
-Description: Read/write methods do nothing
-Fix Time: 8 hours
+Fix Time: 2 hours
 
 
 Bug: Paging compilation
@@ -154,23 +125,21 @@ Fix Time: 20 min
 
 Bug: Execute
 Description: Execute crashing sporadically
-Fix Time: 3 hours
+Fix Time: 5 hours
 
 
 Bug: Save/Restore
 Description: Stack isn’t set up well before the iret
-Fix Time: 2 hours
+Fix Time: 4 hours
 
 
 Bug: Cursor
 Description: Cursor isn’t loading in the right position
-Fix Time: 20 min
+Fix Time: 45 min
 
 
 Checkpoint 4
-Bug: Page memory
-Description: page is taking up memory where the filesystem is mapped
-Fix Time: 2 hours
+------------
 
 
 Bug: Vidmap pagefault
@@ -179,7 +148,7 @@ Fix Time: 1 hour
 
 
 Bug: System call too long
-Description: Read/write is not one line
+Description: Read/write is not one line w/o error checking
 Fix Time: 20 min
 
 
@@ -190,25 +159,24 @@ Fix Time: 4 hours
 
 Bug: Fish not moving
 Description: Fish is animating really slowly
-Fix Time: 3 hours
-
-
-Bug: Shell freezing
-Description: Shell freezes when entering an invalid command
 Fix Time: 1 hour
 
 
 Checkpoint 5
-Bug: Network controller
-Description: Network controller is outputting 0s for all packet values
-Fix Time: 18 hours
+------------
 
 
 Bug: Terminal switching
-Description: Changing to another terminal stops the current one
+Description: Changing to another terminal corrupts the current one
 Fix Time: 2 hours
 
 
 Bug: Video gap
 Description: similar to previous bug, switching out of terminal creates a gap in video
 Fix Time: 1 hour
+
+
+Bug: Video memory paging
+Description: When setting up new page mapping for the backing stores and video memory,
+the screen is not being displayed correctly.
+Fix Time: 5 hours

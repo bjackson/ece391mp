@@ -17,6 +17,7 @@ uint8_t shift_bitmask = 0; // Bit 1 for left, Bit 0 for right
 
 // Declared in terminal.c
 extern volatile uint32_t shell_pids[NUM_TERMINALS];
+extern volatile uint32_t active_pids[NUM_TERMINALS];
 
 /**
  *
@@ -239,7 +240,7 @@ void keyboard_isr() {
             log(DEBUG, "Shell already exists for terminal 0!", "isr");
 
             // Switch to base shell of terminal 0
-            task_switch(shell_pids[0]);
+            task_switch(active_pids[0]);
         } else {
             // Need to start a new shell for this terminal
             do_execute((uint8_t *)"shell");
@@ -256,7 +257,7 @@ void keyboard_isr() {
             log(DEBUG, "Shell already exists for terminal 1!", "isr");
 
             // Switch to base shell of terminal 1
-            task_switch(shell_pids[1]);
+            task_switch(active_pids[1]);
         } else {
             // Need to start a new shell for this terminal
             do_execute((uint8_t *)"shell");
@@ -273,7 +274,7 @@ void keyboard_isr() {
             log(DEBUG, "Shell already exists for terminal 2!", "isr");
 
             // Switch to base shell of terminal 2
-            task_switch(shell_pids[2]);
+            task_switch(active_pids[2]);
         } else {
             // Need to start a new shell for this terminal
             do_execute((uint8_t *)"shell");

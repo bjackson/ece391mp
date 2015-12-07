@@ -5,18 +5,13 @@
 #ifndef _TERMINAL_H
 #define _TERMINAL_H
 
-#include "../types.h"
-#include "../log.h"
-
+#define NUM_TERMINALS 3
 #define KEYBOARD_BUFFER_SIZE 128
 
-#define NUM_TERMINALS 3
-
-// Stores the pid for the main shell started when each terminal was first switched to
-extern volatile uint32_t shell_pids[NUM_TERMINALS];
-
-// Stores the index of the current terminal
-extern volatile uint32_t current_terminal;
+#include "../types.h"
+#include "../log.h"
+#include "../lib.h"
+#include "../tasks.h"
 
 // open the terminal
 int32_t terminal_open(const uint8_t* filename);
@@ -35,5 +30,8 @@ int32_t terminal_write_key(uint8_t key);
 
 // clear the terminal
 void terminal_clear();
+
+//
+void switch_active_terminal_screen(uint32_t old_pid, uint32_t new_pid);
 
 #endif /* TERMINAL_H */

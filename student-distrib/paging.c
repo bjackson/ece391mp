@@ -6,20 +6,23 @@
 #include "paging.h"
 
 uint32_t page_dirs[MAX_TASKS][MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
-uint32_t page_tables[MAX_TASKS][MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
+uint32_t page_tables[MAX_TASKS][NUM_PAGE_TABLES][MAX_ENTRIES] __attribute__((aligned(FOUR_KB)));
+
+// Declared in terminal.c
+extern volatile uint32_t active_pids[NUM_TERMINALS];
 
 /**
  *
  */
 void init_paging() {
     memset(page_dirs, 0x00, sizeof(uint32_t) * MAX_ENTRIES * MAX_TASKS);
-    memset(page_tables, 0x00, sizeof(uint32_t) * MAX_ENTRIES * MAX_TASKS);
+    memset(page_tables, 0x00, sizeof(uint32_t) * MAX_ENTRIES * NUM_PAGE_TABLES * MAX_TASKS);
 
     // Kernel page table
-    register_page_table(page_dirs[KERNEL_PID], 0, page_tables[KERNEL_PID], ACCESS_SUPER);
+    register_page_table(page_dirs[KERNEL_PID], 0, page_tables[KERNEL_PID][0], ACCESS_SUPER);
 
     // Map page for video memory in kernel page table
-    map_page(page_tables[KERNEL_PID], ((void*) VIDEO), ((void*) VIDEO), ACCESS_ALL);
+    map_page(page_tables[KERNEL_PID][0], ((void*) VIDEO), ((void*) VIDEO), ACCESS_ALL);
 
     // Map large page for kernel code
     map_large_page(page_dirs[KERNEL_PID], ((void*) FOUR_MB), ((void*) FOUR_MB),
@@ -61,6 +64,15 @@ void map_page(uint32_t* page_table, void* phys, void* virt, uint8_t access) {
     pt_entry.global = 0;         // Flush TLB if CR3 is reset
     pt_entry.addr = ((uint32_t) phys) >> 12;
 
+    page_table[(((uint32_t) virt) >> 12) & 0x3FF] = pt_entry.val;
+}
+
+/**
+ *
+ */
+void unmap_page(uint32_t* page_table, void* virt) {
+    pt_entry_t pt_entry;
+    memset(&pt_entry, 0x00, sizeof(pt_entry_t));
     page_table[(((uint32_t) virt) >> 12) & 0x3FF] = pt_entry.val;
 }
 
@@ -147,11 +159,14 @@ void register_page_table(uint32_t* page_dir, uint32_t index,
  *
  */
 void init_task_paging(uint32_t pid) {
-    // Register kernel page table
-    register_page_table(page_dirs[pid], 0, page_tables[KERNEL_PID], ACCESS_SUPER);
+    // Register first user page table [0GB, 4MB)
+    register_page_table(page_dirs[pid], 0, page_tables[pid][0], ACCESS_SUPER);
 
-    // Register user page table
-    register_page_table(page_dirs[pid], 256, page_tables[pid], ACCESS_ALL);
+    // Map page for video memory in first user page table
+    map_page(page_tables[pid][0], ((void*) VIDEO), ((void*) VIDEO), ACCESS_SUPER);
+
+    // Register second user page table [1GB, 1GB + 4MB)
+    register_page_table(page_dirs[pid], 256, page_tables[pid][1], ACCESS_ALL);
 
     // Map large page for kernel code
     map_large_page(page_dirs[pid], ((void*) FOUR_MB), ((void*) FOUR_MB),
@@ -178,23 +193,93 @@ void set_page_dir(uint32_t pid) {
  */
 void restore_parent_paging(uint32_t pid, uint32_t parent_pid) {
     set_page_dir(parent_pid);
+}
 
-    // Clear paging structures of old process
-    //memset(page_dirs[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
-    //memset(page_tables[pid], 0x00, sizeof(uint32_t) * MAX_ENTRIES);
+/**
+ *
+ */
+void remap_video_memory(uint32_t old_pid, uint32_t new_pid) {
+    cli(); // Begin critical section
+
+    if(active_pids[current_terminal] == new_pid) {
+        log(DEBUG, "Mapping VIDEO to VIDEO", "remap_video_memory");
+
+        // Map VIDEO to VIDEO for new task
+        map_page(page_tables[new_pid][0], ((void*) VIDEO), ((void*) VIDEO), ACCESS_SUPER);
+    } else {
+        log(DEBUG, "Mapping VIDEO to new_backing", "remap_video_memory");
+
+        // Map VIDEO to backing store for new task
+        uint32_t new_terminal = get_pcb_ptr_pid(new_pid)->terminal_index;
+        void* new_backing = (void*) (VIDEO + (FOUR_KB * (new_terminal + 1)));
+        map_page(page_tables[new_pid][0], new_backing, ((void*) VIDEO), ACCESS_SUPER);
+    }
+
+    // Remap VIDEO to backing store for old task if it's not the kernel
+    if(old_pid > KERNEL_PID) {
+        uint32_t old_terminal = get_pcb_ptr_pid(old_pid)->terminal_index;
+        void* old_backing = (void*) (VIDEO + (FOUR_KB * (old_terminal + 1)));
+        map_page(page_tables[old_pid][0], old_backing, ((void*) VIDEO), ACCESS_SUPER);
+    }
+
+    // Flush TLB
+    set_page_dir(new_pid);
+
+    sti(); // End critical section
 }
 
 /**
  *
  */
 void mmap(void* phys, void* virt, uint8_t access) {
+    uint32_t raw_virt = (uint32_t) virt;
+
+    uint32_t page_table_idx;
+    if(raw_virt < FOUR_MB) {
+        page_table_idx = 0;
+    } else if(raw_virt >= GB && raw_virt < (GB + FOUR_MB)) {
+        page_table_idx = 1;
+    } else {
+        log(ERROR, "Need to allocate more page tables!", "mmap");
+        return;
+    }
+
     pcb_t* pcb = get_pcb_ptr();
-    map_page(page_tables[(pcb == NULL) ? KERNEL_PID : pcb->pid],
+    map_page(page_tables[(pcb == NULL) ? KERNEL_PID : pcb->pid][page_table_idx],
             phys, virt, access);
+
+    // Flush TLB
+    set_page_dir((pcb == NULL) ? KERNEL_PID : pcb->pid);
+}
+
+/**
+ *
+ */
+void munmap(void* virt) {
+    uint32_t raw_virt = (uint32_t) virt;
+
+    uint32_t page_table_idx;
+    if(raw_virt < FOUR_MB) {
+        page_table_idx = 0;
+    } else if(raw_virt >= GB && raw_virt < (GB + FOUR_MB)) {
+        page_table_idx = 1;
+    } else {
+        log(ERROR, "Need to allocate more page tables!", "mmap");
+        return;
+    }
+
+    pcb_t* pcb = get_pcb_ptr();
+    unmap_page(page_tables[(pcb == NULL) ? KERNEL_PID : pcb->pid][page_table_idx], virt);
+
+    // Flush TLB
+    set_page_dir((pcb == NULL) ? KERNEL_PID : pcb->pid);
 }
 
 void mmap_large(void* phys, void* virt, uint8_t access, uint8_t write_through) {
     pcb_t* pcb = get_pcb_ptr();
     map_large_page(page_dirs[(pcb == NULL) ? KERNEL_PID : pcb->pid],
             phys, virt, access, GLOBAL, CACHE_DISABLED, write_through);
+
+    // Flush TLB
+    set_page_dir((pcb == NULL) ? KERNEL_PID : pcb->pid);
 }

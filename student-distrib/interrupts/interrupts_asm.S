@@ -55,6 +55,7 @@ ISR 40 0
 #   error_code: Optional error code pushed by some exceptions, 0 otherwise
 # Returns: none
 isr_common:
+    cli                                # Disable further interrupts
     popl    %eax                       # eax: ISR index
     popl    %ecx                       # ecx: Error code
 

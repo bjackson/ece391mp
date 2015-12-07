@@ -264,7 +264,12 @@ putc(uint8_t c)
         }
 
     }
-    set_cursor(screen_y, screen_x);
+
+	// Only set the cursor if this is the active task for the current terminal
+	pcb_t* pcb = get_pcb_ptr();
+	if(pcb == NULL || active_pids[current_terminal] == pcb->pid) {
+		set_cursor(screen_y, screen_x);
+	}
 }
 
 /*
@@ -644,5 +649,28 @@ int32_t log2_of_pwr2(int32_t pwr2) {
 		result++;
 	}
 	return result;
+}
+
+/**
+ *
+ */
+void reset_screen_pos() {
+	screen_x = switch_screen_pos_x[current_terminal];
+	screen_y = switch_screen_pos_y[current_terminal];
+	set_cursor(screen_y, screen_x);
+}
+
+/**
+ *
+ */
+int get_screen_x() {
+	return screen_x;
+}
+
+/**
+ *
+ */
+int get_screen_y() {
+	return screen_y;
 }
 

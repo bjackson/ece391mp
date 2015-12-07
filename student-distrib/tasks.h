@@ -43,6 +43,8 @@ typedef struct {
     uint8_t args[MAX_ARGS_LENGTH];
     uint32_t terminal_index;
     uint32_t from_task_switch;
+    uint32_t switch_esp;
+    uint32_t switch_ebp;
 } pcb_t;
 
 // File descriptor table used by the kernel (will probably be moved later)
@@ -59,6 +61,9 @@ pcb_t* init_pcb(uint32_t pid);
 
 //
 pcb_t* get_pcb_ptr();
+
+//
+pcb_t* get_pcb_ptr_pid(uint32_t pid);
 
 //
 file_desc_t* get_file_array();

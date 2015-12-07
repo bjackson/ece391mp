@@ -9,6 +9,8 @@
 #pragma clang diagnostic ignored "-Wincompatible-library-redeclaration"
 
 #include "types.h"
+#include "tasks.h"
+#include "devices/terminal.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -18,6 +20,12 @@
 
 #define VIDEO 0xB8000
 
+// Declared in terminal.c
+extern volatile uint32_t current_terminal;
+extern volatile int switch_screen_pos_x[NUM_TERMINALS];
+extern volatile int switch_screen_pos_y[NUM_TERMINALS];
+extern volatile uint32_t active_pids[NUM_TERMINALS];
+
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
 int32_t puts(int8_t *s);
@@ -26,6 +34,9 @@ int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
 int32_t log2_of_pwr2(int32_t pwr2);
+void reset_screen_pos();
+int get_screen_x();
+int get_screen_y();
 
 void* memset(void* s, int32_t c, uint32_t n);
 void* memset_word(void* s, int32_t c, uint32_t n);

@@ -14,6 +14,9 @@ uint32_t pid_use_array[MAX_TASKS + 1] = {0};
 // Declared in syscalls.c
 extern void* halt_ret_lbl asm("halt_ret_lbl");
 
+// Declared in terminal.c
+extern volatile uint32_t active_pids[NUM_TERMINALS];
+
 /**
  *
  */
@@ -106,6 +109,13 @@ pcb_t* get_pcb_ptr() {
 /**
  *
  */
+pcb_t* get_pcb_ptr_pid(uint32_t pid) {
+    return (pcb_t*) ((8 * MB) - ((pid + 1) * (8 * KB)));
+}
+
+/**
+ *
+ */
 file_desc_t* get_file_array() {
     pcb_t* pcb = get_pcb_ptr();
     return (pcb == NULL) ? kernel_file_array : pcb->file_array;
@@ -115,6 +125,7 @@ file_desc_t* get_file_array() {
  *
  */
 void task_switch(uint32_t new_pid) {
+    cli(); // Begin critical section
     log(DEBUG, "Switching to new task!", "task_switch");
 
     if(new_pid == 0) {
@@ -133,6 +144,9 @@ void task_switch(uint32_t new_pid) {
         return;
     }
 
+    // Mark the new task as the active task of the current terminal
+    active_pids[current_terminal] = new_pid;
+
     // Write TSS with new process's kernel stack
     tss.ss0 = KERNEL_DS;
     tss.esp0 = ((8 * MB) - ((new_pid) * (8 * KB)) - 4);
@@ -140,23 +154,24 @@ void task_switch(uint32_t new_pid) {
     // Get the PCB for the new task
     pcb_t* new_pcb = (pcb_t*) ((8 * MB) - ((new_pid + 1) * (8 * KB)));
 
-    // Save old parent esp/esb
-    uint32_t old_parent_esp = old_pcb->parent_esp;
-    uint32_t old_parent_ebp = old_pcb->parent_ebp;
-
     // Save esp/ebp in the PCB, and mark that we came from this function
     register uint32_t esp asm ("esp");
-    old_pcb->parent_esp = esp;
+    old_pcb->switch_esp = esp;
     register uint32_t ebp asm ("ebp");
-    old_pcb->parent_ebp = ebp;
+    old_pcb->switch_ebp = ebp;
     old_pcb->from_task_switch = 1;
 
     // Restore new process's paging
     restore_parent_paging(old_pcb->pid, new_pid);
 
-    //TODO: Do some video memory bullshit
-    //TODO: Clear the screen and reset the cursor and other asst. bullshit
-    //TODO: Other bullshit I'm forgetting
+    /*
+     * Remap old tasks's VIDEO memory to backing store and new tasks's video
+     * memory to physical VIDEO addr
+     */
+    remap_video_memory(old_pcb->pid, new_pid);
+
+    // Ensure the screen displays properly based on the active task
+    //switch_active_terminal_screen((old_pcb == NULL) ? KERNEL_PID : old_pcb->pid, new_pid);
 
     /*
      * If this kernel stack didn't leave off at task_switch code, we need to head
@@ -165,16 +180,17 @@ void task_switch(uint32_t new_pid) {
      */
     if(!new_pcb->from_task_switch) { // Stack for parent process was stored in the old pcb
         // Restore the stack of the parent process
-        asm volatile ("movl %0, %%esp;"::"r"(old_parent_esp));
-        asm volatile ("movl %0, %%ebp;"::"r"(old_parent_ebp));
+        asm volatile ("movl %0, %%esp;"::"r"(old_pcb->parent_esp));
+        asm volatile ("movl %0, %%ebp;"::"r"(old_pcb->parent_ebp));
         asm volatile ("jmp halt_ret_lbl;");
     }
 
     log(DEBUG, "Returning from task_switch normally", "task_switch");
 
     // Restore the stack of the new process
-    asm volatile ("movl %0, %%esp;"::"r"(new_pcb->parent_esp));
-    asm volatile ("movl %0, %%ebp;"::"r"(new_pcb->parent_ebp));
+    asm volatile ("movl %0, %%esp;"::"r"(new_pcb->switch_esp));
+    asm volatile ("movl %0, %%ebp;"::"r"(new_pcb->switch_ebp));
 
+    sti(); // End critical section
     return;
 }

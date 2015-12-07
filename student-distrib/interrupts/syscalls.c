@@ -17,6 +17,7 @@ extern uint32_t pid_use_array[MAX_TASKS + 1];
 
 // Declared in terminal.c
 extern volatile uint32_t shell_pids[NUM_TERMINALS];
+extern volatile uint32_t active_pids[NUM_TERMINALS];
 extern volatile uint32_t current_terminal;
 
 /**
@@ -39,6 +40,10 @@ int32_t sys_halt(uint8_t status) {
     // Check to see if we are halting the base shell for a terminal. If so, execute another
     int i;
     for(i = 0; i < NUM_TERMINALS; i++) {
+        if(active_pids[i] == pcb.pid) {
+            active_pids[i] = pcb.parent_pid;
+        }
+
         if(shell_pids[i] == pcb.pid) {
             log(DEBUG, "Exiting base terminal. Executing another", "halt");
             shell_pids[i] = 0;
@@ -56,6 +61,12 @@ int32_t sys_halt(uint8_t status) {
 
     // Restore parent's paging
     restore_parent_paging(pcb.pid, pcb.parent_pid);
+
+    /*
+     * Remap old tasks's VIDEO memory to backing store and new tasks's video
+     * memory to physical VIDEO addr
+     */
+    remap_video_memory(pcb.pid, pcb.parent_pid);
 
     // Restore parent's ESP/EBP
     asm volatile ("movl %0, %%esp;"::"r"(parent_esp));
@@ -143,18 +154,28 @@ int32_t sys_execute(const uint8_t* command) {
         return -1;
     }
 
-    // Check if we are executing a new base shell for a terminal
-    if(strncmp(executable_fname, "shell", 5) == 0) {
-        if(shell_pids[current_terminal] == 0) {
-            shell_pids[current_terminal] = new_pid;
-        }
-    }
+    // Mark the task we are executing as the active task of the current terminal
+    active_pids[current_terminal] = new_pid;
+
+    // Fetch old PCB structure (or NULL if we're running pre-task kernel)
+    pcb_t* old_pcb = get_pcb_ptr();
 
     // Set up paging structures for new process
     init_task_paging(new_pid);
 
-    // Fetch old PCB structure (or NULL if we're running pre-task kernel)
-    pcb_t* old_pcb = get_pcb_ptr();
+    /*
+     * Remap old tasks's VIDEO memory to backing store and new tasks's video
+     * memory to physical VIDEO addr
+     */
+    remap_video_memory((old_pcb == NULL) ? KERNEL_PID : old_pcb->pid, new_pid);
+
+    // Check if we are executing a new base shell for a terminal
+    if(strncmp(((int8_t*) executable_fname), "shell", 5) == 0) {
+        if(shell_pids[current_terminal] == 0) {
+            shell_pids[current_terminal] = new_pid;
+            clear();
+        }
+    }
 
     // Load program image into memory from the file system
     void* program_image_mem = (void*) 0x08048000;

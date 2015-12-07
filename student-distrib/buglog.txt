@@ -7,56 +7,55 @@ Checkpoint 1
 
 Bug: IDT error
 Description: The IDT is not being properly initialized
+Fix: Changed the memory used in the intialization
 Fix Time: 3 hours
 
 
 Bug: IDT offset
 Description: The offset to the IDT is incorrect
+Fix: Recaulcuated the offsets
 Fix Time: 15 minutes
-
-
-Bug: GDB issues
-Description: GDB isn’t loading properly
-Fix Time: 1 hour
-
-
-Bug: Interrupts
-Description: Interrupts only fire some of the time
-Fix Time: 1 hour
 
 
 Bug: Page Tables
 Description: Page tables are incorrectly sizing
+Fix: Changed the size of the page tables
 Fix Time: 2 hours
 
 
 Bug: Page Table Offset
 Description: Page table is using the wrong offset
+Fix: Corrected the offset value for the page table
 Fix Time: 15 min
 
 
 Bug: QEMU
 Description: QEMU not booting
+Fix: Reinstalling QEMU
 Fix Time: 4 hours
 
 
 Bug: Remote file syncing
 Description: Sharing files between local machine and QEMU
+Fix: Copying files from git to svn and doing an svn commit
 Fix Time: 2 hours
 
 
 Bug: PIC Initialization
 Description: PIC isn’t getting initialized
+Fix: Calling the initialization from the correct location now
 Fix Time: 2 hours
 
 
 Bug: fstab errors
 Description: Fstab file getting randomly cleared out
+Fix: Reinstalling QEMU
 Fix Time: 1 hour
 
 
 Bug: Paging compilation
 Description: Undefined constants
+Fix: Defined constants at the beginning of the file
 Fix Time: 20 min
 
 
@@ -66,46 +65,49 @@ Checkpoint 2
 
 Bug: Line buffer
 Description: the line buffer is an incorrect size
+Fix: fixed the math calculating buffer size
 Fix Time: 20 min
 
 
 Bug: Backspace
 Description: Backspace isn’t removing characters from the line buffer
+Fix: Decrement line buffer count on backspace
 Fix Time: 2 hours
 
 
 Bug: Terminal Read
 Description: Terminal read appears to randomly return every now and then
+Fix: Fixed how the return condition was evaluated
 Fix Time: 3 hours
 
 
 Bug: RTC init
 Description: RTC is initializing abnormally
+Fix: Fixed the values that were accepted as possible clock values
 Fix Time: 3 hours
 
 
 Bug: RTC test code
 Description: Test code for the RTC is in the wrong location for the demo
+Fix: Move test code to kernel file
 Fix Time: 20 min
 
 
 Bug: RTC wrong values
 Description: RTC will accept invalid numbers for clock
+Fix: Put error checking in around the values the function would accept
 Fix Time: 40 min
-
-
-Bug: Directory read
-Description: Can’t read from the directory
-Fix Time: 4 hours
 
 
 Bug: RTC merge
 Description: New RTC code being merged into the new code is causing issues
+Fix: Removed old RTC code and merged their functionality into the new RTC functions
 Fix Time: 4 hours
 
 
 Bug: Pagefault
 Description: fs_open pagefaults when run
+Fix: Fixed the meory locations
 Fix Time: 3 hours
 
 
@@ -115,26 +117,31 @@ Checkpoint 3
 
 Bug: nbytes
 Description: nbytes isn’t being used properly
+Fix: Fixed the formula that uses nbytes
 Fix Time: 2 hours
 
 
 Bug: Paging compilation
 Description: Undefined constants
+Fix: Defined the constants in the begining of the file
 Fix Time: 20 min
 
 
 Bug: Execute
 Description: Execute crashing sporadically
+Fix: Protected against invalid input
 Fix Time: 5 hours
 
 
 Bug: Save/Restore
 Description: Stack isn’t set up well before the iret
+Fix: Researched how the stack should be set up
 Fix Time: 4 hours
 
 
 Bug: Cursor
 Description: Cursor isn’t loading in the right position
+Fix: Offset corrected
 Fix Time: 45 min
 
 
@@ -144,21 +151,25 @@ Checkpoint 4
 
 Bug: Vidmap pagefault
 Description: Vidmap keeps pagefaulting
+Fix: Changed the memory locations
 Fix Time: 1 hour
 
 
 Bug: System call too long
 Description: Read/write is not one line w/o error checking
+Fix: Move functionality out of the functions
 Fix Time: 20 min
 
 
 Bug: Halt pagefault
 Description: Halt keeps pagefaulting when the shell exists
+Fix: Pointed to paren instead of grandparent for the pcb
 Fix Time: 4 hours
 
 
 Bug: Fish not moving
 Description: Fish is animating really slowly
+Fix: fixed the RTC clock frequency
 Fix Time: 1 hour
 
 
@@ -168,15 +179,18 @@ Checkpoint 5
 
 Bug: Terminal switching
 Description: Changing to another terminal corrupts the current one
+Fix: Creates functions to write to a backing page so it doesn't mess with other terminals
 Fix Time: 2 hours
 
 
 Bug: Video gap
 Description: similar to previous bug, switching out of terminal creates a gap in video
+Fix: Created functions to write to a backing page so it doesn't mess with other terminals
 Fix Time: 1 hour
 
 
 Bug: Video memory paging
 Description: When setting up new page mapping for the backing stores and video memory,
 the screen is not being displayed correctly.
+Fix: Moved video memory to it's own page
 Fix Time: 5 hours

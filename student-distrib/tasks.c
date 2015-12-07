@@ -14,21 +14,15 @@ uint32_t pid_use_array[MAX_TASKS + 1] = {0};
 // Declared in syscalls.c
 extern void* halt_ret_lbl asm("halt_ret_lbl");
 
-<<<<<<< HEAD
-/*
-* void init_kernel_file_array()
-*   Inputs: 
-*   Return Value: none
-*   Function: begins filesystem processing by the kernel
-*/
-=======
 // Declared in terminal.c
 extern volatile uint32_t active_pids[NUM_TERMINALS];
 
-/**
- *
- */
->>>>>>> origin/master
+/*
+* void init_kernel_file_array()
+*   Inputs:
+*   Return Value: none
+*   Function: begins filesystem processing by the kernel
+*/
 void init_kernel_file_array() {
     // Initialize kernel stdin file desctriptor
     file_desc_t stdin_kernel;
@@ -57,8 +51,8 @@ void init_kernel_file_array() {
 
 /*
 * pcb_t* init_pcb(uint32_t pid)
-*   Inputs: 
-    -pid = process id
+*   Inputs:
+*   -pid = process id
 *   Return Value: pointer to PCB data sctructure
 *   Function: initializes PCB for the given process ID
 */
@@ -101,7 +95,7 @@ pcb_t* init_pcb(uint32_t pid) {
 
 /*
 * pcb_t* get_pcb_ptr()
-*   Inputs: 
+*   Inputs:
 *   Return Value: pointer to the PCB if a process is running
 *   Function: grabs PCB
 */
@@ -122,14 +116,6 @@ pcb_t* get_pcb_ptr() {
     return NULL;
 }
 
-<<<<<<< HEAD
-/*
-* file_desc_t* get_file_array()
-*   Inputs: 
-*   Return Value: file descriptor array pointer
-*   Function: grabs the value of the file array for the given PCB
-*/
-=======
 /**
  *
  */
@@ -137,10 +123,12 @@ pcb_t* get_pcb_ptr_pid(uint32_t pid) {
     return (pcb_t*) ((8 * MB) - ((pid + 1) * (8 * KB)));
 }
 
-/**
- *
- */
->>>>>>> origin/master
+/*
+* file_desc_t* get_file_array()
+*   Inputs:
+*   Return Value: file descriptor array pointer
+*   Function: grabs the value of the file array for the given PCB
+*/
 file_desc_t* get_file_array() {
     pcb_t* pcb = get_pcb_ptr();
     return (pcb == NULL) ? kernel_file_array : pcb->file_array;
@@ -148,8 +136,8 @@ file_desc_t* get_file_array() {
 
 /*
 * void task_switch(uint32_t new_pid)
-*   Inputs: 
-    -new_pid = process ID to switch to
+*   Inputs:
+*   -new_pid = process ID to switch to
 *   Return Value: None
 *   Function: handles the bulk of the task switching
 */
